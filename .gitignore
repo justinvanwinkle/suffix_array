@@ -18,7 +18,7 @@ develop-eggs
 lib
 lib64
 __pycache__
-
+*.o
 # Installer logs
 pip-log.txt
 
@@ -34,3 +34,12 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+*~
+*.pyc
+*.pyo
+\#*\#
+*.DS_Store
+.coverage
+htmlcov/
+.cache/
+src/suffix_array.c
