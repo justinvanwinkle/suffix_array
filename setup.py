@@ -1,16 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from distutils.core import setup, Extension
 from glob import glob
 
-from setuptools import setup
-from distutils.extension import Extension
+setup(name='foo',
+      version='1.0',
+      ext_modules=[Extension('foo', ['foo.c'])],
+      )
+
 
 from Cython.Distutils import build_ext
 
 
 if __name__ == '__main__':
-    src_files = ["src/suffix_array.pyx"] + glob('src/*.c')
+    src_files = glob('src/*.c')
     extensions = [Extension("suffix_array",
                             src_files,
                             language='c')]
