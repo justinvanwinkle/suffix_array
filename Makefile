@@ -45,7 +45,7 @@ test: suffix_array.so
 	py.test -- test/test_basics.py
 
 clean:
-	rm -f suffix_array.so cython_src/*.c src/*.o
+	rm -rf suffix_array.so cython_src/*.c src/*.o build/
 
 check-syntax:
 	cc -fsyntax-only $(CFLAGS) $(INCLUDE) -pedantic -c ${CHK_SOURCES}
