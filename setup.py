@@ -4,12 +4,14 @@
 from distutils.core import setup, Extension
 from glob import glob
 
-VERSION = '0.9'
+VERSION = '0.9.11'
 
 if __name__ == '__main__':
     src_files = glob('src/*.c')
+    dep_files = glob('src/*.h')
     extensions = [Extension("suffix_array",
-                            src_files,
+                            sources=src_files,
+                            depends=dep_files,
                             language='c')]
     description = "Fast Suffix Array for Python"
     setup(name='suffix_array',
@@ -17,5 +19,6 @@ if __name__ == '__main__':
           author='Justin Van Winkle',
           author_email='justin.vanwinkle@gmail.com',
           url='https://github.com/justinvanwinkle/suffix_array',
+          license="BSD",
           description=description,
           ext_modules=extensions)
