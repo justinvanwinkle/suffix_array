@@ -1,4 +1,4 @@
-# pydivsufsort
+# Suffix Array
 
 A fork of divsufsort. It does suffix arrays and related stuff.
 
