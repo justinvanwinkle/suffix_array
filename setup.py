@@ -4,14 +4,12 @@
 from distutils.core import setup, Extension
 from glob import glob
 
-VERSION = '0.9.11'
+VERSION = '0.9.12'
 
 if __name__ == '__main__':
     src_files = glob('src/*.c')
-    dep_files = glob('src/*.h')
     extensions = [Extension("suffix_array",
                             sources=src_files,
-                            depends=dep_files,
                             language='c')]
     description = "Fast Suffix Array for Python"
     setup(name='suffix_array',
