@@ -42,4 +42,3 @@ nosetests.xml
 .coverage
 htmlcov/
 .cache/
-src/suffix_array.c
