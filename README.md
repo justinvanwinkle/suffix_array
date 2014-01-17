@@ -16,15 +16,44 @@ A fork of divsufsort. It does suffix arrays and related stuff.
     In [5]: %timeit 'abababx' in sa
     1000000 loops, best of 3: 540 ns per loop
 
-    In [6]: %time s.count('ab')
-    CPU times: user 2.95 s, sys: 579 µs, total: 2.95 s
-    Wall time: 2.95 s
+    In [6]: s.count('ab')
     Out[6]: 1000000000
 
-    In [7]: %time sa.count('ab')
-    CPU times: user 15 µs, sys: 1 µs, total: 16 µs
-    Wall time: 20 µs
+    In [7]: sa.count('ab')
     Out[7]: 1000000000
+
+    In [8]: %timeit s.count('ab')
+    1 loops, best of 3: 2.83 s per loop
+
+    In [9]: %timeit sa.count('ab')
+    1000000 loops, best of 3: 577 ns per loop
+
+    In [10]: s.count('x')
+    Out[10]: 0
+
+    In [11]: sa.count('x')
+    Out[11]: 0
+
+    In [12]: %timeit s.count('x')
+    1 loops, best of 3: 1.1 s per loop
+
+    In [13]: %timeit sa.count('x')
+    1000000 loops, best of 3: 309 ns per loop
+
+
+This library counts overlapping matches, whereas string.count finds nonoverlapping.
+
+    In [14]: s.count('ab' * 50)
+    Out[14]: 20000000
+
+    In [15]: sa.count('ab' * 50)
+    Out[15]: 999999951
+
+    In [16]: %timeit s.count('ab' * 50)
+    1 loops, best of 3: 1.32 s per loop
+
+    In [17]: %timeit sa.count('ab' * 50)
+    100000 loops, best of 3: 6.02 µs per loop
 
 
 ## Setup for development:
