@@ -43,7 +43,10 @@ cdef class Int32Array:
         return self._array[i]
 
     cpdef int bsearch(Int32Array self, int q):
-        return bsearch_left(self._array, self.length, q) - 1
+        cdef int pos = bsearch_left(self._array, self.length, q)
+        if self.get(pos) == q:
+            return pos
+        return pos - 1
 
     def __iter__(self):
         cdef int i
