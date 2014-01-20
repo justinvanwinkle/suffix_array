@@ -36,14 +36,6 @@ cdef class Int32Array:
     cdef inline int get(Int32Array self, int i):
         return self._array[i]
 
-    cpdef int bsearch(Int32Array self, int q):
-        cdef int pos
-        with nogil:
-            pos = binarysearch_lower(self._array, self.length, q)
-        if self.get(pos) == q:
-            return pos
-        return pos - 1
-
     def __iter__(self):
         cdef int i
         for i in range(self.length):
@@ -83,12 +75,12 @@ cdef class SuffixArray:
         # TODO: start and end optional params, see str.find() documentation
         # slice notation might make it more complicated than it sounds...
         cdef:
-            int idx = 0        
+            int idx = 0
             int len_q = len(q)
             unsigned char *_q = <unsigned char *> q
             unsigned char *_s = <unsigned char *> self.s
 
-        
+
         with nogil:
             matches = <int>sa_search(_s,
                                      self.length,
@@ -317,11 +309,16 @@ cdef class Rstr_max:
             pos += 1
 
     cdef int text_index_at(Rstr_max self, int i):
-        cdef int text_position = self.text_positions[self.text_at(i)]
-        return i - text_position
+        cdef int index_at = self.text_at(i)
+        return i - self.text_positions.get(index_at)
 
     cdef int text_at(Rstr_max self, int i):
-        return self.text_positions.bsearch(i)
+        cdef int text_pos
+        for ix in range(self.num_texts):
+            text_pos = self.text_positions.get(ix)
+            if text_pos > i:
+                return ix - 1
+        return self.num_texts - 1
 
     cdef dict rstr(Rstr_max self):
         cdef:
