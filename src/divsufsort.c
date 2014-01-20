@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <Python.h>
 #ifdef _OPENMP
 # include <omp.h>
 #endif
