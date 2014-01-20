@@ -8,6 +8,7 @@ from cpython cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 from libc.string cimport memset
 from suffix_array cimport divsufsort
 from suffix_array cimport binarysearch_lower
+from suffix_array cimport binary_cmov
 from suffix_array cimport sa_search
 
 
@@ -31,6 +32,9 @@ cdef class Int32Array:
             for i in range(self.length):
                 self._array[i] = v
         return self
+
+    cpdef int binary_search(Int32Array self, int i):
+        return binary_cmov(self._array, self.length, i)
 
     @cython.profile(False)
     cdef inline int get(Int32Array self, int i):
@@ -304,21 +308,21 @@ cdef class Rstr_max:
 
         cdef int pos = 0
         for i, text in enumerate(texts):
-            self.text_positions[i] = pos
             pos += len(text)
+            self.text_positions[i] = pos
             pos += 1
 
     cdef int text_index_at(Rstr_max self, int i):
         cdef int index_at = self.text_at(i)
-        return i - self.text_positions.get(index_at)
+        cdef int start
+        if index_at == 0:
+            start = 0
+        else:
+            start = self.text_positions.get(index_at - 1) + 1
+        return i - start
 
     cdef int text_at(Rstr_max self, int i):
-        cdef int text_pos
-        for ix in range(self.num_texts):
-            text_pos = self.text_positions.get(ix)
-            if text_pos > i:
-                return ix - 1
-        return self.num_texts - 1
+        return self.text_positions.binary_search(i)
 
     cdef dict rstr(Rstr_max self):
         cdef:

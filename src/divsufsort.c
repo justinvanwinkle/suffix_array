@@ -1762,6 +1762,20 @@ binarysearch_lower(const int *A, int size, int value) {
 }
 
 int
+binary_cmov(const int *arr, int n, int key) {
+    int min = 0, max = n;
+    while (min < max) {
+	int middle = (min + max) >> 1;
+	asm ("cmpl %3, %2\n\tcmovg %4, %0\n\tcmovle %5, %1"
+	     : "+r" (min),
+	       "+r" (max)
+	     : "r" (key), "g" (arr [middle]),
+	       "g" (middle + 1), "g" (middle));
+    }
+    return min;
+}
+
+int
 divsufsort(const unsigned char *T, int *SA, int n) {
   int *bucket_A, *bucket_B;
   int m;
@@ -2029,6 +2043,3 @@ sa_search(const uint8_t *T, int Tsize,
 
     return k - j;
 }
-
-
-

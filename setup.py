@@ -4,7 +4,7 @@
 from distutils.core import setup, Extension
 from glob import glob
 
-VERSION = '0.9.12'
+VERSION = '0.9.13'
 
 if __name__ == '__main__':
     src_files = glob('src/*.c')

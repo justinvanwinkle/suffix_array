@@ -4,6 +4,7 @@ cdef extern from "divsufsort.h":
     int divsufsort(const unsigned char *T, int *SA, int n) nogil
 
     int binarysearch_lower(const int *A, int size, int value) nogil
+    int binary_cmov(const int *arr, int n, int key)
 
     int divbwt(const unsigned char *T, unsigned char *U, int *A, int n) nogil
 
