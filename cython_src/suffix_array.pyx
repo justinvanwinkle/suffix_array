@@ -11,11 +11,6 @@ from suffix_array cimport binarysearch_lower
 from suffix_array cimport sa_search
 
 
-cdef int bsearch_left(const int *array, int size, int q):
-    cdef int pos = binarysearch_lower(array, size, q)
-    return pos
-
-
 cdef class Int32Array:
     cdef int* _array
     cdef int length
@@ -32,8 +27,9 @@ cdef class Int32Array:
 
     cpdef Int32Array populate(Int32Array self, int v):
         cdef int i
-        for i in range(self.length):
-            self._array[i] = v
+        with nogil:
+            for i in range(self.length):
+                self._array[i] = v
         return self
 
     @cython.profile(False)
@@ -41,7 +37,9 @@ cdef class Int32Array:
         return self._array[i]
 
     cpdef int bsearch(Int32Array self, int q):
-        cdef int pos = bsearch_left(self._array, self.length, q)
+        cdef int pos
+        with nogil:
+            pos = binarysearch_lower(self._array, self.length, q)
         if self.get(pos) == q:
             return pos
         return pos - 1
@@ -68,7 +66,7 @@ cdef class Int32Array:
 cdef class SuffixArray:
     cdef:
         Int32Array SA
-        int _sarray_len
+        int length
         int _alphabet_size
         bytes s
 
@@ -79,19 +77,25 @@ cdef class SuffixArray:
 
     def __init__(self, s):
         self.s = bytes(s)
-        self._sarray_len = len(s)
+        self.length = len(s)
 
     cpdef find(SuffixArray self, q):
         # TODO: start and end optional params, see str.find() documentation
         # slice notation might make it more complicated than it sounds...
-        cdef int idx = 0
+        cdef:
+            int idx = 0        
+            int len_q = len(q)
+            unsigned char *_q = <unsigned char *> q
+            unsigned char *_s = <unsigned char *> self.s
 
-        matches = <int>sa_search(<unsigned char *><char *>self.s,
-                                     len(self.s),
-                                     <unsigned char *><char *>q,
-                                     len(q),
+        
+        with nogil:
+            matches = <int>sa_search(_s,
+                                     self.length,
+                                     _q,
+                                     len_q,
                                      self.SA._array,
-                                     self._sarray_len,
+                                     self.length,
                                      &idx)
         if matches == 0:
             return -1
@@ -99,12 +103,17 @@ cdef class SuffixArray:
             return idx
 
     cpdef count(SuffixArray self, q):
-        matches = <int>sa_search(<unsigned char *><char *>self.s,
-                                     len(self.s),
-                                     <unsigned char *><char *>q,
-                                     len(q),
+        cdef:
+            int len_q = len(q)
+            unsigned char *_q = <unsigned char *> q
+            unsigned char *_s = <unsigned char *> self.s
+        with nogil:
+            matches = <int>sa_search(_s,
+                                     self.length,
+                                     _q,
+                                     len_q,
                                      self.SA._array,
-                                     self._sarray_len,
+                                     self.length,
                                      NULL)
         return matches
 
@@ -122,12 +131,12 @@ cdef class SuffixArray:
         return self.count(q) > 0
 
     def __iter__(self):
-        for i in range(self._sarray_len):
+        for i in range(self.length):
             yield self.get(i)
 
     cdef _eq(SuffixArray self, other):
         cdef int i
-        for i in range(self._sarray_len):
+        for i in range(self.length):
             if self.SA.get(i) != other[i]:
                 return False
         return True
@@ -146,10 +155,10 @@ cdef class SuffixArray:
         if bwt_str == NULL:
             raise MemoryError('Unable to allocate memory')
         try:
-            res = bw_transform(self.s, bwt_str, self.SA._array, self._sarray_len, &idx)
+            res = bw_transform(self.s, bwt_str, self.SA._array, self.length, &idx)
             if res != 0:
                 raise Exception('Problem')
-            return ((<char *>bwt_str)[:self._sarray_len], idx)
+            return ((<char *>bwt_str)[:self.length], idx)
         finally:
             PyMem_Free(bwt_str)
 
@@ -160,10 +169,10 @@ cdef class SuffixArray:
             raise MemoryError('Unable to allocate memory')
         try:
             res = inverse_bw_transform(
-                s, bwt_str, NULL, self._sarray_len, idx)
+                s, bwt_str, NULL, self.length, idx)
             if res != 0:
                 raise Exception('Problem')
-            return (<char *>bwt_str)[:self._sarray_len]
+            return (<char *>bwt_str)[:self.length]
         finally:
             PyMem_Free(bwt_str)
 
