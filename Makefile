@@ -42,6 +42,9 @@ suffix_array.so: src/suffix_array.o src/trsort.o src/bwt.o src/divsufsort.o src/
 test: suffix_array.so
 	py.test -- test/test_basics.py
 
+install: suffix_array.so
+	python setup.py install
+
 clean:
 	rm -rf suffix_array.so cython_src/*.c src/*.o build/
 

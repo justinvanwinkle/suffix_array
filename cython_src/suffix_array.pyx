@@ -23,6 +23,8 @@ cdef class Int32Array:
     cdef int length
 
     def __cinit__(Int32Array self, int32_t length):
+        if length == 0:
+            raise ValueError('Not allowed 0 length array')
         cdef int32_t* _array = <int32_t *>PyMem_Malloc(length * sizeof(int32_t))
         if _array == NULL:
             raise MemoryError
@@ -287,22 +289,21 @@ cdef class Rstr_max:
         bytes combined_texts
         SuffixArray sa
         int min_matching
-        Int32Array text_id_map
 
     def __init__(self, texts, min_matching=None):
-        self.text_id_map = Int32Array(len(texts))
-        good_texts = []
-        for ix, text in enumerate(texts):
-            if text != '':
-                self.text_id_map[len(good_texts)] = ix
-                good_texts.append(text)
+        if len(texts) == 0:
+            raise ValueError('Must pass some texts')
 
-        self.num_texts = len(good_texts)
+        for text in texts:
+            if len(text) == 0:
+                raise ValueError('Empty texts are not allowed')
+
+        self.num_texts = len(texts)
         self.text_positions = Int32Array(self.num_texts)
         if min_matching is None:
             min_matching = len(texts)
         self.min_matching = min_matching
-        self.combined_texts = self.char_frontier.join(good_texts)
+        self.combined_texts = self.char_frontier.join(texts)
 
         cdef int pos = 0
         for i, text in enumerate(texts):
@@ -387,35 +388,33 @@ cdef class Rstr_max:
 
     cpdef go_rstr(Rstr_max self):
         cdef:
-            dict r
             int nb
             int o
             int offset
             int offset_end
             int offset_global
             int start_plage
-            int good_match = 1
-            list results = []
-            list sub_results
-            Int32Array match_mask
+            int good_match
 
         if self.num_texts < self.min_matching:
             return []
 
         r = self.rstr()
-        match_mask = Int32Array(self.num_texts)
 
+        results = []
         for (offset_end, nb), (match_len, start_ix) in r.iteritems():
-            match_mask.zero()
-            good_match = self.num_texts
+            match_mask = [0] * self.num_texts
             sub_results = []
             for o in range(start_ix, start_ix + nb):
                 offset_global = self.sa.get(o)
                 offset = self.text_index_at(offset_global)
-                id_str = self.text_id_map[self.text_at(offset_global)]
+                id_str = self.text_at(offset_global)
+                if id_str >= len(match_mask):
+                    print offset_global, offset, id_str, self.num_texts
+                    raise ValueError('Fuck %s %s' % (id_str, len(match_mask)))
                 match_mask[id_str] = 1
                 sub_results.append((match_len, offset, id_str))
-
+            good_match = self.num_texts
             for i in range(self.num_texts):
                 if match_mask[i] == 0:
                     good_match -= 1
@@ -430,19 +429,3 @@ def rstr_max(*ss):
     rstr = Rstr_max(ss)
 
     return rstr.go_rstr()
-
-
-def rstr_pretty(*ss):
-    rstr = Rstr_max(ss)
-
-    results = rstr.go_rstr()
-
-
-    for result_set in results:
-        first = True
-        for length, start_offset, filenumber in result_set:
-            if first:
-                print repr(ss[filenumber][start_offset:start_offset + length])
-                first = False
-            print ' ' * 4,
-            print filenumber, start_offset
