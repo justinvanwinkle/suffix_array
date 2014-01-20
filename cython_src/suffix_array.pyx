@@ -235,7 +235,7 @@ cdef class Stack:
         list _stack
         int last_index
 
-    def __cinit__(Stack self) :
+    def __cinit__(Stack self):
         self._top = 0
         self._stack = []
         self.last_index = -1
@@ -262,46 +262,53 @@ cdef inline int intmax(int i, int j):
     return j
 
 
-from collections import deque
+# from collections import deque
 
-cpdef common_substrings(strs):
-    counts = [0] * len(strs)
-    big_s = chr(2).join(strs)
-    positions = []
-    pos = 0
-    for s in strs:
-        positions.append(pos)
-        pos += len(s) + 1
+# cpdef common_substrings(strs):
+#     counts = [0] * len(strs)
+#     big_s = chr(2).join(strs)
+#     positions = []
+#     pos = 0
+#     for s in strs:
+#         positions.append(pos)
+#         pos += len(s) + 1
 
-    sa = SuffixArray(big_s)
-    a = 1
-    b = 0
-
+#     sa = SuffixArray(big_s)
+#     a = 1
+#     b = 0
 
 
 
 cdef class Rstr_max:
     char_frontier = chr(2)
     cdef:
-        tuple texts
         int num_texts
         Int32Array text_positions
         bytes combined_texts
         SuffixArray sa
+        int min_matching
+        Int32Array text_id_map
 
-    def __init__(self, texts):
-        self.texts = texts
-        self.num_texts = len(texts)
+    def __init__(self, texts, min_matching=None):
+        self.text_id_map = Int32Array(len(texts))
+        good_texts = []
+        for ix, text in enumerate(texts):
+            if text != '':
+                self.text_id_map[len(good_texts)] = ix
+                good_texts.append(text)
+
+        self.num_texts = len(good_texts)
         self.text_positions = Int32Array(self.num_texts)
+        if min_matching is None:
+            min_matching = len(texts)
+        self.min_matching = min_matching
+        self.combined_texts = self.char_frontier.join(good_texts)
 
         cdef int pos = 0
         for i, text in enumerate(texts):
             self.text_positions[i] = pos
             pos += len(text)
             pos += 1
-
-    def get_repeat(self, id_str, offset, length) :
-        return self.texts[id_str][offset:offset+length]
 
     cdef int text_index_at(Rstr_max self, int i):
         cdef int text_position = self.text_positions[self.text_at(i)]
@@ -325,10 +332,10 @@ cdef class Rstr_max:
             int n
             int pos1
             int pos2
+            int current_lcp_len = 0
             int previous_lcp_len = 0
 
-        self.combined_texts = self.char_frontier.join(self.texts)
-        sa = SuffixArray(self.char_frontier.join(self.texts))
+        sa = SuffixArray(self.combined_texts)
         self.sa = sa
         lcp = LCP(sa)
         len_lcp = len(lcp) - 1
@@ -337,20 +344,20 @@ cdef class Rstr_max:
 
         pos1 = sa.get(0)
         for i in range(len_lcp):
-            current_lcp = lcp.get(i + 1)
+            current_lcp_len = lcp.get(i + 1)
             pos2 = sa.get(i + 1)
-            end_ix = intmax(pos1, pos2) + current_lcp
-            n = previous_lcp_len - current_lcp
+            end_ix = intmax(pos1, pos2) + current_lcp_len
+            n = previous_lcp_len - current_lcp_len
             if n < 0:
                 stack.push((-n, i, end_ix))
-                stack._top += -n
+                stack._top -= n
             elif n > 0:
                 self.remove_many(stack, results, n, i)
             elif stack._top > 0 and end_ix > stack.last()[2]:
                 Xn, Xi, _ = stack.pop()
                 stack.push((Xn, Xi, end_ix))
 
-            previous_lcp_len = current_lcp
+            previous_lcp_len = current_lcp_len
             pos1 = pos2
 
         if(stack._top > 0):
@@ -380,24 +387,42 @@ cdef class Rstr_max:
 
     cpdef go_rstr(Rstr_max self):
         cdef:
-            dict r = self.rstr()
+            dict r
             int nb
             int o
             int offset
             int offset_end
             int offset_global
             int start_plage
+            int good_match = 1
             list results = []
             list sub_results
+            Int32Array match_mask
+
+        if self.num_texts < self.min_matching:
+            return []
+
+        r = self.rstr()
+        match_mask = Int32Array(self.num_texts)
 
         for (offset_end, nb), (match_len, start_ix) in r.iteritems():
+            match_mask.zero()
+            good_match = self.num_texts
             sub_results = []
-            results.append(sub_results)
             for o in range(start_ix, start_ix + nb):
                 offset_global = self.sa.get(o)
                 offset = self.text_index_at(offset_global)
-                id_str = self.text_at(offset_global)
+                id_str = self.text_id_map[self.text_at(offset_global)]
+                match_mask[id_str] = 1
                 sub_results.append((match_len, offset, id_str))
+
+            for i in range(self.num_texts):
+                if match_mask[i] == 0:
+                    good_match -= 1
+            if good_match >= self.min_matching:
+                results.append(sub_results)
+
+
         return results
 
 

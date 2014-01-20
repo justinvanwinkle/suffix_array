@@ -1,3 +1,6 @@
+from os.path import join as pathjoin
+from glob import glob
+
 from suffix_array import SuffixArray
 from suffix_array import LCP
 from suffix_array import rstr_max
@@ -19,11 +22,11 @@ def test_find():
 
 
 def test_count():
-    for i in range(1000):
+    for i in range(100):
         s = 'ab' * i
         assert SuffixArray(s).count('ab') == i
 
-    for i in range(1000):
+    for i in range(100):
         s = 'abxx' * i
         assert SuffixArray(s).count('ab') == i
 
@@ -52,11 +55,16 @@ def test_rstr_max():
     assert result == [[(4, 1, 0), (4, 1, 1), (4, 6, 1)]]
 
 
-def test_rstr_max_big():
-    s1 = open('test/data/html/0c314').read()
-    s2 = open('test/data/html/1bf1b').read()
-    s3 = open('test/data/html/e1038').read()
-    s4 = open('test/data/html/ef4ba').read()
+def _read_files(path):
+    fns = glob(pathjoin(path, '*'))
+    content = []
+    for fn in fns:
+        content.append(open(fn).read())
+    return content
 
-    length = len(rstr_max(s1, s2, s3, s4))
-    assert length == 26511
+
+def test_rstr_max_big():
+    ss = _read_files('test/data/html')
+
+    length = len(rstr_max(*ss))
+    assert length == 27497

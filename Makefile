@@ -15,9 +15,7 @@ CFLAGS += -pipe
 CYTHON = cython
 
 
-CYTHON_DIRECTIVES := boundscheck=False,infer_types=True,overflowcheck=False,nonecheck=False,wraparound=False
-
-CYTHON_FLAGS = -X $(CYTHON_DIRECTIVES) -Wextra
+CYTHON_FLAGS = -Wextra
 CC = gcc
 
 LFLAGS = -fno-strict-aliasing -Wall -Os -undefined dynamic_lookup
