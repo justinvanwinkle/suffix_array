@@ -1,5 +1,5 @@
 /*
- * divsufsort.h for libdivsufsort
+ * divsufsort.h for libdivsufsort-lite
  * Copyright (c) 2003-2008 Yuta Mori All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -24,16 +24,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <inttypes.h>
+#ifndef _DIVSUFSORT_H
+#define _DIVSUFSORT_H 1
 
-/*- Datatypes -*/
-
-#ifndef PRIdSAINT_T
-#define PRIdSAINT_T PRId32
-#endif /* PRIdSAINT_T */
-#ifndef PRIdSAIDX_T
-#define PRIdSAIDX_T PRId32
-#endif /* PRIdSAIDX_T */
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 
 /*- Prototypes -*/
@@ -45,12 +41,8 @@
  * @param n The length of the given string.
  * @return 0 if no error occurred, -1 or -2 otherwise.
  */
-int32_t
-divsufsort(const uint8_t *T, int32_t *SA, int32_t n);
-
-int32_t
-binarysearch_lower(const int32_t *A, int32_t size, int32_t value);
-
+int
+divsufsort(const unsigned char *T, int *SA, int n);
 
 /**
  * Constructs the burrows-wheeler transformed string of a given string.
@@ -60,84 +52,12 @@ binarysearch_lower(const int32_t *A, int32_t size, int32_t value);
  * @param n The length of the given string.
  * @return The primary index if no error occurred, -1 or -2 otherwise.
  */
-int32_t
-divbwt(const uint8_t *T, uint8_t *U, int32_t *A, int32_t n);
-
-/**
- * Returns the version of the divsufsort library.
- * @return The version number string.
- */
-const char *
-divsufsort_version(void);
+int
+divbwt(const unsigned char *T, unsigned char *U, int *A, int n);
 
 
-/**
- * Constructs the burrows-wheeler transformed string of a given string and suffix array.
- * @param T[0..n-1] The input string.
- * @param U[0..n-1] The output string. (can be T)
- * @param SA[0..n-1] The suffix array. (can be NULL)
- * @param n The length of the given string.
- * @param idx The output primary index.
- * @return 0 if no error occurred, -1 or -2 otherwise.
- */
-int32_t
-bw_transform(const uint8_t *T, uint8_t *U,
-             int32_t *SA /* can NULL */,
-             int32_t n, int32_t *idx);
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
 
-/**
- * Inverse BW-transforms a given BWTed string.
- * @param T[0..n-1] The input string.
- * @param U[0..n-1] The output string. (can be T)
- * @param A[0..n-1] The temporary array. (can be NULL)
- * @param n The length of the given string.
- * @param idx The primary index.
- * @return 0 if no error occurred, -1 or -2 otherwise.
- */
-int32_t
-inverse_bw_transform(const uint8_t *T, uint8_t *U,
-                     int32_t *A /* can NULL */,
-                     int32_t n, int32_t idx);
-
-/**
- * Checks the correctness of a given suffix array.
- * @param T[0..n-1] The input string.
- * @param SA[0..n-1] The input suffix array.
- * @param n The length of the given string.
- * @param verbose The verbose mode.
- * @return 0 if no error occurred.
- */
-int32_t
-sufcheck(const uint8_t *T, const int32_t *SA, int32_t n, int32_t verbose);
-
-/**
- * Search for the pattern P in the string T.
- * @param T[0..Tsize-1] The input string.
- * @param Tsize The length of the given string.
- * @param P[0..Psize-1] The input pattern string.
- * @param Psize The length of the given pattern string.
- * @param SA[0..SAsize-1] The input suffix array.
- * @param SAsize The length of the given suffix array.
- * @param idx The output index.
- * @return The count of matches if no error occurred, -1 otherwise.
- */
-int32_t
-sa_search(const uint8_t *T, int32_t Tsize,
-          const uint8_t *P, int32_t Psize,
-          const int32_t *SA, int32_t SAsize,
-          int32_t *left);
-
-/**
- * Search for the character c in the string T.
- * @param T[0..Tsize-1] The input string.
- * @param Tsize The length of the given string.
- * @param SA[0..SAsize-1] The input suffix array.
- * @param SAsize The length of the given suffix array.
- * @param c The input character.
- * @param idx The output index.
- * @return The count of matches if no error occurred, -1 otherwise.
- */
-int32_t
-sa_simplesearch(const uint8_t *T, int32_t Tsize,
-                const int32_t *SA, int32_t SAsize,
-                int32_t c, int32_t *left);
+#endif /* _DIVSUFSORT_H */

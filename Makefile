@@ -30,13 +30,13 @@ LINK =  $(LFLAGS) -Wl,-F. src/*.o -o suffix_array.so
 
 default: suffix_array.so
 
-src/%.o: src/%.c Makefile src/divsufsort_private.h src/divsufsort.h
+src/%.o: src/%.c Makefile src/divsufsort.h
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 src/suffix_array.c: cython_src/suffix_array.pyx cython_src/suffix_array.pxd
 	cython $(CYTHON_FLAGS) cython_src/suffix_array.pyx -o src/suffix_array.c
 
-suffix_array.so: src/suffix_array.o src/trsort.o src/bwt.o src/divsufsort.o src/sssort.o
+suffix_array.so: src/suffix_array.o src/divsufsort.o 
 	$(CC) $(LINK)
 
 test: suffix_array.so
@@ -46,7 +46,7 @@ install: suffix_array.so
 	python setup.py install
 
 clean:
-	rm -rf suffix_array.so cython_src/*.c src/*.o build/
+	rm -rf suffix_array.so src/*.o build/
 
 check-syntax:
 	cc -fsyntax-only $(CFLAGS) $(INCLUDE) -pedantic -c ${CHK_SOURCES}
