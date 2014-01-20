@@ -209,6 +209,14 @@ ss_isqrt(int x) {
 #endif /* SS_BLOCKSIZE != 0 */
 
 
+
+static
+inline
+int
+int_min(int a, int b) {
+    return a < b ? a : b;
+}
+
 /*---------------------------------------------------------------------------*/
 
 /* Compares two suffixes. */
@@ -1713,9 +1721,44 @@ construct_BWT(const unsigned char *T, int *SA,
 }
 
 
+static
+int
+_compare(const uint8_t *T, int Tsize,
+         const uint8_t *P, int Psize,
+         int suf, int *match) {
+    int i, j;
+    int r;
+    i = suf + *match;
+    j = *match;
+    r = 0;
+    while((i < Tsize) && (j < Psize) && ((r = T[i] - P[j]) == 0)) {
+	++i;
+	++j;
+    }
+    *match = j;
+    return (r == 0) ? -(j != Psize) : r;
+}
+
 /*---------------------------------------------------------------------------*/
 
 /*- Function -*/
+
+int
+binarysearch_lower(const int *A, int size, int value) {
+    int half, i;
+    i = 0;
+    half = size >> 1;
+    do {
+	if(A[i + half] < value) {
+	    i += half + 1;
+	    half -= (size & 1) ^ 1;
+	}
+	size = half;
+	half >>= 1;
+    } while (0 < size);
+
+    return i;
+}
 
 int
 divsufsort(const unsigned char *T, int *SA, int n) {
@@ -1780,3 +1823,211 @@ divbwt(const unsigned char *T, unsigned char *U, int *A, int n) {
 
   return pidx;
 }
+
+
+int
+bw_transform(const uint8_t *T, uint8_t *U, int *SA, int n, int *idx) {
+    int *A, i, j, p, t;
+    int c;
+
+    /* Check arguments. */
+    if((T == NULL) || (U == NULL) || (n < 0) || (idx == NULL)) { return -1; }
+    if(n <= 1) {
+	if(n == 1) { U[0] = T[0]; }
+	*idx = n;
+	return 0;
+    }
+
+    if((A = SA) == NULL) {
+	i = divbwt(T, U, NULL, n);
+	if(0 <= i) { *idx = i; i = 0; }
+	return (int)i;
+    }
+
+    /* BW transform. */
+    if(T == U) {
+	t = n;
+	for(i = 0, j = 0; i < n; ++i) {
+	    p = t - 1;
+	    t = A[i];
+	    if(0 <= p) {
+		c = T[j];
+		U[j] = (j <= p) ? T[p] : (uint8_t)A[p];
+		A[j] = c;
+		j++;
+	    } else {
+		*idx = i;
+	    }
+	}
+	p = t - 1;
+	if(0 <= p) {
+	    c = T[j];
+	    U[j] = (j <= p) ? T[p] : (uint8_t)A[p];
+	    A[j] = c;
+	} else {
+	    *idx = i;
+	}
+    } else {
+	U[0] = T[n - 1];
+	for(i = 0; A[i] != 0; ++i) { U[i + 1] = T[A[i] - 1]; }
+	*idx = i + 1;
+	for(++i; i < n; ++i) { U[i] = T[A[i] - 1]; }
+    }
+
+    if(SA == NULL) {
+	/* Deallocate memory. */
+	PyMem_Free(A);
+    }
+
+    return 0;
+}
+
+/* Inverse Burrows-Wheeler transform. */
+int
+inverse_bw_transform(const uint8_t *T, uint8_t *U, int *A, int n, int idx) {
+    int C[ALPHABET_SIZE];
+    uint8_t D[ALPHABET_SIZE];
+    int *B;
+    int i, p;
+    int c, d;
+
+    /* Check arguments. */
+    if((T == NULL) || (U == NULL) || (n < 0) || (idx < 0) ||
+       (n < idx) || ((0 < n) && (idx == 0))) {
+	return -1;
+    }
+    if(n <= 1) { return 0; }
+
+    if((B = A) == NULL) {
+	/* Allocate n*sizeof(int) bytes of memory. */
+	if((B = (int *)PyMem_Malloc((size_t)n * sizeof(int))) == NULL) { return -2; }
+    }
+
+    /* Inverse BW transform. */
+    for(c = 0; c < ALPHABET_SIZE; ++c) { C[c] = 0; }
+    for(i = 0; i < n; ++i) { ++C[T[i]]; }
+    for(c = 0, d = 0, i = 0; c < ALPHABET_SIZE; ++c) {
+	p = C[c];
+	if(0 < p) {
+	    C[c] = i;
+	    D[d++] = (uint8_t)c;
+	    i += p;
+	}
+    }
+    for(i = 0; i < idx; ++i) { B[C[T[i]]++] = i; }
+    for( ; i < n; ++i)       { B[C[T[i]]++] = i + 1; }
+    for(c = 0; c < d; ++c) { C[c] = C[D[c]]; }
+    for(i = 0, p = idx; i < n; ++i) {
+	U[i] = D[binarysearch_lower(C, d, p)];
+	p = B[p - 1];
+    }
+
+    if(A == NULL) {
+	/* Deallocate memory. */
+	PyMem_Free(B);
+    }
+
+    return 0;
+}
+
+int
+sa_search(const uint8_t *T, int Tsize,
+          const uint8_t *P, int Psize,
+          const int *SA, int SAsize,
+          int *idx) {
+    int size, lsize, rsize, half;
+    int match, lmatch, rmatch;
+    int llmatch, lrmatch, rlmatch, rrmatch;
+    int i, j, k;
+    int r;
+
+    if(idx != NULL)
+	*idx = -1;
+
+    if((T == NULL) || (P == NULL) || (SA == NULL) ||
+       (Tsize < 0) || (Psize < 0) || (SAsize < 0)) {
+	return -1;
+    }
+
+    if((Tsize == 0) || (SAsize == 0))
+	return 0;
+
+    if(Psize == 0) {
+	if(idx != NULL)
+	    *idx = 0;
+	return SAsize;
+    }
+
+    i = 0;
+    j = 0;
+    k = 0;
+    lmatch = 0;
+    rmatch = 0;
+    size = SAsize;
+    half = size >> 1;
+    while(0 < size) {
+	match = int_min(lmatch, rmatch);
+	r = _compare(T, Tsize, P, Psize, SA[i + half], &match);
+	if(r < 0) {
+	    i += half + 1;
+	    half -= (size & 1) ^ 1;
+	    lmatch = match;
+	} else if(r > 0) {
+	    rmatch = match;
+	} else {
+	    lsize = half;
+	    j = i;
+	    rsize = size - half - 1;
+	    k = i + half + 1;
+
+	    llmatch = lmatch;
+	    lrmatch = match;
+	    half = lsize >> 1;
+            /* left part */
+	    while(0 < lsize) {
+		lmatch = int_min(llmatch, lrmatch);
+		r = _compare(T, Tsize, P, Psize, SA[j + half], &lmatch);
+		if(r < 0) {
+		    j += half + 1;
+		    half -= (lsize & 1) ^ 1;
+		    llmatch = lmatch;
+		} else {
+		    lrmatch = lmatch;
+		}
+		lsize = half;
+		half >>= 1;
+	    }
+
+	    rlmatch = match;
+	    rrmatch = rmatch;
+	    half = rsize >> 1;
+	    /* right part */
+	    while(0 < rsize) {
+		rmatch = int_min(rlmatch, rrmatch);
+		r = _compare(T, Tsize, P, Psize, SA[k + half], &rmatch);
+		if(r <= 0) {
+		    k += half + 1;
+		    half -= (rsize & 1) ^ 1;
+		    rlmatch = rmatch;
+		} else {
+		    rrmatch = rmatch;
+		}
+
+		rsize = half;
+		half >>= 1;
+	    }
+
+	    break;
+	}
+	size = half;
+	half >>= 1;
+    }
+
+    if(idx != NULL)
+	*idx = (0 < (k - j)) ? j : i;
+
+    return k - j;
+}
+
+
+

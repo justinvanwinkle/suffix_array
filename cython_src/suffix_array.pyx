@@ -5,7 +5,6 @@ _THIS_FIXES_CYTHON_BUG = 'wtf'
 cimport cython
 from cpython cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 
-from libc.stdint cimport uint8_t
 from libc.string cimport memset
 from suffix_array cimport divsufsort
 from suffix_array cimport binarysearch_lower
@@ -22,8 +21,6 @@ cdef class Int32Array:
     cdef int length
 
     def __cinit__(Int32Array self, int length):
-        if length == 0:
-            raise ValueError('Not allowed 0 length array')
         cdef int* _array = <int *>PyMem_Malloc(length * sizeof(int))
         if _array == NULL:
             raise MemoryError
@@ -77,7 +74,7 @@ cdef class SuffixArray:
 
     def __cinit__(self, s):
         cdef Int32Array SA = Int32Array(len(s))
-        divsufsort(<uint8_t *><char *>s, SA._array, len(s))
+        divsufsort(<unsigned char *><char *>s, SA._array, len(s))
         self.SA = SA
 
     def __init__(self, s):
@@ -89,9 +86,9 @@ cdef class SuffixArray:
         # slice notation might make it more complicated than it sounds...
         cdef int idx = 0
 
-        matches = <int>sa_search(<uint8_t *><char *>self.s,
+        matches = <int>sa_search(<unsigned char *><char *>self.s,
                                      len(self.s),
-                                     <uint8_t *><char *>q,
+                                     <unsigned char *><char *>q,
                                      len(q),
                                      self.SA._array,
                                      self._sarray_len,
@@ -102,9 +99,9 @@ cdef class SuffixArray:
             return idx
 
     cpdef count(SuffixArray self, q):
-        matches = <int>sa_search(<uint8_t *><char *>self.s,
+        matches = <int>sa_search(<unsigned char *><char *>self.s,
                                      len(self.s),
-                                     <uint8_t *><char *>q,
+                                     <unsigned char *><char *>q,
                                      len(q),
                                      self.SA._array,
                                      self._sarray_len,
@@ -143,7 +140,7 @@ cdef class SuffixArray:
         raise NotImplemented
 
     cpdef bwt(self):
-        cdef uint8_t* bwt_str = <uint8_t *>PyMem_Malloc(len(self.s) * sizeof(uint8_t))
+        cdef unsigned char* bwt_str = <unsigned char *>PyMem_Malloc(len(self.s) * sizeof(unsigned char))
         cdef int idx = 0
 
         if bwt_str == NULL:
@@ -157,7 +154,7 @@ cdef class SuffixArray:
             PyMem_Free(bwt_str)
 
     cpdef inverse_bwt(self, s, idx):
-        cdef uint8_t* bwt_str = <uint8_t *>PyMem_Malloc(len(self.s) * sizeof(uint8_t))
+        cdef unsigned char* bwt_str = <unsigned char *>PyMem_Malloc(len(self.s) * sizeof(unsigned char))
 
         if bwt_str == NULL:
             raise MemoryError('Unable to allocate memory')

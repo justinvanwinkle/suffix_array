@@ -55,7 +55,21 @@ divsufsort(const unsigned char *T, int *SA, int n);
 int
 divbwt(const unsigned char *T, unsigned char *U, int *A, int n);
 
+int
+binarysearch_lower(const int *A, int size, int value);
 
+int
+bw_transform(const uint8_t *T, uint8_t *U, int *SA, int n, int *idx);
+
+int
+    inverse_bw_transform(const uint8_t *T, uint8_t *U, int *A, int n, int idx);
+
+int
+sa_search(const uint8_t *T, int Tsize,
+          const uint8_t *P, int Psize,
+          const int *SA, int SAsize,
+          int *idx);
+          
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */
