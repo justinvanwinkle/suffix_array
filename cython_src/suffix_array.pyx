@@ -304,13 +304,17 @@ cdef class Rstr_max:
         if min_matching is None:
             min_matching = len(texts)
         self.min_matching = min_matching
-        self.combined_texts = self.char_frontier.join(texts)
+        combined_texts = ''
+        for ix, text in enumerate(texts):
+            combined_texts += text
+            combined_texts += chr(ix % 4)
+        self.combined_texts = combined_texts
 
         cdef int pos = 0
         for i, text in enumerate(texts):
             pos += len(text)
-            self.text_positions[i] = pos
             pos += 1
+            self.text_positions[i] = pos
 
     cdef int text_index_at(Rstr_max self, int i):
         cdef int index_at = self.text_at(i)
@@ -318,11 +322,14 @@ cdef class Rstr_max:
         if index_at == 0:
             start = 0
         else:
-            start = self.text_positions.get(index_at - 1) + 1
+            start = self.text_positions.get(index_at - 1)
         return i - start
 
     cdef int text_at(Rstr_max self, int i):
-        return self.text_positions.binary_search(i)
+        cdef int ix = self.text_positions.binary_search(i)
+        if self.text_positions.get(ix) == i:
+            return ix + 1
+        return ix
 
     cdef dict rstr(Rstr_max self):
         cdef:
@@ -400,38 +407,36 @@ cdef class Rstr_max:
             int offset_end
             int offset_global
             int start_plage
-            int good_match
+            int most_docs = 0
+            int largest = 0
+            int hit_docs = 0
 
         if self.num_texts < self.min_matching:
             return []
 
         r = self.rstr()
-
-        results = []
+        best_results = []
         for (offset_end, nb), (match_len, start_ix) in r.iteritems():
-            match_mask = [0] * self.num_texts
-            sub_results = []
+            sub_results = [None] * self.num_texts
             for o in range(start_ix, start_ix + nb):
                 offset_global = self.sa.get(o)
                 offset = self.text_index_at(offset_global)
                 id_str = self.text_at(offset_global)
-                if id_str >= len(match_mask):
-                    print offset_global, offset, id_str, self.num_texts
-                    raise ValueError('Fuck %s %s' % (id_str, len(match_mask)))
-                match_mask[id_str] = 1
-                sub_results.append((match_len, offset, id_str))
-            good_match = self.num_texts
-            for i in range(self.num_texts):
-                if match_mask[i] == 0:
-                    good_match -= 1
-            if good_match >= self.min_matching:
-                results.append(sub_results)
+                sub_results[id_str] = offset
+            hit_docs = self.num_texts
+            for match_start in sub_results:
+                if match_start is None:
+                    hit_docs -= 1
+            if hit_docs >= self.min_matching:
+                if ((hit_docs > most_docs or
+                     (hit_docs >= most_docs and match_len > largest))):
+                    most_docs = hit_docs
+                    largest = match_len
+                    best_results = sub_results
+
+        return largest, tuple(best_results)
 
 
-        return results
-
-
-def rstr_max(*ss):
+def rstr_max(ss):
     rstr = Rstr_max(ss)
-
     return rstr.go_rstr()

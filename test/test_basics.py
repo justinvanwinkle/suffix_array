@@ -50,9 +50,9 @@ def test_rstr_max():
     s1 = '1yyyy0'
     s2 = '2yyyy3yyyy4'
 
-    result = rstr_max(s1, s2)
+    result = rstr_max([s1, s2])
     print result
-    assert result == [[(4, 1, 0), (4, 1, 1), (4, 6, 1)]]
+    assert result == (4, (1, 6))
 
 
 def _read_files(path):
@@ -66,5 +66,5 @@ def _read_files(path):
 def test_rstr_max_big():
     ss = _read_files('test/data/html')
 
-    length = len(rstr_max(*ss))
-    assert length == 27497
+    best = rstr_max(ss)
+    assert best == (27661, (6831, 7495, 6739, 6574, 6932, 6831, 6379, 6794, 7176, 6920, 7007, 6921, 6561, 7742, 6757, 6843, 6508, 6761, 6815))
