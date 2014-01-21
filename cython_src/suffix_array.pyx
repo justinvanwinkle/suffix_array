@@ -419,6 +419,8 @@ cdef class Rstr_max:
         r = self.rstr()
         best_results = []
         for (offset_end, nb), (match_len, start_ix) in r.iteritems():
+            if match_len < largest or match_len < 2:
+                continue
             sub_results = [None] * self.num_texts
             for o in range(start_ix, start_ix + nb):
                 offset_global = self.sa.get(o)
