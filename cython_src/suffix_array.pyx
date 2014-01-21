@@ -410,9 +410,11 @@ cdef class Rstr_max:
             int most_docs = 0
             int largest = 0
             int hit_docs = 0
+            int id_str_end
+            int id_str
 
         if self.num_texts < self.min_matching:
-            return []
+            return 0, tuple()
 
         r = self.rstr()
         best_results = []
@@ -422,7 +424,9 @@ cdef class Rstr_max:
                 offset_global = self.sa.get(o)
                 offset = self.text_index_at(offset_global)
                 id_str = self.text_at(offset_global)
-                sub_results[id_str] = offset
+                id_str_end = self.text_at(offset_global + match_len)
+                if sub_results[id_str] is None and id_str == id_str_end:
+                    sub_results[id_str] = offset
             hit_docs = self.num_texts
             for match_start in sub_results:
                 if match_start is None:
@@ -433,6 +437,11 @@ cdef class Rstr_max:
                     most_docs = hit_docs
                     largest = match_len
                     best_results = sub_results
+            # if hit_docs >= self.min_matching:
+            #     if hit_docs * match_len > most_docs * largest:
+            #         most_docs = hit_docs
+            #         largest = match_len
+            #         best_results = sub_results
 
         return largest, tuple(best_results)
 
