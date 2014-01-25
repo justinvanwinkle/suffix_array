@@ -385,13 +385,16 @@ cdef class Rstr_max:
             int max_end_ix = 0
             int n = 0
             int start_ix = 0
+            int nb
 
         while m > 0:
             n, start_ix, max_end_ix = stack.pop()
             if last_start_ix != start_ix:
-                id_ = (max_end_ix, end_ix - start_ix + 1)
-                if id_ not in results or results[id_][0] < stack._top:
-                    results[id_] = (stack._top, start_ix)
+                nb = end_ix - start_ix + 1
+                if nb >= self.min_matching:
+                    id_ = (max_end_ix, nb)
+                    if id_ not in results or results[id_][0] < stack._top:
+                        results[id_] = (stack._top, start_ix)
                 last_start_ix = start_ix
             m -= n
             stack._top -= n
@@ -419,7 +422,7 @@ cdef class Rstr_max:
         r = self.rstr()
         best_results = []
         for (offset_end, nb), (match_len, start_ix) in r.iteritems():
-            if match_len < 2:
+            if match_len < 2 or nb < self.min_matching:
                 continue
             sub_results = [None] * self.num_texts
             for o in range(start_ix, start_ix + nb):
@@ -439,11 +442,6 @@ cdef class Rstr_max:
                     most_docs = hit_docs
                     largest = match_len
                     best_results = sub_results
-            # if hit_docs >= self.min_matching:
-            #     if hit_docs * match_len > most_docs * largest:
-            #         most_docs = hit_docs
-            #         largest = match_len
-            #         best_results = sub_results
 
         return largest, tuple(best_results)
 
