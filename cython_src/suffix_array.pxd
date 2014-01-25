@@ -1,5 +1,7 @@
 _THIS_FIXES_CYTHON_BUG = 'wtf'
 
+from libcpp.vector cimport vector
+
 cdef extern from "divsufsort.h":
     int divsufsort(const unsigned char *T, int *SA, int n) nogil
 
@@ -38,3 +40,10 @@ cdef extern from "divsufsort.h":
                             int SAsize,
                             int c,
                             int *left) nogil
+
+
+cdef extern from "lcp.hpp":
+    void make_lcp(const unsigned char *s,
+                  const int *sa,
+                  int sa_length,
+                  vector[int] &lcp) nogil

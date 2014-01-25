@@ -374,7 +374,7 @@ ss_pivot(const unsigned char *Td, const int *PA, int *first, int *last) {
 static INLINE
 int *
 ss_partition(const int *PA,
-                    int *first, int *last, int depth) {
+	     int *first, int *last, int depth) {
   int *a, *b;
   int t;
   for(a = first - 1, b = last;;) {
@@ -1787,8 +1787,8 @@ divsufsort(const unsigned char *T, int *SA, int n) {
   else if(n == 1) { SA[0] = 0; return 0; }
   else if(n == 2) { m = (T[0] < T[1]); SA[m ^ 1] = 0, SA[m] = 1; return 0; }
 
-  bucket_A = (int *)malloc(BUCKET_A_SIZE * sizeof(int));
-  bucket_B = (int *)malloc(BUCKET_B_SIZE * sizeof(int));
+  bucket_A = (int *)PyMem_Malloc(BUCKET_A_SIZE * sizeof(int));
+  bucket_B = (int *)PyMem_Malloc(BUCKET_B_SIZE * sizeof(int));
 
   /* Suffixsort. */
   if((bucket_A != NULL) && (bucket_B != NULL)) {
@@ -1798,8 +1798,8 @@ divsufsort(const unsigned char *T, int *SA, int n) {
     err = -2;
   }
 
-  free(bucket_B);
-  free(bucket_A);
+  PyMem_Free(bucket_B);
+  PyMem_Free(bucket_A);
 
   return err;
 }
@@ -1814,9 +1814,9 @@ divbwt(const unsigned char *T, unsigned char *U, int *A, int n) {
   if((T == NULL) || (U == NULL) || (n < 0)) { return -1; }
   else if(n <= 1) { if(n == 1) { U[0] = T[0]; } return n; }
 
-  if((B = A) == NULL) { B = (int *)malloc((size_t)(n + 1) * sizeof(int)); }
-  bucket_A = (int *)malloc(BUCKET_A_SIZE * sizeof(int));
-  bucket_B = (int *)malloc(BUCKET_B_SIZE * sizeof(int));
+  if((B = A) == NULL) { B = (int *)PyMem_Malloc((size_t)(n + 1) * sizeof(int)); }
+  bucket_A = (int *)PyMem_Malloc(BUCKET_A_SIZE * sizeof(int));
+  bucket_B = (int *)PyMem_Malloc(BUCKET_B_SIZE * sizeof(int));
 
   /* Burrows-Wheeler Transform. */
   if((B != NULL) && (bucket_A != NULL) && (bucket_B != NULL)) {
@@ -1832,9 +1832,9 @@ divbwt(const unsigned char *T, unsigned char *U, int *A, int n) {
     pidx = -2;
   }
 
-  free(bucket_B);
-  free(bucket_A);
-  if(A == NULL) { free(B); }
+  PyMem_Free(bucket_B);
+  PyMem_Free(bucket_A);
+  if(A == NULL) { PyMem_Free(B); }
 
   return pidx;
 }

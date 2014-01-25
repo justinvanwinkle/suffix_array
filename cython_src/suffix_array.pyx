@@ -1,15 +1,17 @@
-# #cython: profile=True
+# distutils: language = c++
 
 _THIS_FIXES_CYTHON_BUG = 'wtf'
 
 cimport cython
 from cpython cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
-
+from libcpp.vector cimport vector
 from libc.string cimport memset
+
 from suffix_array cimport divsufsort
 from suffix_array cimport binarysearch_lower
 from suffix_array cimport binary_cmov
 from suffix_array cimport sa_search
+from suffix_array cimport make_lcp
 
 
 cdef class Int32Array:
@@ -173,63 +175,63 @@ cdef class SuffixArray:
             PyMem_Free(bwt_str)
 
 
-cdef class LCP:
-    cdef Int32Array lcp
-    cdef int length
+# cdef class LCP:
+#     cdef Int32Array lcp
+#     cdef int length
 
-    def __cinit__(LCP self, SuffixArray SA):
-        self.lcp = Int32Array(len(SA))
-        self.length = len(SA)
-        self._build_lcp(SA)
+#     def __cinit__(LCP self, SuffixArray SA):
+#         self.lcp = Int32Array(len(SA))
+#         self.length = len(SA)
+#         self._build_lcp(SA)
 
-    cdef _build_lcp(LCP self, SuffixArray SA):
-        sa_len = len(SA)
-        cdef int i, j, j2, l = 0
-        cdef Int32Array rank = Int32Array(sa_len)
-        for i in range(sa_len):
-            rank[SA.get(i)] = i
-        self.lcp[0] = -1
-        for j in range(self.length):
-            if l != 0:
-                l = l - 1
-            i = rank[j]
-            j2 = SA.get(i - 1)
-            if i:
-                while (l + j < sa_len and
-                       l + j2 < sa_len and
-                       SA.s[j + l] == SA.s[j2 + l]):
-                    l += 1
-                self.lcp[i] = l
-            else:
-                l = 0
+#     cdef _build_lcp(LCP self, SuffixArray SA):
+#         sa_len = len(SA)
+#         cdef int i, j, j2, l = 0
+#         cdef Int32Array rank = Int32Array(sa_len)
+#         for i in range(sa_len):
+#             rank[SA.get(i)] = i
+#         self.lcp[0] = -1
+#         for j in range(self.length):
+#             if l != 0:
+#                 l = l - 1
+#             i = rank[j]
+#             j2 = SA.get(i - 1)
+#             if i:
+#                 while (l + j < sa_len and
+#                        l + j2 < sa_len and
+#                        SA.s[j + l] == SA.s[j2 + l]):
+#                     l += 1
+#                 self.lcp[i] = l
+#             else:
+#                 l = 0
 
-    @cython.profile(False)
-    cdef inline int get(LCP self, int i):
-        return self.lcp.get(i)
+#     @cython.profile(False)
+#     cdef inline int get(LCP self, int i):
+#         return self.lcp.get(i)
 
-    def __getitem__(LCP self, int i):
-        return self.get(i)
+#     def __getitem__(LCP self, int i):
+#         return self.get(i)
 
-    def __len__(LCP self):
-        return self.length
+#     def __len__(LCP self):
+#         return self.length
 
-    def __iter__(self):
-        for i in range(self.length):
-            yield self.get(i)
+#     def __iter__(self):
+#         for i in range(self.length):
+#             yield self.get(i)
 
-    cdef _eq(LCP self, other):
-        cdef int i
-        for i in range(self.length):
-            if self.lcp.get(i) != other[i]:
-                return False
-        return True
+#     cdef _eq(LCP self, other):
+#         cdef int i
+#         for i in range(self.length):
+#             if self.lcp.get(i) != other[i]:
+#                 return False
+#         return True
 
-    def __richcmp__(LCP self, other, int op):
-        if op == 2:
-            if len(self) != len(other):
-                return False
-            return self._eq(other)
-        raise NotImplemented
+#     def __richcmp__(LCP self, other, int op):
+#         if op == 2:
+#             if len(self) != len(other):
+#                 return False
+#             return self._eq(other)
+#         raise NotImplemented
 
 
 cdef class Stack:
@@ -333,7 +335,6 @@ cdef class Rstr_max:
 
     cdef dict rstr(Rstr_max self):
         cdef:
-            LCP lcp
             Stack stack = Stack()
             SuffixArray sa
             dict results = {}
@@ -350,15 +351,20 @@ cdef class Rstr_max:
             int previous_lcp_len = 0
 
         sa = SuffixArray(self.combined_texts)
-        self.sa = sa
-        lcp = LCP(sa)
-        len_lcp = len(lcp) - 1
         if len(sa) == 0:
             return {}
 
+        cdef int sa_len = sa.length
+        cdef vector[int] lcp
+        self.sa = sa
+        make_lcp(<const unsigned char *>sa.s,
+                 sa.SA._array,
+                 len(sa),
+                 lcp)
+        len_lcp = lcp.size() - 1
         pos1 = sa.get(0)
         for i in range(len_lcp):
-            current_lcp_len = lcp.get(i + 1)
+            current_lcp_len = lcp[i + 1]
             pos2 = sa.get(i + 1)
             end_ix = intmax(pos1, pos2) + current_lcp_len
             n = previous_lcp_len - current_lcp_len

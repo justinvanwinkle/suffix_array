@@ -10,7 +10,7 @@ if __name__ == '__main__':
     src_files = glob('src/*.c')
     extensions = [Extension("suffix_array",
                             sources=src_files,
-                            language='c')]
+                            language='c++')]
     description = "Fast Suffix Array for Python"
     setup(name='suffix_array',
           version=VERSION,
