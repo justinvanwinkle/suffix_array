@@ -1,132 +1,290 @@
-
+#ifndef REPEATS_HPP
+#define REPEATS_HPP
+/**
+ * Local Variables:
+ * flycheck-clang-language-standard: "c++11"
+ * flycheck-clang-include-path: ("../include")
+ * flycheck-clang-warnings: ("all" "extra")
+ * End:
+ */
 
 #include <algorithm>
 #include <vector>
 #include <string>
 #include <tuple>
+#include <stack>
 #include <unordered_map>
-#include "lcp.hpp"
+#include <iostream>
 #include "divsufsort.h"
-#include <Python.h>
 
-using namespace std;
 
 class SuffixArray {
 
-public:
-    int length;
-    const unsigned char* s;
-    int* suffix_array;
+ public:
+  int length;
+  const unsigned char* s;
+  int* suffix_array;
 
-    SuffixArray(const unsigned char* _s, int _s_length) {
-	length = _s_length;
-	s = _s;
-	suffix_array = (int *)PyMem_Malloc(length * sizeof(int));
+  SuffixArray(const unsigned char* _s, int _s_length) {
+    length = _s_length;
+    s = _s;
+    suffix_array = (int *)calloc(length, sizeof(int));
+    divsufsort(s, suffix_array, length);
 
+  }
+
+  ~SuffixArray() {
+    free(suffix_array);
+  }
+
+  std::vector<int>* lcp () {
+    auto lcp_p = new std::vector<int>;
+    auto &lcp = *lcp_p;
+    lcp.resize(length);
+    std::vector<int> rank;
+    rank.resize(length);
+
+    for(int i=0; i < length; ++i)
+      rank[suffix_array[i]] = i;
+
+    int l = 0;
+
+    lcp[0] = -1;
+    for(int j=0; j < length; ++j) {
+      if(l != 0)
+        l = l - 1;
+
+      int i = rank[j];
+      int j2 = suffix_array[i - 1];
+      if(i != 0) {
+        while(l + j < length and
+              l + j2 < length and
+              s[j + l] == s[j2 + l]) {
+          l += 1;
+        }
+        lcp[i] = l;
+      } else {
+        l = 0;
+      }
     }
-
-    ~SuffixArray() {
-	PyMem_Free(suffix_array);
-    }
+    return lcp_p;
+  }
 };
 
 
-typedef pair<int, int> int_pair;
+typedef std::pair<int, int> int_pair;
 
 namespace std {
-    template <>
-        struct hash<int_pair> {
-        public :
-            size_t operator()(const int_pair &t ) const
-            {
-                return hash<int>()(t.first) ^ hash<int>()(t.second);
-            }
-    };
+template <>
+struct hash<int_pair> // denotes a specialization of hash<...>
+{
+  size_t operator() (const int_pair& t) const
+  {
+    return hash<int>()(t.first) ^ hash<int>()(t.second);
+  }
 };
+}
+
+typedef std::unordered_map<int_pair, int_pair> int_tuple_map;
+typedef std::tuple<int, int, int> int_trip;
 
 class RepeatFinder {
 
-private:
-    int num_texts;
-    vector<int> text_positions;
-    const unsigned char* combined_texts;
-    SuffixArray *sa;
-    int min_matching;
-public:
-    RepeatFinder(vector<string> &texts, int _min_matching) {
-	min_matching = _min_matching;
-	text_positions = vector<int>();
-	num_texts = texts.size();
+ private:
 
-	string accum = "";
-	for(string s : texts) {
-	    accum += s;
-	    accum += "\2";
-	    text_positions.push_back(accum.length());
+  int num_texts;
+  std::vector<int> text_positions;
+  const unsigned char* combined_texts;
+  SuffixArray *sa;
+  int min_matching;
 
-	}
-	combined_texts = (const unsigned char*) accum.c_str();
-	sa = new SuffixArray(combined_texts, accum.length());
-    }
+ public:
 
-    int text_index_at(int q) {
-	int index_at = text_at(q);
-	int start = 0;
-	if(index_at != 0)
-	    start = text_positions[index_at - 1];
-	return q = start;
-    }
+  RepeatFinder(std::vector<std::string> &texts, int _min_matching) {
+    min_matching = _min_matching;
+    text_positions = std::vector<int>();
+    num_texts = texts.size();
 
-    int text_at(int q) {
-	int ix = *lower_bound(text_positions.begin(),
-			      text_positions.end(),
-			      q);
-	if(text_positions[ix] == q)
-	    ++ix;
-
-	return ix;
-    }
-
-    unordered_map<int_pair, int_pair> rstr() {
-	int Xi,
-	    Xn,
-	    _,
-	    end_ix,
-	    i,
-	    n,
-	    pos1,
-	    pos2,
-	    current_lcp_len = 0,
-	    previous_lcp_len = 0,
-	    len_lcp = sa->length - 1;;
-	unordered_map<int_pair, int_pair> d;
-	if(sa->length == 0)
-	    return d;
-
-	const int* suffix_array = sa->suffix_array;
-	vector<int> lcp;
-	make_lcp(combined_texts,
-		 suffix_array,
-		 sa->length,
-		 lcp);
-
-	pos1 = suffix_array[0];
-
-	for(i=0; i < len_lcp; ++i) {
-	    current_lcp_len = lcp[i + 1];
-	    pos2 = suffix_array[i + 1];
-	    end_ix = max(pos1, pos2) + current_lcp_len;
-	    n = previous_lcp_len - current_lcp_len;
-	    if(n < 0) {
-	    } else if(n > 0) {
-	    } else if(stack.top > 0 && end_ix) {
-	    }
-
-
-	}
-
-
+    std::string accum = "";
+    for(std::string s : texts) {
+      accum += s;
+      accum += "\2";
+      text_positions.push_back(accum.length());
 
     }
+    combined_texts = (const unsigned char*) accum.c_str();
+    sa = new SuffixArray(combined_texts, accum.length());
+  }
+
+  ~RepeatFinder() {
+    delete sa;
+  }
+
+  int text_index_at(int q) {
+    int index_at = text_at(q);
+    int start = 0;
+    if(index_at != 0)
+      start = text_positions[index_at - 1];
+    std::cout << q << "ix" << start << " \n";
+    return q - start;
+  }
+
+  int text_at(int q) {
+    int ix = *lower_bound(text_positions.begin(),
+                          text_positions.end(),
+                          q);
+    if(text_positions[ix] == q)
+      ++ix;
+
+    std::cout << ix << "ix \n";
+
+    return ix;
+  }
+
+
+  void remove_many(std::stack<int_trip> &stack,
+                   std::unordered_map<int_pair, int_pair> *results,
+                   int &m,
+                   int end_ix) {
+
+    int last_start_ix = -1,
+        max_end_ix = 0,
+        n = 0,
+        start_ix = 0,
+        nb;
+
+    while(m > 0) {
+
+      std::tie(n, start_ix, max_end_ix) = stack.top();
+      stack.pop();
+      if(last_start_ix != start_ix) {
+        nb = end_ix - start_ix + 1;
+        std::cout << nb << " nb min_matching " << min_matching << "\n";
+        if(nb >= min_matching) {
+          int_pair id(max_end_ix, nb);
+          auto entry = results->find(id);
+          if(entry == results->end() or entry->first.first < m) {
+            std::cout << "insert! " << start_ix << '\n';
+            results->insert(make_pair(id, std::make_pair(m, start_ix)));
+          }
+
+        }
+        last_start_ix = start_ix;
+      }
+      m -= n;
+    }
+    if(m < 0) {
+      stack.push(std::make_tuple(-m, start_ix, max_end_ix - n - m));
+    }
+  }
+
+  int_tuple_map* rstr() {
+    int Xi,
+        Xn,
+        end_ix,
+        i,
+        n,
+        pos1,
+        pos2,
+        top = 0,
+        current_lcp_len = 0,
+        previous_lcp_len = 0,
+        len_lcp = sa->length - 1;
+    auto results = new std::unordered_map<int_pair, int_pair>;
+    if(sa->length == 0)
+      return results;
+
+    const int *suffix_array = sa->suffix_array;
+
+    auto *lcp_p = sa->lcp();
+    auto &lcp = *lcp_p;
+
+
+    std::stack<int_trip> stack;
+
+    pos1 = suffix_array[0];
+    for(i=0; i < len_lcp; ++i) {
+      current_lcp_len = lcp[i + 1];
+      pos2 = suffix_array[i + 1];
+      end_ix = std::max(pos1, pos2) + current_lcp_len;
+      n = previous_lcp_len - current_lcp_len;
+      if(n < 0) {
+        stack.push(int_trip(-n, i, end_ix));
+        top -= n;
+      } else if(n > 0) {
+        remove_many(stack, results, top, i + 1);
+      } else if(top > 0 and end_ix > std::get<2>(stack.top())) {
+        std::tie(Xn, Xi, std::ignore) = stack.top();
+        stack.pop();
+        stack.push(int_trip(Xn, Xi, end_ix));
+      }
+      previous_lcp_len = current_lcp_len;
+      pos1 = pos2;
+    }
+
+    if(top > 0) {
+      remove_many(stack, results, top, i + 1);
+    }
+
+    std::cout << results->size() << "results! \n";
+    return results;
+  }
+
+  std::vector<int> go_rstr() {
+    auto results = rstr();
+    std::cout << "results:" << results->size() << "\n";
+    std::vector<int> best_results;
+
+    int offset_end,
+        nb,
+        match_len,
+        start_ix,
+        most_docs = 0,
+        largest = 0;
+
+    const int* suffix_array = sa->suffix_array;
+    for(auto &result : *results) {
+      std::tie(offset_end, nb) = result.first;
+      std::tie(match_len, start_ix) = result.second;
+      std::cout <<  offset_end << " " << start_ix << "\n";
+
+      if(match_len < 2 or nb < min_matching)
+        continue;
+
+      std::vector<int> sub_results;
+      for(int i=0; i < num_texts; ++i)
+        sub_results.push_back(-1);
+
+      for(int o=start_ix; o < start_ix + nb; ++o) {
+        int offset_global = suffix_array[o];
+        int offset = text_index_at(offset_global);
+        int id_str = text_at(offset_global);
+        int id_str_end = text_at(offset_global + match_len);
+        if(id_str == id_str_end and sub_results[id_str] == 0)
+          std::cout << id_str << '\n';
+        sub_results[id_str] = offset;
+      }
+      int hit_docs = num_texts;
+      for(int match_start : sub_results) {
+        if(match_start == -1)
+          --hit_docs;
+      }
+      if(hit_docs >= min_matching) {
+        if(hit_docs > most_docs or
+           (hit_docs >= most_docs and match_len > largest)) {
+          most_docs = hit_docs;
+          largest = match_len;
+          best_results = sub_results;
+        }
+      }
+
+
+    }
+
+    return best_results;
+  }
 
 };
+
+
+#endif

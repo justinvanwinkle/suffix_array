@@ -1,44 +1,44 @@
 from os.path import join as pathjoin
 from glob import glob
 
-from suffix_array import SuffixArray
-from suffix_array import make_lcp
+#from suffix_array import SuffixArray
+#from suffix_array import make_lcp
 from suffix_array import rstr_max
 
 
-def test_basic_sort():
-    assert SuffixArray('abcdefg') == range(7)
-    assert SuffixArray('gfedcba') == range(6, -1, -1)
-    assert list(SuffixArray('banana')) == [5, 3, 1, 0, 4, 2]
+# def test_basic_sort():
+#     assert SuffixArray('abcdefg') == range(7)
+#     assert SuffixArray('gfedcba') == range(6, -1, -1)
+#     assert list(SuffixArray('banana')) == [5, 3, 1, 0, 4, 2]
 
 
-def test_find():
-    s = 'aaabbbcccddd'
-    assert SuffixArray(s).find('a') == 0
-    assert SuffixArray(s).find('aaa') == 0
-    assert SuffixArray(s).find('ab') == 2
-    assert SuffixArray(s).find('dddd') == -1
-    assert SuffixArray(s).find('') == 0
+# def test_find():
+#     s = 'aaabbbcccddd'
+#     assert SuffixArray(s).find('a') == 0
+#     assert SuffixArray(s).find('aaa') == 0
+#     assert SuffixArray(s).find('ab') == 2
+#     assert SuffixArray(s).find('dddd') == -1
+#     assert SuffixArray(s).find('') == 0
 
 
-def test_count():
-    for i in range(100):
-        s = 'ab' * i
-        assert SuffixArray(s).count('ab') == i
+# def test_count():
+#     for i in range(100):
+#         s = 'ab' * i
+#         assert SuffixArray(s).count('ab') == i
 
-    for i in range(100):
-        s = 'abxx' * i
-        assert SuffixArray(s).count('ab') == i
+#     for i in range(100):
+#         s = 'abxx' * i
+#         assert SuffixArray(s).count('ab') == i
 
-    assert SuffixArray('aabbxxxxyyyy').count('xxx') == 2
-    assert SuffixArray('aabbxxxyyyyxxxdfdjk').count('xxx') == 2
+#     assert SuffixArray('aabbxxxxyyyy').count('xxx') == 2
+#     assert SuffixArray('aabbxxxyyyyxxxdfdjk').count('xxx') == 2
 
 
-def test___contains__():
-    sa = SuffixArray('ab')
-    assert ('a' in sa) is True
-    assert ('b' in sa) is True
-    assert ('c' in sa) is False
+# def test___contains__():
+#     sa = SuffixArray('ab')
+#     assert ('a' in sa) is True
+#     assert ('b' in sa) is True
+#     assert ('c' in sa) is False
 
 
 # def test_lcp_array():
@@ -99,6 +99,5 @@ def test_rstr_max_logic():
          '3104684","dpci":"243-19-8713']
     for _ in xrange(10000):
         length, offsets = rstr_max(l, 3)
-
-    assert length == 10
-    assert offsets == tuple([7] * 27)
+        assert length == 10
+        assert offsets == tuple([7] * 27)

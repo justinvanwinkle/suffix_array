@@ -3,175 +3,172 @@
 _THIS_FIXES_CYTHON_BUG = 'wtf'
 
 cimport cython
-from cpython cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
+#from cpython cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 from libcpp.vector cimport vector
-from libc.string cimport memset
+from libcpp.string cimport string
+#from suffix_array cimport divsufsort
+#from suffix_array cimport sa_search
+#from suffix_array cimport make_lcp
+from suffix_array cimport RepeatFinder as RepeatFinder
 
-from suffix_array cimport divsufsort
-from suffix_array cimport binarysearch_lower
-from suffix_array cimport binary_cmov
-from suffix_array cimport sa_search
-from suffix_array cimport make_lcp
+# cdef class Int32Array:
+#     cdef int* _array
+#     cdef int length
 
+#     def __cinit__(Int32Array self, int length):
+#         cdef int* _array = <int *>PyMem_Malloc(length * sizeof(int))
+#         if _array == NULL:
+#             raise MemoryError
+#         self._array = _array
+#         self.length = length
 
-cdef class Int32Array:
-    cdef int* _array
-    cdef int length
+#     cpdef Int32Array zero(Int32Array self):
+#         return self.populate(0)
 
-    def __cinit__(Int32Array self, int length):
-        cdef int* _array = <int *>PyMem_Malloc(length * sizeof(int))
-        if _array == NULL:
-            raise MemoryError
-        self._array = _array
-        self.length = length
+#     cpdef Int32Array populate(Int32Array self, int v):
+#         cdef int i
+#         with nogil:
+#             for i in range(self.length):
+#                 self._array[i] = v
+#         return self
 
-    cpdef Int32Array zero(Int32Array self):
-        return self.populate(0)
+#     cpdef int binary_search(Int32Array self, int i):
+#         return binary_cmov(self._array, self.length, i)
 
-    cpdef Int32Array populate(Int32Array self, int v):
-        cdef int i
-        with nogil:
-            for i in range(self.length):
-                self._array[i] = v
-        return self
+#     @cython.profile(False)
+#     cdef inline int get(Int32Array self, int i):
+#         return self._array[i]
 
-    cpdef int binary_search(Int32Array self, int i):
-        return binary_cmov(self._array, self.length, i)
+#     def __iter__(self):
+#         cdef int i
+#         for i in range(self.length):
+#             yield self._array[i]
 
-    @cython.profile(False)
-    cdef inline int get(Int32Array self, int i):
-        return self._array[i]
+#     def __len__(self):
+#         return self.length
 
-    def __iter__(self):
-        cdef int i
-        for i in range(self.length):
-            yield self._array[i]
+#     def __dealloc__(self):
+#         PyMem_Free(self._array)
 
-    def __len__(self):
-        return self.length
+#     def __getitem__(Int32Array self, int i):
+#         return self.get(i)
 
-    def __dealloc__(self):
-        PyMem_Free(self._array)
-
-    def __getitem__(Int32Array self, int i):
-        return self.get(i)
-
-    def __setitem__(Int32Array self, int i, int v):
-        self._array[i] = v
+#     def __setitem__(Int32Array self, int i, int v):
+#         self._array[i] = v
 
 
 
-cdef class SuffixArray:
-    cdef:
-        Int32Array SA
-        int length
-        bytes s
+# cdef class SuffixArray:
+#     cdef:
+#         Int32Array SA
+#         int length
+#         bytes s
 
-    def __cinit__(self, s):
-        cdef Int32Array SA = Int32Array(len(s))
-        divsufsort(<unsigned char *><char *>s, SA._array, len(s))
-        self.SA = SA
+#     def __cinit__(self, s):
+#         cdef Int32Array SA = Int32Array(len(s))
+#         divsufsort(<unsigned char *><char *>s, SA._array, len(s))
+#         self.SA = SA
 
-    def __init__(self, s):
-        self.s = bytes(s)
-        self.length = len(s)
+#     def __init__(self, s):
+#         self.s = bytes(s)
+#         self.length = len(s)
 
-    cpdef find(SuffixArray self, q):
-        # TODO: start and end optional params, see str.find() documentation
-        # slice notation might make it more complicated than it sounds...
-        cdef:
-            int idx = 0
-            int len_q = len(q)
-            unsigned char *_q = <unsigned char *> q
-            unsigned char *_s = <unsigned char *> self.s
+#     cpdef find(SuffixArray self, q):
+#         # TODO: start and end optional params, see str.find() documentation
+#         # slice notation might make it more complicated than it sounds...
+#         cdef:
+#             int idx = 0
+#             int len_q = len(q)
+#             unsigned char *_q = <unsigned char *> q
+#             unsigned char *_s = <unsigned char *> self.s
 
 
-        with nogil:
-            matches = <int>sa_search(_s,
-                                     self.length,
-                                     _q,
-                                     len_q,
-                                     self.SA._array,
-                                     self.length,
-                                     &idx)
-        if matches == 0:
-            return -1
-        else:
-            return idx
+#         with nogil:
+#             matches = <int>sa_search(_s,
+#                                      self.length,
+#                                      _q,
+#                                      len_q,
+#                                      self.SA._array,
+#                                      self.length,
+#                                      &idx)
+#         if matches == 0:
+#             return -1
+#         else:
+#             return idx
 
-    cpdef count(SuffixArray self, q):
-        cdef:
-            int len_q = len(q)
-            unsigned char *_q = <unsigned char *> q
-            unsigned char *_s = <unsigned char *> self.s
-        with nogil:
-            matches = <int>sa_search(_s,
-                                     self.length,
-                                     _q,
-                                     len_q,
-                                     self.SA._array,
-                                     self.length,
-                                     NULL)
-        return matches
+#     cpdef count(SuffixArray self, q):
+#         cdef:
+#             int len_q = len(q)
+#             unsigned char *_q = <unsigned char *> q
+#             unsigned char *_s = <unsigned char *> self.s
+#         with nogil:
+#             matches = <int>sa_search(_s,
+#                                      self.length,
+#                                      _q,
+#                                      len_q,
+#                                      self.SA._array,
+#                                      self.length,
+#                                      NULL)
+#         return matches
 
-    @cython.profile(False)
-    cdef inline int get(SuffixArray self, int i):
-        return self.SA.get(i)
+#     @cython.profile(False)
+#     cdef inline int get(SuffixArray self, int i):
+#         return self.SA.get(i)
 
-    def __getitem__(SuffixArray self, int i):
-        return self.get(i)
+#     def __getitem__(SuffixArray self, int i):
+#         return self.get(i)
 
-    def __len__(SuffixArray self):
-        return len(self.SA)
+#     def __len__(SuffixArray self):
+#         return len(self.SA)
 
-    def __contains__(SuffixArray self, q):
-        return self.count(q) > 0
+#     def __contains__(SuffixArray self, q):
+#         return self.count(q) > 0
 
-    def __iter__(self):
-        for i in range(self.length):
-            yield self.get(i)
+#     def __iter__(self):
+#         for i in range(self.length):
+#             yield self.get(i)
 
-    cdef _eq(SuffixArray self, other):
-        cdef int i
-        for i in range(self.length):
-            if self.SA.get(i) != other[i]:
-                return False
-        return True
+#     cdef _eq(SuffixArray self, other):
+#         cdef int i
+#         for i in range(self.length):
+#             if self.SA.get(i) != other[i]:
+#                 return False
+#         return True
 
-    def __richcmp__(SuffixArray self, other, int op):
-        if op == 2:
-            if len(self) != len(other):
-                return False
-            return self._eq(other)
-        raise NotImplemented
+#     def __richcmp__(SuffixArray self, other, int op):
+#         if op == 2:
+#             if len(self) != len(other):
+#                 return False
+#             return self._eq(other)
+#         raise NotImplemented
 
-    cpdef bwt(self):
-        cdef unsigned char* bwt_str = <unsigned char *>PyMem_Malloc(len(self.s) * sizeof(unsigned char))
-        cdef int idx = 0
+#     cpdef bwt(self):
+#         cdef unsigned char* bwt_str = <unsigned char *>PyMem_Malloc(len(self.s) * sizeof(unsigned char))
+#         cdef int idx = 0
 
-        if bwt_str == NULL:
-            raise MemoryError('Unable to allocate memory')
-        try:
-            res = bw_transform(self.s, bwt_str, self.SA._array, self.length, &idx)
-            if res != 0:
-                raise Exception('Problem')
-            return ((<char *>bwt_str)[:self.length], idx)
-        finally:
-            PyMem_Free(bwt_str)
+#         if bwt_str == NULL:
+#             raise MemoryError('Unable to allocate memory')
+#         try:
+#             res = bw_transform(self.s, bwt_str, self.SA._array, self.length, &idx)
+#             if res != 0:
+#                 raise Exception('Problem')
+#             return ((<char *>bwt_str)[:self.length], idx)
+#         finally:
+#             PyMem_Free(bwt_str)
 
-    cpdef inverse_bwt(self, s, idx):
-        cdef unsigned char* bwt_str = <unsigned char *>PyMem_Malloc(len(self.s) * sizeof(unsigned char))
+#     cpdef inverse_bwt(self, s, idx):
+#         cdef unsigned char* bwt_str = <unsigned char *>PyMem_Malloc(len(self.s) * sizeof(unsigned char))
 
-        if bwt_str == NULL:
-            raise MemoryError('Unable to allocate memory')
-        try:
-            res = inverse_bw_transform(
-                s, bwt_str, NULL, self.length, idx)
-            if res != 0:
-                raise Exception('Problem')
-            return (<char *>bwt_str)[:self.length]
-        finally:
-            PyMem_Free(bwt_str)
+#         if bwt_str == NULL:
+#             raise MemoryError('Unable to allocate memory')
+#         try:
+#             res = inverse_bw_transform(
+#                 s, bwt_str, NULL, self.length, idx)
+#             if res != 0:
+#                 raise Exception('Problem')
+#             return (<char *>bwt_str)[:self.length]
+#         finally:
+#             PyMem_Free(bwt_str)
 
 
 # cdef class LCP:
@@ -233,37 +230,37 @@ cdef class SuffixArray:
 #         raise NotImplemented
 
 
-cdef class Stack:
-    cdef:
-        int _top
-        list _stack
-        int last_index
+# cdef class Stack:
+#     cdef:
+#         int _top
+#         list _stack
+#         int last_index
 
-    def __cinit__(Stack self):
-        self._top = 0
-        self._stack = []
-        self.last_index = -1
+#     def __cinit__(Stack self):
+#         self._top = 0
+#         self._stack = []
+#         self.last_index = -1
 
-    cdef tuple push(Stack self, tuple t):
-        self._stack.append(t)
-        self.last_index += 1
+#     cdef tuple push(Stack self, tuple t):
+#         self._stack.append(t)
+#         self.last_index += 1
 
-    cdef tuple pop(Stack self):
-        if self.last_index > -1:
-            self.last_index -= 1
-        else:
-            raise IndexError
-        return self._stack.pop()
+#     cdef tuple pop(Stack self):
+#         if self.last_index > -1:
+#             self.last_index -= 1
+#         else:
+#             raise IndexError
+#         return self._stack.pop()
 
-    cdef tuple last(Stack self):
-        return self._stack[self.last_index]
+#     cdef tuple last(Stack self):
+#         return self._stack[self.last_index]
 
 
-@cython.profile(False)
-cdef inline int intmax(int i, int j):
-    if i > j:
-        return i
-    return j
+# @cython.profile(False)
+# cdef inline int intmax(int i, int j):
+#     if i > j:
+#         return i
+#     return j
 
 
 # from collections import deque
@@ -283,174 +280,185 @@ cdef inline int intmax(int i, int j):
 
 
 
-cdef class Rstr_max:
-    char_frontier = chr(2)
-    cdef:
-        int num_texts
-        Int32Array text_positions
-        bytes combined_texts
-        SuffixArray sa
-        int min_matching
+# cdef class Rstr_max:
+#     char_frontier = chr(2)
+#     cdef:
+#         int num_texts
+#         Int32Array text_positions
+#         bytes combined_texts
+#         SuffixArray sa
+#         int min_matching
 
-    def __init__(self, texts, min_matching=None):
-        if len(texts) == 0:
-            raise ValueError('Must pass some texts')
+#     def __init__(self, texts, min_matching=None):
+#         if len(texts) == 0:
+#             raise ValueError('Must pass some texts')
 
-        for text in texts:
-            if len(text) == 0:
-                raise ValueError('Empty texts are not allowed')
+#         for text in texts:
+#             if len(text) == 0:
+#                 raise ValueError('Empty texts are not allowed')
 
-        self.num_texts = len(texts)
-        self.text_positions = Int32Array(self.num_texts)
+#         self.num_texts = len(texts)
+#         self.text_positions = Int32Array(self.num_texts)
+#         if min_matching is None:
+#             min_matching = len(texts)
+#         self.min_matching = min_matching
+#         combined_texts = ''
+#         for ix, text in enumerate(texts):
+#             combined_texts += text
+#             combined_texts += chr(ix % 4)
+#         self.combined_texts = combined_texts
+
+#         cdef int pos = 0
+#         for i, text in enumerate(texts):
+#             pos += len(text)
+#             pos += 1
+#             self.text_positions[i] = pos
+
+#     cdef int text_index_at(Rstr_max self, int i):
+#         cdef int index_at = self.text_at(i)
+#         cdef int start
+#         if index_at == 0:
+#             start = 0
+#         else:
+#             start = self.text_positions.get(index_at - 1)
+#         return i - start
+
+#     cdef int text_at(Rstr_max self, int i):
+#         cdef int ix = self.text_positions.binary_search(i)
+#         if self.text_positions.get(ix) == i:
+#             return ix + 1
+#         return ix
+
+#     cdef dict rstr(Rstr_max self):
+#         cdef:
+#             Stack stack = Stack()
+#             SuffixArray sa
+#             dict results = {}
+#             int Xi
+#             int Xn
+#             int _
+#             int end_ix
+#             int i = 0
+#             int len_lcp
+#             int n
+#             int pos1
+#             int pos2
+#             int current_lcp_len = 0
+#             int previous_lcp_len = 0
+
+#         sa = SuffixArray(self.combined_texts)
+#         if len(sa) == 0:
+#             return {}
+
+#         cdef int sa_len = sa.length
+#         cdef vector[int] lcp
+#         self.sa = sa
+#         make_lcp(<const unsigned char *>sa.s,
+#                  sa.SA._array,
+#                  len(sa),
+#                  lcp)
+#         len_lcp = lcp.size() - 1
+#         pos1 = sa.get(0)
+#         for i in range(len_lcp):
+#             current_lcp_len = lcp[i + 1]
+#             pos2 = sa.get(i + 1)
+#             end_ix = intmax(pos1, pos2) + current_lcp_len
+#             n = previous_lcp_len - current_lcp_len
+#             if n < 0:
+#                 stack.push((-n, i, end_ix))
+#                 stack._top -= n
+#             elif n > 0:
+#                 self.remove_many(stack, results, n, i)
+#             elif stack._top > 0 and end_ix > stack.last()[2]:
+#                 Xn, Xi, _ = stack.pop()
+#                 stack.push((Xn, Xi, end_ix))
+
+#             previous_lcp_len = current_lcp_len
+#             pos1 = pos2
+
+#         if(stack._top > 0):
+#             self.remove_many(stack, results, stack._top, i + 1)
+
+#         return results
+
+#     cdef remove_many(Rstr_max self, Stack stack, dict results, int m, int end_ix):
+#         cdef:
+#             int last_start_ix = -1
+#             int max_end_ix = 0
+#             int n = 0
+#             int start_ix = 0
+#             int nb
+
+#         while m > 0:
+#             n, start_ix, max_end_ix = stack.pop()
+#             if last_start_ix != start_ix:
+#                 nb = end_ix - start_ix + 1
+#                 if nb >= self.min_matching:
+#                     id_ = (max_end_ix, nb)
+#                     if id_ not in results or results[id_][0] < stack._top:
+#                         results[id_] = (stack._top, start_ix)
+#                 last_start_ix = start_ix
+#             m -= n
+#             stack._top -= n
+#         if m < 0:
+#             stack.push((-m, start_ix, max_end_ix - n - m))
+#             stack._top -= m
+
+#     cpdef go_rstr(Rstr_max self):
+#         cdef:
+#             int nb
+#             int o
+#             int offset
+#             int offset_end
+#             int offset_global
+#             int start_plage
+#             int most_docs = 0
+#             int largest = 0
+#             int hit_docs = 0
+#             int id_str_end
+#             int id_str
+
+#         if self.num_texts < self.min_matching:
+#             return 0, tuple()
+
+#         r = self.rstr()
+#         best_results = []
+#         for (offset_end, nb), (match_len, start_ix) in r.iteritems():
+#             if match_len < 2 or nb < self.min_matching:
+#                 continue
+#             sub_results = [None] * self.num_texts
+#             for o in range(start_ix, start_ix + nb):
+#                 offset_global = self.sa.get(o)
+#                 offset = self.text_index_at(offset_global)
+#                 id_str = self.text_at(offset_global)
+#                 id_str_end = self.text_at(offset_global + match_len)
+#                 if sub_results[id_str] is None and id_str == id_str_end:
+#                     sub_results[id_str] = offset
+#             hit_docs = self.num_texts
+#             for match_start in sub_results:
+#                 if match_start is None:
+#                     hit_docs -= 1
+#             if hit_docs >= self.min_matching:
+#                 if ((hit_docs > most_docs or
+#                      (hit_docs >= most_docs and match_len > largest))):
+#                     most_docs = hit_docs
+#                     largest = match_len
+#                     best_results = sub_results
+
+#         return largest, tuple(best_results)
+
+
+cdef class RepeatFinderP:
+    cdef RepeatFinder *thisptr
+    def __cinit__(self, texts, min_matching=None):
         if min_matching is None:
             min_matching = len(texts)
-        self.min_matching = min_matching
-        combined_texts = ''
-        for ix, text in enumerate(texts):
-            combined_texts += text
-            combined_texts += chr(ix % 4)
-        self.combined_texts = combined_texts
-
-        cdef int pos = 0
-        for i, text in enumerate(texts):
-            pos += len(text)
-            pos += 1
-            self.text_positions[i] = pos
-
-    cdef int text_index_at(Rstr_max self, int i):
-        cdef int index_at = self.text_at(i)
-        cdef int start
-        if index_at == 0:
-            start = 0
-        else:
-            start = self.text_positions.get(index_at - 1)
-        return i - start
-
-    cdef int text_at(Rstr_max self, int i):
-        cdef int ix = self.text_positions.binary_search(i)
-        if self.text_positions.get(ix) == i:
-            return ix + 1
-        return ix
-
-    cdef dict rstr(Rstr_max self):
-        cdef:
-            Stack stack = Stack()
-            SuffixArray sa
-            dict results = {}
-            int Xi
-            int Xn
-            int _
-            int end_ix
-            int i = 0
-            int len_lcp
-            int n
-            int pos1
-            int pos2
-            int current_lcp_len = 0
-            int previous_lcp_len = 0
-
-        sa = SuffixArray(self.combined_texts)
-        if len(sa) == 0:
-            return {}
-
-        cdef int sa_len = sa.length
-        cdef vector[int] lcp
-        self.sa = sa
-        make_lcp(<const unsigned char *>sa.s,
-                 sa.SA._array,
-                 len(sa),
-                 lcp)
-        len_lcp = lcp.size() - 1
-        pos1 = sa.get(0)
-        for i in range(len_lcp):
-            current_lcp_len = lcp[i + 1]
-            pos2 = sa.get(i + 1)
-            end_ix = intmax(pos1, pos2) + current_lcp_len
-            n = previous_lcp_len - current_lcp_len
-            if n < 0:
-                stack.push((-n, i, end_ix))
-                stack._top -= n
-            elif n > 0:
-                self.remove_many(stack, results, n, i)
-            elif stack._top > 0 and end_ix > stack.last()[2]:
-                Xn, Xi, _ = stack.pop()
-                stack.push((Xn, Xi, end_ix))
-
-            previous_lcp_len = current_lcp_len
-            pos1 = pos2
-
-        if(stack._top > 0):
-            self.remove_many(stack, results, stack._top, i + 1)
-
-        return results
-
-    cdef remove_many(Rstr_max self, Stack stack, dict results, int m, int end_ix):
-        cdef:
-            int last_start_ix = -1
-            int max_end_ix = 0
-            int n = 0
-            int start_ix = 0
-            int nb
-
-        while m > 0:
-            n, start_ix, max_end_ix = stack.pop()
-            if last_start_ix != start_ix:
-                nb = end_ix - start_ix + 1
-                if nb >= self.min_matching:
-                    id_ = (max_end_ix, nb)
-                    if id_ not in results or results[id_][0] < stack._top:
-                        results[id_] = (stack._top, start_ix)
-                last_start_ix = start_ix
-            m -= n
-            stack._top -= n
-        if m < 0:
-            stack.push((-m, start_ix, max_end_ix - n - m))
-            stack._top -= m
-
-    cpdef go_rstr(Rstr_max self):
-        cdef:
-            int nb
-            int o
-            int offset
-            int offset_end
-            int offset_global
-            int start_plage
-            int most_docs = 0
-            int largest = 0
-            int hit_docs = 0
-            int id_str_end
-            int id_str
-
-        if self.num_texts < self.min_matching:
-            return 0, tuple()
-
-        r = self.rstr()
-        best_results = []
-        for (offset_end, nb), (match_len, start_ix) in r.iteritems():
-            if match_len < 2 or nb < self.min_matching:
-                continue
-            sub_results = [None] * self.num_texts
-            for o in range(start_ix, start_ix + nb):
-                offset_global = self.sa.get(o)
-                offset = self.text_index_at(offset_global)
-                id_str = self.text_at(offset_global)
-                id_str_end = self.text_at(offset_global + match_len)
-                if sub_results[id_str] is None and id_str == id_str_end:
-                    sub_results[id_str] = offset
-            hit_docs = self.num_texts
-            for match_start in sub_results:
-                if match_start is None:
-                    hit_docs -= 1
-            if hit_docs >= self.min_matching:
-                if ((hit_docs > most_docs or
-                     (hit_docs >= most_docs and match_len > largest))):
-                    most_docs = hit_docs
-                    largest = match_len
-                    best_results = sub_results
-
-        return largest, tuple(best_results)
-
+        self.thisptr = new RepeatFinder(texts, min_matching)
+    def __dealloc__(self):
+        del self.thisptr
+    def go_rstr(self):
+        return list(self.thisptr.go_rstr())
 
 def rstr_max(ss, min_matching=None):
-    rstr = Rstr_max(ss, min_matching)
+    rstr = RepeatFinderP(ss, min_matching)
     return rstr.go_rstr()

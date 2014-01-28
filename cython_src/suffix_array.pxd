@@ -1,6 +1,7 @@
 _THIS_FIXES_CYTHON_BUG = 'wtf'
 
 from libcpp.vector cimport vector
+from libcpp.string cimport string
 
 cdef extern from "divsufsort.h":
     int divsufsort(const unsigned char *T, int *SA, int n) nogil
@@ -47,3 +48,9 @@ cdef extern from "lcp.hpp":
                   const int *sa,
                   int sa_length,
                   vector[int] &lcp) nogil
+
+
+cdef extern from "repeats.hpp":
+    cdef cppclass RepeatFinder:
+        RepeatFinder(vector[string], int) except +
+        vector[int] go_rstr()

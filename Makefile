@@ -5,14 +5,17 @@ INCLUDE = $(PYTHON_INCLUDES)
 
 CFLAGS = -fno-strict-aliasing
 CFLAGS += -fno-common
-CFLAGS += -dynamic
 CFLAGS += -g
 CFLAGS += -O3
 CFLAGS += -Wall
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -pipe
+CFLAGS += -fPIC
+CFLAGS += -pthread
+#CFLAGS += -shared
 
 CPPFLAGS = $(CFLAGS)
+
 CPPFLAGS += -std=c++11
 CPPFLAGS += -stdlib=libc++
 
@@ -21,10 +24,10 @@ CYTHON = cython
 
 
 CYTHON_FLAGS = -Wextra
-CC = cc
+CC = clang
 CPP = clang++
 
-LFLAGS = -fno-strict-aliasing -Wall -Wextra -pedantic -O3 -undefined dynamic_lookup
+LFLAGS = -fno-strict-aliasing -Wall -Wextra -pedantic -O3 -shared
 
 ifeq ($(OS), Darwin)
 LFLAGS += -bundle
@@ -58,4 +61,4 @@ clean:
 	rm -rf suffix_array.so src/*.o build/ src/suffix_array.cpp
 
 check-syntax:
-	cc ${CPPFLAGS} -fsyntax-only -fno-color-diagnostics -Wall -Wextra $(INCLUDE) -pedantic -c ${CHK_SOURCES}
+	$(CPP) ${CPPFLAGS} -fsyntax-only -fno-color-diagnostics -Wall -Wextra $(INCLUDE) -pedantic -c ${CHK_SOURCES}

@@ -7,10 +7,17 @@ from glob import glob
 VERSION = '0.9.18'
 
 if __name__ == '__main__':
-    src_files = glob('src/*.c')
     extensions = [Extension("suffix_array",
-                            sources=src_files,
-                            language='c++')]
+                            sources=['src/suffix_array.cpp',
+                                     'src/divsufsort.cpp'],
+                            extra_compile_args=['-std=c++11',
+                                                '-pedantic',
+                                                '-Wall',
+                                                '-Wextra',
+                                                ],
+                            extra_link_args=[])]
+
+
     description = "Fast Suffix Array for Python"
     setup(name='suffix_array',
           version=VERSION,
