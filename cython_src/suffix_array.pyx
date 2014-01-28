@@ -65,7 +65,6 @@ cdef class SuffixArray:
     cdef:
         Int32Array SA
         int length
-        int _alphabet_size
         bytes s
 
     def __cinit__(self, s):

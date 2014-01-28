@@ -16,6 +16,7 @@ CPPFLAGS = $(CFLAGS)
 CPPFLAGS += -std=c++11
 CPPFLAGS += -stdlib=libc++
 
+
 CYTHON = cython
 
 
@@ -57,4 +58,4 @@ clean:
 	rm -rf suffix_array.so src/*.o build/ src/suffix_array.cpp
 
 check-syntax:
-	cc -fsyntax-only -fno-color-diagnostics -Wall -Wextra $(INCLUDE) -pedantic -c ${CHK_SOURCES}
+	cc ${CPPFLAGS} -fsyntax-only -fno-color-diagnostics -Wall -Wextra $(INCLUDE) -pedantic -c ${CHK_SOURCES}

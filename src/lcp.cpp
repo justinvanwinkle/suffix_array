@@ -1,5 +1,8 @@
 #include "lcp.hpp"
 
+LCP::LCP(const int *sa, int
+
+
 /*
 
 cdef class LCP:

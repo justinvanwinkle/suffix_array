@@ -2,7 +2,7 @@ from os.path import join as pathjoin
 from glob import glob
 
 from suffix_array import SuffixArray
-#from suffix_array import make_lcp
+from suffix_array import make_lcp
 from suffix_array import rstr_max
 
 
