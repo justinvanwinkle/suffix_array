@@ -40,9 +40,9 @@ class SuffixArray {
   std::vector<int>* lcp () {
     auto lcp_p = new std::vector<int>;
     auto &lcp = *lcp_p;
-    lcp.resize(length);
+    lcp.resize(length, 0);
     std::vector<int> rank;
-    rank.resize(length);
+    rank.resize(length, 0);
 
     for(int i=0; i < length; ++i)
       rank[suffix_array[i]] = i;
@@ -56,12 +56,13 @@ class SuffixArray {
 
       int i = rank[j];
       int j2 = suffix_array[i - 1];
+
       if(i != 0) {
-        while(l + j < length and
-              l + j2 < length and
-              s[j + l] == s[j2 + l]) {
+
+        while(l + j < length and l + j2 < length and s[j + l] == s[j2 + l]) {
           l += 1;
         }
+
         lcp[i] = l;
       } else {
         l = 0;
@@ -73,6 +74,7 @@ class SuffixArray {
 
 
 typedef std::pair<int, int> int_pair;
+typedef std::pair<int_pair, int_pair> int_pair_pair;
 
 namespace std {
 template <>
@@ -94,7 +96,7 @@ class RepeatFinder {
 
   int num_texts;
   std::vector<int> text_positions;
-  const unsigned char* combined_texts;
+  std::string* combined_texts;
   SuffixArray *sa;
   int min_matching;
 
@@ -105,19 +107,20 @@ class RepeatFinder {
     text_positions = std::vector<int>();
     num_texts = texts.size();
 
-    std::string accum = "";
-    for(std::string s : texts) {
-      accum += s;
-      accum += "\2";
-      text_positions.push_back(accum.length());
+    combined_texts = new std::string;
+    for(auto s : texts) {
+      combined_texts->append(s);
+      combined_texts->append("\2");
+      text_positions.push_back(combined_texts->length());
 
     }
-    combined_texts = (const unsigned char*) accum.c_str();
-    sa = new SuffixArray(combined_texts, accum.length());
+    const unsigned char* c_str = (const unsigned char*) combined_texts->c_str();
+    sa = new SuffixArray(c_str, combined_texts->length());
   }
 
   ~RepeatFinder() {
     delete sa;
+    delete combined_texts;
   }
 
   int text_index_at(int q) {
@@ -125,7 +128,6 @@ class RepeatFinder {
     int start = 0;
     if(index_at != 0)
       start = text_positions[index_at - 1];
-    std::cout << q << "ix" << start << " \n";
     return q - start;
   }
 
@@ -136,15 +138,14 @@ class RepeatFinder {
     if(text_positions[ix] == q)
       ++ix;
 
-    std::cout << ix << "ix \n";
 
     return ix;
   }
 
 
-  void remove_many(std::stack<int_trip> &stack,
+  int remove_many(std::stack<int_trip> &stack,
                    std::unordered_map<int_pair, int_pair> *results,
-                   int &m,
+                   int m,
                    int end_ix) {
 
     int last_start_ix = -1,
@@ -154,18 +155,15 @@ class RepeatFinder {
         nb;
 
     while(m > 0) {
-
       std::tie(n, start_ix, max_end_ix) = stack.top();
       stack.pop();
       if(last_start_ix != start_ix) {
         nb = end_ix - start_ix + 1;
-        std::cout << nb << " nb min_matching " << min_matching << "\n";
         if(nb >= min_matching) {
           int_pair id(max_end_ix, nb);
           auto entry = results->find(id);
           if(entry == results->end() or entry->first.first < m) {
-            std::cout << "insert! " << start_ix << '\n';
-            results->insert(make_pair(id, std::make_pair(m, start_ix)));
+            results->insert(int_pair_pair(id, int_pair(m, start_ix)));
           }
 
         }
@@ -176,6 +174,7 @@ class RepeatFinder {
     if(m < 0) {
       stack.push(std::make_tuple(-m, start_ix, max_end_ix - n - m));
     }
+    return m;
   }
 
   int_tuple_map* rstr() {
@@ -194,25 +193,21 @@ class RepeatFinder {
     if(sa->length == 0)
       return results;
 
-    const int *suffix_array = sa->suffix_array;
-
-    auto *lcp_p = sa->lcp();
-    auto &lcp = *lcp_p;
-
+    auto &lcp = *sa->lcp();
 
     std::stack<int_trip> stack;
 
-    pos1 = suffix_array[0];
+    pos1 = sa->suffix_array[0];
     for(i=0; i < len_lcp; ++i) {
       current_lcp_len = lcp[i + 1];
-      pos2 = suffix_array[i + 1];
+      pos2 = sa->suffix_array[i + 1];
       end_ix = std::max(pos1, pos2) + current_lcp_len;
       n = previous_lcp_len - current_lcp_len;
       if(n < 0) {
         stack.push(int_trip(-n, i, end_ix));
         top -= n;
       } else if(n > 0) {
-        remove_many(stack, results, top, i + 1);
+        top = remove_many(stack, results, top, i + 1);
       } else if(top > 0 and end_ix > std::get<2>(stack.top())) {
         std::tie(Xn, Xi, std::ignore) = stack.top();
         stack.pop();
@@ -223,30 +218,30 @@ class RepeatFinder {
     }
 
     if(top > 0) {
-      remove_many(stack, results, top, i + 1);
+      top = remove_many(stack, results, top, i + 1);
     }
 
-    std::cout << results->size() << "results! \n";
     return results;
   }
 
   std::vector<int> go_rstr() {
     auto results = rstr();
-    std::cout << "results:" << results->size() << "\n";
     std::vector<int> best_results;
 
-    int offset_end,
-        nb,
-        match_len,
-        start_ix,
+    int offset_end = 0,
+        nb = 0,
+        match_len = 0,
+        start_ix = 0,
         most_docs = 0,
         largest = 0;
 
-    const int* suffix_array = sa->suffix_array;
-    for(auto &result : *results) {
-      std::tie(offset_end, nb) = result.first;
-      std::tie(match_len, start_ix) = result.second;
-      std::cout <<  offset_end << " " << start_ix << "\n";
+    for (auto it = results->begin(); it != results->end(); ++it ) {
+      std::cout << "iterating\n";
+      offset_end = it->first.first;
+      nb = it->first.second;
+      match_len = it->second.first;
+      start_ix = it->second.second;
+      std::cout <<  offset_end << " " << nb << "\n";
 
       if(match_len < 2 or nb < min_matching)
         continue;
@@ -256,13 +251,13 @@ class RepeatFinder {
         sub_results.push_back(-1);
 
       for(int o=start_ix; o < start_ix + nb; ++o) {
-        int offset_global = suffix_array[o];
+        int offset_global = sa->suffix_array[o];
         int offset = text_index_at(offset_global);
         int id_str = text_at(offset_global);
         int id_str_end = text_at(offset_global + match_len);
-        if(id_str == id_str_end and sub_results[id_str] == 0)
-          std::cout << id_str << '\n';
-        sub_results[id_str] = offset;
+        if(id_str == id_str_end and sub_results[id_str] == 0) {
+          sub_results[id_str] = offset;
+        }
       }
       int hit_docs = num_texts;
       for(int match_start : sub_results) {

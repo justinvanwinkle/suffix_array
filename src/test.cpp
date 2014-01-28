@@ -35,6 +35,12 @@ int main() {
 
   cout << ss.size() << "\n";
 
+  int l = 0;
+  for(string s : ss) {
+    l += s.length();
+  }
+  cout << "total length " << l << "\n";
+
   for(int i=0; i<10; ++i){
     auto rf = RepeatFinder(ss, 3);
     auto res = rf.go_rstr();
