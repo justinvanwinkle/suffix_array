@@ -14,22 +14,29 @@
 #include <tuple>
 #include <stack>
 #include <unordered_map>
+#include <map>
 #include <iostream>
 #include "divsufsort.h"
 
 
 class SuffixArray {
 
+ private:
+
+  int numdocs;
+
+
  public:
-  int length;
+  int len;
   const unsigned char* s;
   int* suffix_array;
 
-  SuffixArray(const unsigned char* _s, int _s_length) {
-    length = _s_length;
+  SuffixArray(const unsigned char* _s, int _s_length, int _numdocs=0) {
+    len = _s_length;
     s = _s;
-    suffix_array = (int *)calloc(length, sizeof(int));
-    divsufsort(s, suffix_array, length);
+    numdocs = _numdocs;
+    suffix_array = (int *)calloc(len, sizeof(int));
+    divsufsort(s, suffix_array, len);
 
   }
 
@@ -40,26 +47,25 @@ class SuffixArray {
   std::vector<int>* lcp () {
     auto lcp_p = new std::vector<int>;
     auto &lcp = *lcp_p;
-    lcp.resize(length, 0);
+    lcp.resize(len, 0);
     std::vector<int> rank;
-    rank.resize(length, 0);
+    rank.resize(len, 0);
 
-    for(int i=0; i < length; ++i)
+    for(int i=numdocs; i < len; ++i){
       rank[suffix_array[i]] = i;
-
+    }
     int l = 0;
 
     lcp[0] = -1;
-    for(int j=0; j < length; ++j) {
+    for(int j=0; j < len; ++j) {
       if(l != 0)
-        l = l - 1;
+        --l;
 
       int i = rank[j];
       int j2 = suffix_array[i - 1];
 
       if(i != 0) {
-
-        while(l + j < length and l + j2 < length and s[j + l] == s[j2 + l]) {
+        while(j + l < len and j2 + l < len and s[j + l] == s[j2 + l]) {
           l += 1;
         }
 
@@ -87,7 +93,7 @@ struct hash<int_pair> // denotes a specialization of hash<...>
 };
 }
 
-typedef std::unordered_map<int_pair, int_pair> int_tuple_map;
+typedef std::map<int_pair, int_pair> int_tuple_map;
 typedef std::tuple<int, int, int> int_trip;
 
 class RepeatFinder {
@@ -102,9 +108,11 @@ class RepeatFinder {
 
  public:
 
+  int match_length = 0;
+  std::vector<int> matches;
+
   RepeatFinder(std::vector<std::string> &texts, int _min_matching) {
     min_matching = _min_matching;
-    text_positions = std::vector<int>();
     num_texts = texts.size();
 
     combined_texts = new std::string;
@@ -112,10 +120,9 @@ class RepeatFinder {
       combined_texts->append(s);
       combined_texts->append("\2");
       text_positions.push_back(combined_texts->length());
-
     }
     const unsigned char* c_str = (const unsigned char*) combined_texts->c_str();
-    sa = new SuffixArray(c_str, combined_texts->length());
+    sa = new SuffixArray(c_str, combined_texts->length(), num_texts);
   }
 
   ~RepeatFinder() {
@@ -132,26 +139,66 @@ class RepeatFinder {
   }
 
   int text_at(int q) {
-    int ix = *lower_bound(text_positions.begin(),
-                          text_positions.end(),
-                          q);
+    auto low = lower_bound(text_positions.begin(),
+                           text_positions.end(),
+                           q);
+    int ix = low - text_positions.begin();
     if(text_positions[ix] == q)
-      ++ix;
-
-
+      ix--;
     return ix;
   }
 
 
-  int remove_many(std::stack<int_trip> &stack,
-                   std::unordered_map<int_pair, int_pair> *results,
-                   int m,
-                   int end_ix) {
+  int_tuple_map* rstr() {
+    int i = 0,
+        top = 0,
+        previous_lcp_len = 0,
+        len_lcp = sa->len - 1;
+    auto results = new int_tuple_map;
+    if(sa->len == 0)
+      return results;
 
+    auto &lcp = *sa->lcp();
+
+    std::stack<int_trip> stack;
+
+    int pos1 = sa->suffix_array[0];
+
+    for(i=0; i < len_lcp; ++i) {
+      int current_lcp_len = lcp[i + 1];
+      int pos2 = sa->suffix_array[i + 1];
+      int end_ix = std::max(pos1, pos2) + current_lcp_len;
+      int n = previous_lcp_len - current_lcp_len;
+      if(n < 0) {
+        stack.push(int_trip(-n, i, end_ix));
+        top -= n;
+      } else if(n > 0) {
+        top = remove_many(stack, results, top, n, i);
+      } else if(top > 0 and end_ix > std::get<2>(stack.top())) {
+        std::get<2>(stack.top()) = end_ix;
+      }
+      previous_lcp_len = current_lcp_len;
+      pos1 = pos2;
+    }
+
+    if(top > 0) {
+      top = remove_many(stack, results, top, top, i + 1);
+    }
+
+    return results;
+  }
+
+
+
+  int remove_many(std::stack<int_trip> &stack,
+                  int_tuple_map *results,
+                  int top,
+                  int m,
+                  int end_ix) {
     int last_start_ix = -1,
-        max_end_ix = 0,
-        n = 0,
-        start_ix = 0,
+        max_end_ix,
+        n,
+        start_ix,
         nb;
 
     while(m > 0) {
@@ -159,75 +206,30 @@ class RepeatFinder {
       stack.pop();
       if(last_start_ix != start_ix) {
         nb = end_ix - start_ix + 1;
-        if(nb >= min_matching) {
+        if(nb >= min_matching and top > 1) {
           int_pair id(max_end_ix, nb);
           auto entry = results->find(id);
-          if(entry == results->end() or entry->first.first < m) {
-            results->insert(int_pair_pair(id, int_pair(m, start_ix)));
+          if(entry == results->end()) {
+            results->insert(int_pair_pair(id, int_pair(top, start_ix)));
+          } else if (entry->second.first < top) {
+            entry->second.first = top;
+            entry->second.second = start_ix;
           }
-
         }
         last_start_ix = start_ix;
       }
       m -= n;
+      top -= n;
     }
     if(m < 0) {
       stack.push(std::make_tuple(-m, start_ix, max_end_ix - n - m));
+      top -= m;
     }
-    return m;
+    return top;
   }
 
-  int_tuple_map* rstr() {
-    int Xi,
-        Xn,
-        end_ix,
-        i,
-        n,
-        pos1,
-        pos2,
-        top = 0,
-        current_lcp_len = 0,
-        previous_lcp_len = 0,
-        len_lcp = sa->length - 1;
-    auto results = new std::unordered_map<int_pair, int_pair>;
-    if(sa->length == 0)
-      return results;
 
-    auto &lcp = *sa->lcp();
-
-    std::stack<int_trip> stack;
-
-    pos1 = sa->suffix_array[0];
-    for(i=0; i < len_lcp; ++i) {
-      current_lcp_len = lcp[i + 1];
-      pos2 = sa->suffix_array[i + 1];
-      end_ix = std::max(pos1, pos2) + current_lcp_len;
-      n = previous_lcp_len - current_lcp_len;
-      if(n < 0) {
-        stack.push(int_trip(-n, i, end_ix));
-        top -= n;
-      } else if(n > 0) {
-        top = remove_many(stack, results, top, i + 1);
-      } else if(top > 0 and end_ix > std::get<2>(stack.top())) {
-        std::tie(Xn, Xi, std::ignore) = stack.top();
-        stack.pop();
-        stack.push(int_trip(Xn, Xi, end_ix));
-      }
-      previous_lcp_len = current_lcp_len;
-      pos1 = pos2;
-    }
-
-    if(top > 0) {
-      top = remove_many(stack, results, top, i + 1);
-    }
-
-    return results;
-  }
-
-  std::vector<int> go_rstr() {
-    auto results = rstr();
-    std::vector<int> best_results;
-
+  void go_rstr() {
     int offset_end = 0,
         nb = 0,
         match_len = 0,
@@ -235,13 +237,14 @@ class RepeatFinder {
         most_docs = 0,
         largest = 0;
 
+    if(num_texts < min_matching)
+      return;
+
+    auto results = rstr();
+    std::vector<int> best_results;
     for (auto it = results->begin(); it != results->end(); ++it ) {
-      std::cout << "iterating\n";
-      offset_end = it->first.first;
-      nb = it->first.second;
-      match_len = it->second.first;
-      start_ix = it->second.second;
-      std::cout <<  offset_end << " " << nb << "\n";
+      std::tie(offset_end, nb) = it->first;
+      std::tie(match_len, start_ix) = it->second;
 
       if(match_len < 2 or nb < min_matching)
         continue;
@@ -255,15 +258,16 @@ class RepeatFinder {
         int offset = text_index_at(offset_global);
         int id_str = text_at(offset_global);
         int id_str_end = text_at(offset_global + match_len);
-        if(id_str == id_str_end and sub_results[id_str] == 0) {
+        if(id_str == id_str_end and sub_results[id_str] == -1)
           sub_results[id_str] = offset;
-        }
       }
+
       int hit_docs = num_texts;
       for(int match_start : sub_results) {
         if(match_start == -1)
           --hit_docs;
       }
+
       if(hit_docs >= min_matching) {
         if(hit_docs > most_docs or
            (hit_docs >= most_docs and match_len > largest)) {
@@ -272,11 +276,10 @@ class RepeatFinder {
           best_results = sub_results;
         }
       }
-
-
     }
 
-    return best_results;
+    matches = best_results;
+    match_length = largest;
   }
 
 };

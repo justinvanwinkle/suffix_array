@@ -43,14 +43,9 @@ cdef extern from "divsufsort.h":
                             int *left) nogil
 
 
-cdef extern from "lcp.hpp":
-    void make_lcp(const unsigned char *s,
-                  const int *sa,
-                  int sa_length,
-                  vector[int] &lcp) nogil
-
-
 cdef extern from "repeats.hpp":
     cdef cppclass RepeatFinder:
         RepeatFinder(vector[string], int) except +
-        vector[int] go_rstr()
+        int match_length
+        vector[int] matches
+        void go_rstr()

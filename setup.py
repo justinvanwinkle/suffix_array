@@ -14,8 +14,8 @@ if __name__ == '__main__':
                                                 '-pedantic',
                                                 '-Wall',
                                                 '-Wextra',
-                                                ],
-                            extra_link_args=[])]
+                                                '-O3'])]
+
 
 
     description = "Fast Suffix Array for Python"

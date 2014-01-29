@@ -39,13 +39,14 @@ int main() {
   for(string s : ss) {
     l += s.length();
   }
-  cout << "total length " << l << "\n";
 
   for(int i=0; i<10; ++i){
     auto rf = RepeatFinder(ss, 3);
     auto res = rf.go_rstr();
-    cout << res.size() << "\n";
-
+    std::cout << "found!\n";
+    for(int offset : res) {
+      std::cout << offset << " found\n";
+    }
   }
 
 }
