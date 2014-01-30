@@ -40,13 +40,9 @@ int main() {
     l += s.length();
   }
 
-  for(int i=0; i<10; ++i){
+  for(int i=0; i<1000; ++i){
     auto rf = RepeatFinder(ss, 3);
-    auto res = rf.go_rstr();
-    std::cout << "found!\n";
-    for(int offset : res) {
-      std::cout << offset << " found\n";
-    }
+    rf.go_rstr();
   }
 
 }

@@ -51,7 +51,7 @@ class SuffixArray {
     std::vector<int> rank;
     rank.resize(len, 0);
 
-    for(int i=numdocs; i < len; ++i){
+    for(int i=0; i < len; ++i){
       rank[suffix_array[i]] = i;
     }
     int l = 0;
@@ -93,7 +93,7 @@ struct hash<int_pair> // denotes a specialization of hash<...>
 };
 }
 
-typedef std::map<int_pair, int_pair> int_tuple_map;
+typedef std::unordered_map<int_pair, int_pair> int_tuple_map;
 typedef std::tuple<int, int, int> int_trip;
 
 class RepeatFinder {
@@ -105,6 +105,7 @@ class RepeatFinder {
   std::string* combined_texts;
   SuffixArray *sa;
   int min_matching;
+  int_tuple_map results;
 
  public:
 
@@ -114,13 +115,15 @@ class RepeatFinder {
   RepeatFinder(std::vector<std::string> &texts, int _min_matching) {
     min_matching = _min_matching;
     num_texts = texts.size();
+    text_positions = std::vector<int>();
 
     combined_texts = new std::string;
     for(auto s : texts) {
-      combined_texts->append(s);
-      combined_texts->append("\2");
       text_positions.push_back(combined_texts->length());
+      combined_texts->append(s);
+      //combined_texts->append("\2");
     }
+    text_positions.push_back(combined_texts->length());
     const unsigned char* c_str = (const unsigned char*) combined_texts->c_str();
     sa = new SuffixArray(c_str, combined_texts->length(), num_texts);
   }
@@ -130,42 +133,34 @@ class RepeatFinder {
     delete combined_texts;
   }
 
-  int text_index_at(int q) {
-    int index_at = text_at(q);
-    int start = 0;
-    if(index_at != 0)
-      start = text_positions[index_at - 1];
-    return q - start;
+  int text_index_at(int o) {
+    return o - text_positions[text_at(o)];
   }
 
-  int text_at(int q) {
-    auto low = lower_bound(text_positions.begin(),
-                           text_positions.end(),
-                           q);
-    int ix = low - text_positions.begin();
-    if(text_positions[ix] == q)
-      ix--;
-    return ix;
+  int text_at(int o) {
+    auto begin = text_positions.begin();
+    auto upper = std::upper_bound(begin,
+                                  text_positions.end(),
+                                  o);
+    return upper - begin - 1;
   }
 
 
-  int_tuple_map* rstr() {
+  void rstr() {
     int i = 0,
         top = 0,
         previous_lcp_len = 0,
         len_lcp = sa->len - 1;
-    auto results = new int_tuple_map;
     if(sa->len == 0)
-      return results;
-
-    auto &lcp = *sa->lcp();
+      return;
+    auto lcp = sa->lcp();
 
     std::stack<int_trip> stack;
 
     int pos1 = sa->suffix_array[0];
 
     for(i=0; i < len_lcp; ++i) {
-      int current_lcp_len = lcp[i + 1];
+      int current_lcp_len = lcp->at(i + 1);
       int pos2 = sa->suffix_array[i + 1];
       int end_ix = std::max(pos1, pos2) + current_lcp_len;
       int n = previous_lcp_len - current_lcp_len;
@@ -173,7 +168,7 @@ class RepeatFinder {
         stack.push(int_trip(-n, i, end_ix));
         top -= n;
       } else if(n > 0) {
-        top = remove_many(stack, results, top, n, i);
+        top = remove_many(stack, top, n, i);
       } else if(top > 0 and end_ix > std::get<2>(stack.top())) {
         std::get<2>(stack.top()) = end_ix;
       }
@@ -182,16 +177,15 @@ class RepeatFinder {
     }
 
     if(top > 0) {
-      top = remove_many(stack, results, top, top, i + 1);
+      top = remove_many(stack, top, top, i + 1);
     }
 
-    return results;
+    delete lcp;
   }
 
 
 
   int remove_many(std::stack<int_trip> &stack,
-                  int_tuple_map *results,
                   int top,
                   int m,
                   int end_ix) {
@@ -206,11 +200,11 @@ class RepeatFinder {
       stack.pop();
       if(last_start_ix != start_ix) {
         nb = end_ix - start_ix + 1;
-        if(nb >= min_matching and top > 1) {
+        if(nb >= min_matching) {
           int_pair id(max_end_ix, nb);
-          auto entry = results->find(id);
-          if(entry == results->end()) {
-            results->insert(int_pair_pair(id, int_pair(top, start_ix)));
+          auto entry = results.find(id);
+          if(entry == results.end()) {
+            results.insert(int_pair_pair(id, int_pair(top, start_ix)));
           } else if (entry->second.first < top) {
             entry->second.first = top;
             entry->second.second = start_ix;
@@ -240,9 +234,9 @@ class RepeatFinder {
     if(num_texts < min_matching)
       return;
 
-    auto results = rstr();
+    rstr();
     std::vector<int> best_results;
-    for (auto it = results->begin(); it != results->end(); ++it ) {
+    for (auto it = results.begin(); it != results.end(); ++it ) {
       std::tie(offset_end, nb) = it->first;
       std::tie(match_len, start_ix) = it->second;
 
