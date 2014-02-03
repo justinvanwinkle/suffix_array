@@ -4,13 +4,16 @@
 from distutils.core import setup, Extension
 from glob import glob
 
-VERSION = '0.9.50'
+VERSION = '0.9.18'
 
 if __name__ == '__main__':
     extensions = [Extension("suffix_array",
                             sources=['src/suffix_array.cpp',
                                      'src/divsufsort.cpp'],
                             extra_compile_args=['-std=c++11',
+                                                '-pedantic',
+                                                '-Wall',
+                                                '-Wextra',
                                                 '-O3'])]
 
 
