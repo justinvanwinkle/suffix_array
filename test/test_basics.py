@@ -62,7 +62,7 @@ def _read_files(path):
         content.append(open(fn).read())
     return content
 
-def test_rstr_max_big():
+def XXX_test_rstr_max_big():
     ss = _read_files('test/data/html')
 
     best = rstr_max(ss)
@@ -97,7 +97,28 @@ def test_rstr_max_logic():
          '3715382","dpci":"248-73-0576',
          '4157298","dpci":"243-29-1957',
          '3104684","dpci":"243-19-8713']
-    for _ in xrange(10000):
-        length, offsets = rstr_max(l, 3)
-        assert length == 10
-        assert offsets == tuple([7] * 27)
+    length, offsets = rstr_max(l, 3)
+    assert length == 10
+    assert offsets == tuple([7] * 27)
+
+
+def test_rstr_max_end():
+    l = ['abaxxx',
+         'cbcxxx',
+         'dddxxx',
+         'fgfxxx',
+         'nonxxx']
+    length, offsets = rstr_max(l)
+    assert length == 3
+    assert offsets == tuple([3] * 5)
+
+
+def test_rstr_max_begin():
+    l = ['xxxaba',
+         'xxxcbc',
+         'xxxddd',
+         'xxxfgf',
+         'xxxnon']
+    length, offsets = rstr_max(l)
+    assert length == 3
+    assert offsets == tuple([0] * 5)
