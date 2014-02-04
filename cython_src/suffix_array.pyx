@@ -14,7 +14,7 @@ cdef class RepeatFinderP:
     def __dealloc__(self):
         del self.thisptr
     def go_rstr(self):
-        self.thisptr.go_rstr()
+        self.thisptr.rstr()
         matches = []
         for match in self.thisptr.matches:
             if match == -1:

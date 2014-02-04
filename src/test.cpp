@@ -33,16 +33,11 @@ int main() {
     "4157298\",\"dpci\":\"243-29-1957",
     "3104684\",\"dpci\":\"243-19-8713"};
 
-  cout << ss.size() << "\n";
-
-  int l = 0;
-  for(string s : ss) {
-    l += s.length();
-  }
-
   for(int i=0; i<1000; ++i){
     auto rf = RepeatFinder(ss, 3);
-    rf.go_rstr();
+    rf.rstr();
+    cout << rf.match_length << '\n';
   }
+
 
 }

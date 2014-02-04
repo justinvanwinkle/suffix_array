@@ -62,7 +62,7 @@ def _read_files(path):
         content.append(open(fn).read())
     return content
 
-def XXX_test_rstr_max_big():
+def test_rstr_max_big():
     ss = _read_files('test/data/html')
 
     best = rstr_max(ss)

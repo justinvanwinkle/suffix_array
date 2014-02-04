@@ -48,4 +48,4 @@ cdef extern from "repeats.hpp":
         RepeatFinder(vector[string], int) except +
         int match_length
         vector[int] matches
-        void go_rstr()
+        void rstr()

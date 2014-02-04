@@ -55,6 +55,10 @@ suffix_array.so: src/suffix_array.o src/divsufsort.o
 test: suffix_array.so test/test_basics.py
 	py.test -- test/test_basics.py
 
+a.out: src/test.cpp src/suffix_array.o src/divsufsort.o
+	$(CXX) $(CPPFLAGS) -c src/test.cpp -o src/test.o
+	$(CXX) src/divsufsort.o src/test.o
+
 install: suffix_array.so
 	python setup.py install
 
