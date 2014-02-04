@@ -27,6 +27,8 @@
 #ifndef _DIVSUFSORT_H
 #define _DIVSUFSORT_H 1
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */

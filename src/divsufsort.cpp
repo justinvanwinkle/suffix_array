@@ -24,14 +24,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "divsufsort.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <Python.h>
 #ifdef _OPENMP
 # include <omp.h>
 #endif
-#include "divsufsort.h"
 
 
 /*- Constants -*/
@@ -374,7 +374,7 @@ ss_pivot(const unsigned char *Td, const int *PA, int *first, int *last) {
 static INLINE
 int *
 ss_partition(const int *PA,
-                    int *first, int *last, int depth) {
+	     int *first, int *last, int depth) {
   int *a, *b;
   int t;
   for(a = first - 1, b = last;;) {
@@ -1891,7 +1891,7 @@ bw_transform(const uint8_t *T, uint8_t *U, int *SA, int n, int *idx) {
 
     if(SA == NULL) {
 	/* Deallocate memory. */
-	PyMem_Free(A);
+	free(A);
     }
 
     return 0;
@@ -1915,7 +1915,7 @@ inverse_bw_transform(const uint8_t *T, uint8_t *U, int *A, int n, int idx) {
 
     if((B = A) == NULL) {
 	/* Allocate n*sizeof(int) bytes of memory. */
-	if((B = (int *)PyMem_Malloc((size_t)n * sizeof(int))) == NULL) { return -2; }
+	if((B = (int *)malloc((size_t)n * sizeof(int))) == NULL) { return -2; }
     }
 
     /* Inverse BW transform. */
@@ -1939,7 +1939,7 @@ inverse_bw_transform(const uint8_t *T, uint8_t *U, int *A, int n, int idx) {
 
     if(A == NULL) {
 	/* Deallocate memory. */
-	PyMem_Free(B);
+	free(B);
     }
 
     return 0;
