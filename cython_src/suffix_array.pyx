@@ -429,7 +429,7 @@ cdef class Rstr_max:
                 offset_global = self.sa.get(o)
                 offset = self.text_index_at(offset_global)
                 id_str = self.text_at(offset_global)
-                id_str_end = self.text_at(offset_global + match_len)
+                id_str_end = self.text_at(offset_global + match_len - 1)
                 if sub_results[id_str] is None and id_str == id_str_end:
                     sub_results[id_str] = offset
             hit_docs = self.num_texts
