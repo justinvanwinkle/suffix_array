@@ -51,7 +51,7 @@ class SuffixArray {
     std::vector<int> rank;
     rank.resize(len, 0);
 
-    for(int i=numdocs; i < len; ++i){
+    for(int i=0; i < len; ++i){
       rank[suffix_array[i]] = i;
     }
     int l = 0;
@@ -121,7 +121,7 @@ class RepeatFinder {
     for(auto s : texts) {
       text_positions.push_back(combined_texts->length());
       combined_texts->append(s);
-      combined_texts->append("\x02");
+      //combined_texts->append("\x02");
     }
     text_positions.push_back(combined_texts->length());
     const unsigned char* c_str = (const unsigned char*) combined_texts->c_str();
@@ -142,6 +142,8 @@ class RepeatFinder {
     auto upper = std::upper_bound(begin,
                                   text_positions.end(),
                                   o);
+    if(upper == begin)
+	return 0;
     return upper - begin - 1;
   }
 
@@ -251,8 +253,7 @@ class RepeatFinder {
         int offset_global = sa->suffix_array[o];
         int offset = text_index_at(offset_global);
         int id_str = text_at(offset_global);
-        int id_str_end = text_at(offset_global + match_len);
-        std::cout << offset_global << ' ' << match_len << ' ' << id_str << ' ' << id_str_end << ' ' << offset <<'\n';
+        int id_str_end = text_at(offset_global + match_len - 1);
         if(id_str == id_str_end and sub_results[id_str] == -1)
           sub_results[id_str] = offset;
       }

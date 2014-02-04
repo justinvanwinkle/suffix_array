@@ -109,8 +109,8 @@ def test_rstr_max_end():
          'fgfxxx',
          'nonxxx']
     length, offsets = rstr_max(l)
-    assert length == 3
     assert offsets == tuple([3] * 5)
+    assert length == 3
 
 
 def test_rstr_max_begin():
