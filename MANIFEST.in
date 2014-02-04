@@ -1,2 +1,2 @@
-include src/*
+include src/divsufsort.cpp src/divsufsort.h src/repeats.hpp src/suffix_array.cpp
 prune test
