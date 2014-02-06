@@ -1724,8 +1724,8 @@ construct_BWT(const unsigned char *T, int *SA,
 
 static
 int
-_compare(const uint8_t *T, int Tsize,
-         const uint8_t *P, int Psize,
+_compare(const unsigned char *T, int Tsize,
+         const unsigned char *P, int Psize,
          int suf, int *match) {
     int i, j;
     int r;
@@ -1841,7 +1841,7 @@ divbwt(const unsigned char *T, unsigned char *U, int *A, int n) {
 
 
 int
-bw_transform(const uint8_t *T, uint8_t *U, int *SA, int n, int *idx) {
+bw_transform(const unsigned char *T, unsigned char *U, int *SA, int n, int *idx) {
     int *A, i, j, p, t;
     int c;
 
@@ -1867,7 +1867,7 @@ bw_transform(const uint8_t *T, uint8_t *U, int *SA, int n, int *idx) {
 	    t = A[i];
 	    if(0 <= p) {
 		c = T[j];
-		U[j] = (j <= p) ? T[p] : (uint8_t)A[p];
+		U[j] = (j <= p) ? T[p] : (unsigned char)A[p];
 		A[j] = c;
 		j++;
 	    } else {
@@ -1877,7 +1877,7 @@ bw_transform(const uint8_t *T, uint8_t *U, int *SA, int n, int *idx) {
 	p = t - 1;
 	if(0 <= p) {
 	    c = T[j];
-	    U[j] = (j <= p) ? T[p] : (uint8_t)A[p];
+	    U[j] = (j <= p) ? T[p] : (unsigned char)A[p];
 	    A[j] = c;
 	} else {
 	    *idx = i;
@@ -1899,9 +1899,9 @@ bw_transform(const uint8_t *T, uint8_t *U, int *SA, int n, int *idx) {
 
 /* Inverse Burrows-Wheeler transform. */
 int
-inverse_bw_transform(const uint8_t *T, uint8_t *U, int *A, int n, int idx) {
+inverse_bw_transform(const unsigned char *T, unsigned char *U, int *A, int n, int idx) {
     int C[ALPHABET_SIZE];
-    uint8_t D[ALPHABET_SIZE];
+    unsigned char D[ALPHABET_SIZE];
     int *B;
     int i, p;
     int c, d;
@@ -1925,7 +1925,7 @@ inverse_bw_transform(const uint8_t *T, uint8_t *U, int *A, int n, int idx) {
 	p = C[c];
 	if(0 < p) {
 	    C[c] = i;
-	    D[d++] = (uint8_t)c;
+	    D[d++] = (unsigned char)c;
 	    i += p;
 	}
     }
@@ -1946,8 +1946,8 @@ inverse_bw_transform(const uint8_t *T, uint8_t *U, int *A, int n, int idx) {
 }
 
 int
-sa_search(const uint8_t *T, int Tsize,
-          const uint8_t *P, int Psize,
+sa_search(const unsigned char *T, int Tsize,
+          const unsigned char *P, int Psize,
           const int *SA, int SAsize,
           int *idx) {
     int size, lsize, rsize, half;
