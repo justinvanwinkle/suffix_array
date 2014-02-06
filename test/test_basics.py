@@ -122,3 +122,14 @@ def test_rstr_max_begin():
     length, offsets = rstr_max(l)
     assert length == 3
     assert offsets == tuple([0] * 5)
+
+
+def test_rstr_max_wraparound():
+    l = ['aaabaxxxx',
+         'aaabfcxxxx',
+         'aaadddxxxx',
+         'aaafgfxxxx',
+         'aaanonxxxx']
+    length, offsets = rstr_max(l)
+    assert offsets == (5, 6, 6, 6, 6)
+    assert length == 4

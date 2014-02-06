@@ -5,21 +5,20 @@ CXX = clang++
 PYTHON_INCLUDES=$(shell python-config --includes)
 INCLUDE = $(PYTHON_INCLUDES)
 
-CFLAGS = -fno-strict-aliasing
-CFLAGS += -fno-common
-CFLAGS += -g
-CFLAGS += -O3
-CFLAGS += -Wall
-CFLAGS += -Wextra
-CFLAGS += -Wstrict-prototypes
-CFLAGS += -pipe
-CFLAGS += -pthread
-CFLAGS += -fwrapv
+FLAGS = -fno-strict-aliasing
+FLAGS += -fno-common
+FLAGS += -g
+FLAGS += -O3
+FLAGS += -Wall
+FLAGS += -Wextra
+FLAGS += -Wstrict-prototypes
+FLAGS += -pipe
+FLAGS += -pthread
+FLAGS += -fwrapv
+FLAGS += -pedantic
 
 CYTHON = cython
 CYTHON_FLAGS = -Wextra
-
-LFLAGS = -pedantic
 
 ifeq ($(shell uname), Darwin)
 LFLAGS += -bundle
@@ -29,17 +28,17 @@ LFLAGS += -Wl,-F.
 else
 LFLAGS += -shared
 LFLAGS += -pthread
-LFLAGS += -Wl,-O3
-LFLAGS += -Wl,-Bsymbolic-functions
-LFLAGS += -Wl,-z,relro
-CFLAGS += -fPIC
-CFLAGS += -fno-common
+# LFLAGS += -Wl,-O3
+# LFLAGS += -Wl,-Bsymbolic-functions
+# LFLAGS += -Wl,-z,relro
+FLAGS += -fPIC
+FLAGS += -fno-common
 endif
 
-CPPFLAGS = $(CFLAGS)
-
+CPPFLAGS = $(FLAGS)
 CPPFLAGS += -std=c++11
 CPPFLAGS += -stdlib=libc++
+LFLAGS += $(CPPFLAGS)
 
 .PHONY: test
 
@@ -52,7 +51,7 @@ src/suffix_array.cpp: cython_src/suffix_array.pyx cython_src/suffix_array.pxd
 	cython $(CYTHON_FLAGS) --cplus cython_src/suffix_array.pyx -o src/suffix_array.cpp
 
 suffix_array.so: src/suffix_array.o src/divsufsort.o
-	$(CXX) $(CPPFLAGS) $(LFLAGS) src/suffix_array.o src/divsufsort.o -o suffix_array.so
+	$(CXX) $(LFLAGS) src/suffix_array.o src/divsufsort.o -o suffix_array.so
 
 test: suffix_array.so test/test_basics.py
 	py.test -- test/test_basics.py
