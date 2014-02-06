@@ -51,7 +51,6 @@ def test_rstr_max():
     s2 = '2yyyy3yyyy4'
 
     result = rstr_max([s1, s2])
-    print result
     assert result == (4, (1, 1))
 
 
@@ -62,7 +61,7 @@ def _read_files(path):
         content.append(open(fn).read())
     return content
 
-def test_rstr_max_big():
+def XXX_test_rstr_max_big():
     ss = _read_files('test/data/html')
 
     best = rstr_max(ss)
@@ -114,11 +113,11 @@ def test_rstr_max_end():
 
 
 def test_rstr_max_begin():
-    l = ['xxxaba',
-         'xxxcbc',
-         'xxxddd',
-         'xxxfgf',
-         'xxxnon']
+    l = ["xxxaba",
+         "xxxcbc",
+         "xxxddd",
+         "xxxfgf",
+         "xxxnon"]
     length, offsets = rstr_max(l)
     assert length == 3
     assert offsets == tuple([0] * 5)
@@ -133,3 +132,92 @@ def test_rstr_max_wraparound():
     length, offsets = rstr_max(l)
     assert offsets == (5, 6, 6, 6, 6)
     assert length == 4
+
+
+def test_found_bug_1():
+    l = ["3032704'); ",
+         "3035841'); ",
+         "3714022'); ",
+         "3484658'); ",
+         "4699727'); ",
+         "3713494'); ",
+         "4621762'); ",
+         "1921322'); ",
+         "3914006'); ",
+         "2025732'); ",
+         "4252542'); ",
+         "4066915'); ",
+         "3997210'); ",
+         "3753929'); ",
+         "4600999'); ",
+         "4328259'); ",
+         "3236879'); ",
+         "4243508'); ",
+         "2832063'); ",
+         "4787939'); ",
+         "3546141'); ",
+         "3789634'); ",
+         "4558638'); ",
+         "3827191'); ",
+         "4595830'); ",
+         "4592632'); "]
+    length, offsets = rstr_max(l)
+    assert offsets == tuple([7] * len(l))
+    assert length == 4
+
+
+def test_found_bug_2():
+    l = ['bug', '_bug_', '_bug_']
+    length, offsets = rstr_max(l)
+    assert offsets == (0, 1, 1)
+    assert length == 3
+
+
+def test_found_bug_3():
+    l = ['3032704"/>',
+         '3035841"/>',
+         '3714022"/>',
+         '3484658"/>',
+         '4699727"/>',
+         '3713494"/>',
+         '4621762"/>',
+         '1921322"/>',
+         '3914006"/>',
+         '2025732"/>',
+         '4252542"/>',
+         '4066915"/>',
+         '3997210"/>',
+         '3753929"/>',
+         '4600999"/>',
+         '4328259"/>',
+         '1345800"/>',
+         '4915032"/>',
+         '2070789"/>',
+         '5030283"/>',
+         '2044818"/>',
+         '4436078"/>',
+         '2028926"/>',
+         '4853197"/>',
+         '3827671"/>',
+         '4269357"/>',
+         '1420340"/>',
+         '3846564"/>',
+         '4385824"/>',
+         '4225028"/>',
+         '3236879"/>',
+         '4243508"/>',
+         '2832063"/>',
+         '4787939"/>',
+         '3546141"/>',
+         '3789634"/>',
+         '4558638"/>',
+         '3827191"/>',
+         '4595830"/>',
+         '4592632"/>']
+
+    length, offsets = rstr_max(l)
+    assert offsets == tuple([7] * len(l))
+    assert length == 3
+
+if __name__ == '__main__':
+    test_found_bug_2()

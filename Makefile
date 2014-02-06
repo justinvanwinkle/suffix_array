@@ -8,7 +8,7 @@ INCLUDE = $(PYTHON_INCLUDES)
 FLAGS = -fno-strict-aliasing
 FLAGS += -fno-common
 FLAGS += -g
-FLAGS += -O3
+FLAGS += -O0
 FLAGS += -Wall
 FLAGS += -Wextra
 FLAGS += -Wstrict-prototypes
@@ -17,6 +17,7 @@ FLAGS += -pthread
 FLAGS += -fwrapv
 FLAGS += -pedantic
 FLAGS += -ferror-limit=2
+#FLAGS += -fstandalone-debug
 
 CYTHON = cython
 CYTHON_FLAGS = -Wextra
@@ -52,14 +53,13 @@ src/suffix_array.cpp: cython_src/suffix_array.pyx cython_src/suffix_array.pxd
 	cython $(CYTHON_FLAGS) --cplus cython_src/suffix_array.pyx -o src/suffix_array.cpp
 
 suffix_array.so: src/suffix_array.o src/divsufsort.o
-	$(CXX) $(LFLAGS) src/suffix_array.o src/divsufsort.o -o suffix_array.so
+	$(CXX) $(LFLAGS) $(INCLUDE) src/suffix_array.o src/divsufsort.o -o suffix_array.so
 
 test: suffix_array.so test/test_basics.py
 	py.test -- test/test_basics.py
 
 a.out: src/test.cpp src/suffix_array.o src/divsufsort.o
-	$(CXX) $(CPPFLAGS) -c src/test.cpp -o src/test.o
-	$(CXX) src/divsufsort.o src/test.o
+	$(CXX) -std=c++11 -stdlib=libc++ src/divsufsort.cpp src/test.cpp -o a.out
 
 install: suffix_array.so
 	python setup.py install

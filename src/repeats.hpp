@@ -16,10 +16,9 @@
 #include <unordered_map>
 #include <map>
 #include <iostream>
-#include "sais.hxx"
+#include "divsufsort.h"
 
 class SuffixArray {
-
 
 public:
     int len;
@@ -38,7 +37,7 @@ public:
 	free(suffix_array);
     }
 
-    std::vector<int>* lcp () {
+    std::vector<int>* lcp() {
 	auto lcp_p = new std::vector<int>;
 	auto &lcp = *lcp_p;
 	lcp.resize(len, 0);
@@ -48,9 +47,9 @@ public:
 	for(int i=0; i < len; ++i){
 	    rank[suffix_array[i]] = i;
 	}
+
 	int l = 0;
 
-	lcp[0] = -1;
 	for(int j=0; j < len; ++j) {
 	    if(l != 0)
 		--l;
@@ -60,7 +59,7 @@ public:
 
 	    if(i != 0) {
 		while(j + l < len and j2 + l < len and s[j + l] == s[j2 + l]) {
-		    l += 1;
+		    ++l;
 		}
 
 		lcp[i] = l;
@@ -70,6 +69,8 @@ public:
 	}
 	return lcp_p;
     }
+
+
 };
 
 
@@ -95,6 +96,7 @@ class RepeatFinderResult {
 public:
     int match_length = 0;
     int matching = 0;
+    int confusion = 999999999;
     std::vector<int> matches;
 };
 
@@ -106,6 +108,7 @@ private:
     int num_texts;
     std::vector<int> text_positions;
     std::string* combined_texts;
+    int length;
     SuffixArray *sa;
     int min_matching;
     //int_tuple_map results;
@@ -121,10 +124,12 @@ public:
 	for(auto s : texts) {
 	    text_positions.push_back(combined_texts->length());
 	    combined_texts->append(s);
+	    combined_texts->append("\2");
 	}
 	text_positions.push_back(combined_texts->length());
+	length = combined_texts->length();
 	const unsigned char* c_str = (const unsigned char*) combined_texts->c_str();
-	sa = new SuffixArray(c_str, combined_texts->length());
+	sa = new SuffixArray(c_str, length);
     }
 
     ~RepeatFinder() {
@@ -148,19 +153,34 @@ public:
     RepeatFinderResult* rstr() {
 	int i = 0,
 	    top = 0,
-	    previous_lcp_len = 0,
-	    len_lcp = sa->len - 1;
+	    previous_lcp_len = 0;
 
 	auto result = new RepeatFinderResult();
-	if(sa->len == 0)
-	    return result;
 	auto lcp = sa->lcp();
 
+	std::vector<int> rank;
+	rank.resize(length, 0);
+
+	for(int i=0; i < length; ++i){
+	    rank[sa->suffix_array[i]] = i;
+	}
+
+	// Fix lcp for multi strings
+	for(int i=0; i < text_positions.size() - 1; ++i) {
+	    int doc_end = text_positions[i + 1] - 1;
+	    int doc_length = doc_end - text_positions[i] + 1;
+	    for(int k=0; k < doc_length; ++k) {
+		int lcp_value = lcp->at(rank[doc_end - k]);
+		if(lcp_value > k) {
+		    lcp->at(rank[doc_end - k]) = std::min(k, lcp_value);
+		}
+	    }
+	}
 	std::stack<int_trip> stack;
 
 	int pos1 = sa->suffix_array[0];
 
-	for(i=0; i < len_lcp; ++i) {
+	for(i=0; i < length - 1; ++i) {
 	    int current_lcp_len = lcp->at(i + 1);
 	    int pos2 = sa->suffix_array[i + 1];
 	    int end_ix = std::max(pos1, pos2) + current_lcp_len;
@@ -203,9 +223,7 @@ public:
 	    stack.pop();
 	    if(last_start_ix != start_ix) {
 		nb = end_ix - start_ix + 1;
-		if(nb >= min_matching) {
-		    evaluate_match(nb, top, start_ix, result);
-		}
+		evaluate_match(max_end_ix, nb, top, start_ix, result);
 		last_start_ix = start_ix;
 	    }
 	    m -= n;
@@ -219,23 +237,32 @@ public:
     }
 
 
-    void evaluate_match(int nb, int match_len, int start_ix,
+    void evaluate_match(int offset_end, int nb, int match_len, int start_ix,
 			RepeatFinderResult* result) {
-	if(match_len < 2 or nb < result->matching or
-	   (nb == result->matching and match_len <= result->match_length))
-	    return;
-
+	// if(match_len < 2 or nb < result->matching or
+	//    (nb == result->matching and match_len <= result->match_length))
+	//     return;
 	std::vector<int> sub_results;
 	for(int i=0; i < num_texts; ++i)
 	    sub_results.push_back(-1);
 
+	int confusion = 0;
 	for(int o=start_ix; o < start_ix + nb; ++o) {
 	    int offset_global = sa->suffix_array[o];
+	    if(o == length) {
+		break;
+	    }
 	    int offset = text_index_at(offset_global);
 	    int id_str = text_at(offset_global);
-	    int id_str_end = text_at(offset_global + match_len - 1);
-	    if(id_str == id_str_end and sub_results[id_str] == -1)
+
+	    if(sub_results[id_str] == -1) {
 		sub_results[id_str] = offset;
+	    } else if (sub_results[id_str] > offset) {
+		sub_results[id_str] = offset;
+		++confusion;
+	    } else {
+		++confusion;
+	    }
 	}
 
 	int hit_docs = num_texts;
@@ -247,7 +274,9 @@ public:
 	if(hit_docs >= min_matching) {
 	    if(hit_docs > result->matching or
 	       (hit_docs >= result->matching and
-		match_len > result->match_length)) {
+		match_len > result->match_length and
+		confusion <= result->confusion) ) {
+		result->confusion = confusion;
 		result->matching = hit_docs;
 		result->match_length = match_len;
 		result->matches = sub_results;
