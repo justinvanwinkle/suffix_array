@@ -14,16 +14,21 @@ cdef class RepeatFinderP:
     def __dealloc__(self):
         del self.thisptr
     def go_rstr(self):
-        self.thisptr.rstr()
-        matches = []
-        for match in self.thisptr.matches:
-            if match == -1:
-                matches.append(None)
-            else:
-                matches.append(match)
-        return (self.thisptr.match_length, tuple(matches))
+        result = self.thisptr.rstr()
+        try:
+            matches = []
+            for match in result.matches:
+                if match == -1:
+                    matches.append(None)
+                else:
+                    matches.append(match)
+            return (result.match_length, tuple(matches))
+        finally:
+            del result
 
 
 def rstr_max(ss, min_matching=None):
     rstr = RepeatFinderP(ss, min_matching)
-    return rstr.go_rstr()
+    results = rstr.go_rstr()
+    del rstr
+    return results

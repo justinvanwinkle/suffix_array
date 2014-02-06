@@ -16,6 +16,7 @@ FLAGS += -pipe
 FLAGS += -pthread
 FLAGS += -fwrapv
 FLAGS += -pedantic
+FLAGS += -ferror-limit=2
 
 CYTHON = cython
 CYTHON_FLAGS = -Wextra

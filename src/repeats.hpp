@@ -16,12 +16,9 @@
 #include <unordered_map>
 #include <map>
 #include <iostream>
-#include "divsufsort.h"
-
+#include "sais.hxx"
 
 class SuffixArray {
-
-private:
 
 
 public:
@@ -93,6 +90,15 @@ namespace std {
 typedef std::unordered_map<int_pair, int_pair> int_tuple_map;
 typedef std::tuple<int, int, int> int_trip;
 
+
+class RepeatFinderResult {
+public:
+    int match_length = 0;
+    int matching = 0;
+    std::vector<int> matches;
+};
+
+
 class RepeatFinder {
 
 private:
@@ -106,10 +112,6 @@ private:
 
 public:
 
-    int match_length = 0;
-    int matching = 0;
-    std::vector<int> matches;
-
     RepeatFinder(std::vector<std::string> &texts, int _min_matching) {
 	min_matching = _min_matching;
 	num_texts = texts.size();
@@ -119,7 +121,6 @@ public:
 	for(auto s : texts) {
 	    text_positions.push_back(combined_texts->length());
 	    combined_texts->append(s);
-	    //combined_texts->append("\x02");
 	}
 	text_positions.push_back(combined_texts->length());
 	const unsigned char* c_str = (const unsigned char*) combined_texts->c_str();
@@ -144,13 +145,15 @@ public:
     }
 
 
-    void rstr() {
+    RepeatFinderResult* rstr() {
 	int i = 0,
 	    top = 0,
 	    previous_lcp_len = 0,
 	    len_lcp = sa->len - 1;
+
+	auto result = new RepeatFinderResult();
 	if(sa->len == 0)
-	    return;
+	    return result;
 	auto lcp = sa->lcp();
 
 	std::stack<int_trip> stack;
@@ -166,7 +169,7 @@ public:
 		stack.push(int_trip(-n, i, end_ix));
 		top -= n;
 	    } else if(n > 0) {
-		top = remove_many(stack, top, n, i);
+		top = remove_many(stack, top, n, i, result);
 	    } else if(top > 0 and end_ix > std::get<2>(stack.top())) {
 		std::get<2>(stack.top()) = end_ix;
 	    }
@@ -175,10 +178,11 @@ public:
 	}
 
 	if(top > 0) {
-	    top = remove_many(stack, top, top, i + 1);
+	    top = remove_many(stack, top, top, i + 1, result);
 	}
 
 	delete lcp;
+	return result;
     }
 
 
@@ -186,7 +190,8 @@ public:
     int remove_many(std::stack<int_trip> &stack,
 		    int top,
 		    int m,
-		    int end_ix) {
+		    int end_ix,
+		    RepeatFinderResult* result) {
 	int last_start_ix = -1,
 	    max_end_ix,
 	    n,
@@ -199,15 +204,7 @@ public:
 	    if(last_start_ix != start_ix) {
 		nb = end_ix - start_ix + 1;
 		if(nb >= min_matching) {
-		    evaluate_match(max_end_ix, nb, top, start_ix);
-		    // int_pair id(max_end_ix, nb);
-		    // auto entry = results.find(id);
-		    // if(entry == results.end()) {
-		    // 	results.insert(int_pair_pair(id, int_pair(top, start_ix)));
-		    // } else if (entry->second.first < top) {
-		    // 	entry->second.first = top;
-		    // 	entry->second.second = start_ix;
-		    // }
+		    evaluate_match(nb, top, start_ix, result);
 		}
 		last_start_ix = start_ix;
 	    }
@@ -222,9 +219,10 @@ public:
     }
 
 
-    void evaluate_match(int offset_end, int nb, int match_len, int start_ix) {
-	if(match_len < 2 or nb < matching or
-	   (nb == matching and match_len <= match_length))
+    void evaluate_match(int nb, int match_len, int start_ix,
+			RepeatFinderResult* result) {
+	if(match_len < 2 or nb < result->matching or
+	   (nb == result->matching and match_len <= result->match_length))
 	    return;
 
 	std::vector<int> sub_results;
@@ -247,11 +245,12 @@ public:
 	}
 
 	if(hit_docs >= min_matching) {
-	    if(hit_docs > matching or
-	       (hit_docs >= matching and match_len > match_length)) {
-		matching = hit_docs;
-		match_length = match_len;
-		matches = sub_results;
+	    if(hit_docs > result->matching or
+	       (hit_docs >= result->matching and
+		match_len > result->match_length)) {
+		result->matching = hit_docs;
+		result->match_length = match_len;
+		result->matches = sub_results;
 	    }
 	}
 
