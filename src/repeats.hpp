@@ -23,18 +23,15 @@ class SuffixArray {
 
 private:
 
-    int numdocs;
-
 
 public:
     int len;
     const unsigned char* s;
     int* suffix_array;
 
-    SuffixArray(const unsigned char* _s, int _s_length, int _numdocs=0) {
+    SuffixArray(const unsigned char* _s, int _s_length) {
 	len = _s_length;
 	s = _s;
-	numdocs = _numdocs;
 	suffix_array = (int *)calloc(len, sizeof(int));
 	divsufsort(s, suffix_array, len);
 
@@ -126,7 +123,7 @@ public:
 	}
 	text_positions.push_back(combined_texts->length());
 	const unsigned char* c_str = (const unsigned char*) combined_texts->c_str();
-	sa = new SuffixArray(c_str, combined_texts->length(), num_texts);
+	sa = new SuffixArray(c_str, combined_texts->length());
     }
 
     ~RepeatFinder() {

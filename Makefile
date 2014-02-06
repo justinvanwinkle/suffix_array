@@ -1,4 +1,6 @@
-OS := $(shell uname)
+
+CC = clang
+CXX = clang++
 
 PYTHON_INCLUDES=$(shell python-config --includes)
 INCLUDE = $(PYTHON_INCLUDES)
@@ -8,36 +10,36 @@ CFLAGS += -fno-common
 CFLAGS += -g
 CFLAGS += -O3
 CFLAGS += -Wall
+CFLAGS += -Wextra
 CFLAGS += -Wstrict-prototypes
 CFLAGS += -pipe
 CFLAGS += -pthread
+CFLAGS += -fwrapv
 
 CYTHON = cython
-
-
 CYTHON_FLAGS = -Wextra
-CC = clang
-CXX = clang++
 
-LFLAGS = -fno-strict-aliasing -Wall -Wextra -pedantic -O3
+LFLAGS = -pedantic
 
-ifeq ($(OS), Darwin)
+ifeq ($(shell uname), Darwin)
 LFLAGS += -bundle
 LFLAGS += -undefined dynamic_lookup
 LFLAGS += -arch x86_64
+LFLAGS += -Wl,-F.
 else
 LFLAGS += -shared
+LFLAGS += -pthread
+LFLAGS += -Wl,-O3
+LFLAGS += -Wl,-Bsymbolic-functions
+LFLAGS += -Wl,-z,relro
 CFLAGS += -fPIC
-CFLAGS += -shared
+CFLAGS += -fno-common
 endif
 
 CPPFLAGS = $(CFLAGS)
 
 CPPFLAGS += -std=c++11
 CPPFLAGS += -stdlib=libc++
-
-
-LINK =  $(LFLAGS) -Wl,-F. src/*.o -o suffix_array.so
 
 .PHONY: test
 
@@ -50,7 +52,7 @@ src/suffix_array.cpp: cython_src/suffix_array.pyx cython_src/suffix_array.pxd
 	cython $(CYTHON_FLAGS) --cplus cython_src/suffix_array.pyx -o src/suffix_array.cpp
 
 suffix_array.so: src/suffix_array.o src/divsufsort.o
-	$(CXX) $(LINK)
+	$(CXX) $(CPPFLAGS) $(LFLAGS) src/suffix_array.o src/divsufsort.o -o suffix_array.so
 
 test: suffix_array.so test/test_basics.py
 	py.test -- test/test_basics.py
