@@ -4,7 +4,7 @@
 from distutils.core import setup, Extension
 from glob import glob
 
-VERSION = '0.9.50'
+VERSION = '0.9.80'
 
 if __name__ == '__main__':
     extensions = [Extension("suffix_array",
