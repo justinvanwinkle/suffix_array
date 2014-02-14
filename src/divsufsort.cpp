@@ -29,9 +29,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef _OPENMP
-# include <omp.h>
-#endif
+
 
 
 /*- Constants -*/
@@ -278,10 +276,10 @@ ss_fixdown(const unsigned char *Td, const int *PA,
            int *SA, int i, int size) {
   int j, k;
   int v;
-  int c, d, e;
+  int c, e;
 
   for(v = SA[i], c = Td[PA[v]]; (j = 2 * i + 1) < size; SA[i] = SA[k], i = k) {
-    d = Td[PA[SA[k = j++]]];
+    int d = Td[PA[SA[k = j++]]];
     if(d < (e = Td[PA[SA[j]]])) { k = j; d = e; }
     if(d <= c) { break; }
   }
@@ -1437,16 +1435,8 @@ sort_typeBstar(const unsigned char *T, int *SA,
                int *bucket_A, int *bucket_B,
                int n) {
   int *PAb, *ISAb, *buf;
-#ifdef _OPENMP
-  int *curbuf;
-  int l;
-#endif
   int i, j, k, t, m, bufsize;
   int c0, c1;
-#ifdef _OPENMP
-  int d0, d1;
-  int tmp;
-#endif
 
   /* Initialize bucket arrays. */
   for(i = 0; i < BUCKET_A_SIZE; ++i) { bucket_A[i] = 0; }
@@ -1498,36 +1488,6 @@ note:
     SA[--BUCKET_BSTAR(c0, c1)] = m - 1;
 
     /* Sort the type B* substrings using sssort. */
-#ifdef _OPENMP
-    tmp = omp_get_max_threads();
-    buf = SA + m, bufsize = (n - (2 * m)) / tmp;
-    c0 = ALPHABET_SIZE - 2, c1 = ALPHABET_SIZE - 1, j = m;
-#pragma omp parallel default(shared) private(curbuf, k, l, d0, d1, tmp)
-    {
-      tmp = omp_get_thread_num();
-      curbuf = buf + tmp * bufsize;
-      k = 0;
-      for(;;) {
-        #pragma omp critical(sssort_lock)
-        {
-          if(0 < (l = j)) {
-            d0 = c0, d1 = c1;
-            do {
-              k = BUCKET_BSTAR(d0, d1);
-              if(--d1 <= d0) {
-                d1 = ALPHABET_SIZE - 1;
-                if(--d0 < 0) { break; }
-              }
-            } while(((l - k) <= 1) && (0 < (l = k)));
-            c0 = d0, c1 = d1, j = k;
-          }
-        }
-        if(l == 0) { break; }
-        sssort(T, PAb, SA + k, SA + l,
-               curbuf, bufsize, 2, n, *(SA + k) == (m - 1));
-      }
-    }
-#else
     buf = SA + m, bufsize = n - (2 * m);
     for(c0 = ALPHABET_SIZE - 2, j = m; 0 < j; --c0) {
       for(c1 = ALPHABET_SIZE - 1; c0 < c1; j = i, --c1) {
@@ -1538,7 +1498,6 @@ note:
         }
       }
     }
-#endif
 
     /* Compute ranks of type B* substrings. */
     for(i = m - 1; 0 <= i; --i) {
@@ -1759,20 +1718,6 @@ binarysearch_lower(const int *A, int size, int value) {
     } while (0 < size);
 
     return i;
-}
-
-int
-binary_cmov(const int *arr, int n, int key) {
-    int min = 0, max = n;
-    while (min < max) {
-	int middle = (min + max) >> 1;
-	asm ("cmpl %3, %2\n\tcmovg %4, %0\n\tcmovle %5, %1"
-	     : "+r" (min),
-	       "+r" (max)
-	     : "r" (key), "g" (arr [middle]),
-	       "g" (middle + 1), "g" (middle));
-    }
-    return min;
 }
 
 int

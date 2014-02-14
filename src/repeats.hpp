@@ -107,10 +107,12 @@ private:
 
     int num_texts;
     std::vector<int> text_positions;
+    std::vector<int> text_lengths;
     std::string* combined_texts;
     int length;
     SuffixArray *sa;
     int min_matching;
+    std::vector<int> sub_results;
     //int_tuple_map results;
 
 public:
@@ -119,10 +121,13 @@ public:
 	min_matching = _min_matching;
 	num_texts = texts.size();
 	text_positions = std::vector<int>();
+	sub_results = std::vector<int>(num_texts);
+
 
 	combined_texts = new std::string;
 	for(auto s : texts) {
 	    text_positions.push_back(combined_texts->length());
+	    text_lengths.push_back(s.length());
 	    combined_texts->append(s);
 	    combined_texts->append("\2");
 	}
@@ -239,12 +244,10 @@ public:
 
     void evaluate_match(int offset_end, int nb, int match_len, int start_ix,
 			RepeatFinderResult* result) {
-	// if(match_len < 2 or nb < result->matching or
-	//    (nb == result->matching and match_len <= result->match_length))
-	//     return;
-	std::vector<int> sub_results;
+	if(match_len < 2 or nb < num_texts)
+	    return;
 	for(int i=0; i < num_texts; ++i)
-	    sub_results.push_back(-1);
+	    sub_results[i] = -1;
 
 	int confusion = 0;
 	for(int o=start_ix; o < start_ix + nb; ++o) {
@@ -257,30 +260,23 @@ public:
 
 	    if(sub_results[id_str] == -1) {
 		sub_results[id_str] = offset;
-	    } else if (sub_results[id_str] > offset) {
-		sub_results[id_str] = offset;
-		++confusion;
 	    } else {
-		++confusion;
+		return;
 	    }
 	}
 
 	int hit_docs = num_texts;
 	for(int match_start : sub_results) {
-	    if(match_start == -1)
-		--hit_docs;
+	    if(match_start == -1) {
+		return;
+	    }
 	}
 
-	if(hit_docs >= min_matching) {
-	    if(hit_docs > result->matching or
-	       (hit_docs >= result->matching and
-		match_len > result->match_length and
-		confusion <= result->confusion) ) {
-		result->confusion = confusion;
-		result->matching = hit_docs;
-		result->match_length = match_len;
-		result->matches = sub_results;
-	    }
+	if(match_len > result->match_length) {
+	    result->confusion = confusion;
+	    result->matching = hit_docs;
+	    result->match_length = match_len;
+	    result->matches = std::vector<int>(sub_results);
 	}
 
     }
