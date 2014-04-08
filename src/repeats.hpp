@@ -166,7 +166,7 @@ public:
 	}
 
 	// Fix lcp for multi strings
-	for(int i=0; i < text_positions.size() - 1; ++i) {
+	for(unsigned int i=0; i < text_positions.size() - 1; ++i) {
 	    int doc_end = text_positions[i + 1] - 1;
 	    int doc_length = doc_end - text_positions[i] + 1;
 	    for(int k=0; k < doc_length; ++k) {
@@ -223,7 +223,7 @@ public:
 	    stack.pop();
 	    if(last_start_ix != start_ix) {
 		nb = end_ix - start_ix + 1;
-		evaluate_match(max_end_ix, nb, top, start_ix, result);
+		evaluate_match(nb, top, start_ix, result);
 		last_start_ix = start_ix;
 	    }
 	    m -= n;
@@ -237,7 +237,7 @@ public:
     }
 
 
-    void evaluate_match(int offset_end, int nb, int match_len, int start_ix,
+    void evaluate_match(int nb, int match_len, int start_ix,
 			RepeatFinderResult* result) {
 	// if(match_len < 2 or nb < result->matching or
 	//    (nb == result->matching and match_len <= result->match_length))

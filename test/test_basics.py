@@ -1,8 +1,8 @@
 from os.path import join as pathjoin
 from glob import glob
 
-#from suffix_array import SuffixArray
-#from suffix_array import make_lcp
+# from suffix_array import SuffixArray
+# from suffix_array import make_lcp
 from suffix_array import rstr_max
 
 
@@ -61,11 +61,14 @@ def _read_files(path):
         content.append(open(fn).read())
     return content
 
+
 def XXX_test_rstr_max_big():
     ss = _read_files('test/data/html')
 
     best = rstr_max(ss)
-    assert best == (27661, (6831, 7495, 6739, 6574, 6932, 6831, 6379, 6794, 7176, 6920, 7007, 6921, 6561, 7742, 6757, 6843, 6508, 6761, 6815))
+    assert best == (27661, (6831, 7495, 6739, 6574, 6932, 6831, 6379, 6794,
+                            7176, 6920, 7007, 6921, 6561, 7742, 6757, 6843,
+                            6508, 6761, 6815))
 
 
 def test_rstr_max_logic():

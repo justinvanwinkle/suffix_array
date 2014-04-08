@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from distutils.core import setup, Extension
-from glob import glob
 
 VERSION = '0.9.81'
 
@@ -12,9 +11,6 @@ if __name__ == '__main__':
                                      'src/divsufsort.cpp'],
                             extra_compile_args=['-std=c++11',
                                                 '-O3'])]
-
-
-
     description = "Fast Suffix Array for Python"
     setup(name='suffix_array',
           version=VERSION,
