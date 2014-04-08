@@ -96,7 +96,6 @@ class RepeatFinderResult {
 public:
     int match_length = 0;
     int matching = 0;
-    int confusion = 999999999;
     std::vector<int> matches;
 };
 
@@ -249,7 +248,6 @@ public:
 	for(int i=0; i < num_texts; ++i)
 	    sub_results[i] = -1;
 
-	int confusion = 0;
 	for(int o=start_ix; o < start_ix + nb; ++o) {
 	    int offset_global = sa->suffix_array[o];
 	    if(o == length) {
@@ -273,7 +271,6 @@ public:
 	}
 
 	if(match_len > result->match_length) {
-	    result->confusion = confusion;
 	    result->matching = hit_docs;
 	    result->match_length = match_len;
 	    result->matches = std::vector<int>(sub_results);
