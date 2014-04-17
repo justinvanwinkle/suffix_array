@@ -45,8 +45,8 @@ cdef extern from "divsufsort.h":
 
 cdef extern from "repeats.hpp":
     cdef cppclass RepeatFinder:
-        RepeatFinder(vector[string], int) except +
-        RepeatFinderResult* rstr()
+        RepeatFinder(vector[string], int) nogil except +
+        RepeatFinderResult* rstr() nogil
 
     cdef cppclass RepeatFinderResult:
         int match_length

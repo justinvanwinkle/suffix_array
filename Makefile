@@ -56,7 +56,7 @@ suffix_array.so: src/suffix_array.o src/divsufsort.o
 	$(CXX) $(LFLAGS) $(INCLUDE) src/suffix_array.o src/divsufsort.o -o suffix_array.so
 
 test: suffix_array.so test/test_basics.py
-	py.test -- test/test_basics.py
+	PYTHONPATH=./ py.test -- test/test_basics.py
 
 a.out: src/test.cpp src/suffix_array.o src/divsufsort.o
 	$(CXX) -std=c++11 -stdlib=libc++ src/divsufsort.cpp src/test.cpp -o a.out

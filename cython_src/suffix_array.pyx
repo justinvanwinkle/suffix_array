@@ -8,11 +8,18 @@ from suffix_array cimport RepeatFinder as RepeatFinder
 cdef class RepeatFinderP:
     cdef RepeatFinder *thisptr
     def __cinit__(self, texts, min_matching=None):
+        cdef vector[string] ctexts = texts
+        cdef int cmin_matching
         if min_matching is None:
-            min_matching = len(texts)
-        self.thisptr = new RepeatFinder(texts, min_matching)
+            cmin_matching = len(texts)
+        else:
+            cmin_matching = min_matching
+        with nogil:
+            self.thisptr = new RepeatFinder(ctexts, cmin_matching)
+
     def __dealloc__(self):
         del self.thisptr
+
     def go_rstr(self):
         result = self.thisptr.rstr()
         try:

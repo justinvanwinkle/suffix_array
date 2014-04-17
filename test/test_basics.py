@@ -46,11 +46,27 @@ from suffix_array import rstr_max
 #     assert LCP(SuffixArray('banana')) == [-1, 1, 3, 0, 0, 2]
 
 
+def test_simple_rstr():
+    l = ['a:',
+         'b:']
+
+    result = rstr_max(l)
+    print result
+    assert result == (1, (1, 1))
+
+    l = [':a',
+         ':b']
+    result = rstr_max(l)
+    print result
+    assert result == (1, (0, 0))
+
+
 def test_rstr_max():
     s1 = '1yyyy0'
     s2 = '2yyyy3yyyy4'
 
     result = rstr_max([s1, s2])
+    print result
     assert result == (4, (1, 1))
 
 
@@ -100,6 +116,7 @@ def test_rstr_max_logic():
          '4157298","dpci":"243-29-1957',
          '3104684","dpci":"243-19-8713']
     length, offsets = rstr_max(l, 3)
+    print length, offsets
     assert length == 10
     assert offsets == tuple([7] * 27)
 
@@ -111,6 +128,7 @@ def test_rstr_max_end():
          'fgfxxx',
          'nonxxx']
     length, offsets = rstr_max(l)
+    print length, offsets
     assert offsets == tuple([3] * 5)
     assert length == 3
 
@@ -122,6 +140,7 @@ def test_rstr_max_begin():
          "xxxfgf",
          "xxxnon"]
     length, offsets = rstr_max(l)
+    print length, offsets
     assert length == 3
     assert offsets == tuple([0] * 5)
 
@@ -133,6 +152,7 @@ def test_rstr_max_wraparound():
          'aaafgfxxxx',
          'aaanonxxxx']
     length, offsets = rstr_max(l)
+    print length, offsets
     assert offsets == (5, 6, 6, 6, 6)
     assert length == 4
 
@@ -165,6 +185,7 @@ def test_found_bug_1():
          "4595830'); ",
          "4592632'); "]
     length, offsets = rstr_max(l)
+    print length, offsets
     assert offsets == tuple([7] * len(l))
     assert length == 4
 
@@ -172,6 +193,7 @@ def test_found_bug_1():
 def test_found_bug_2():
     l = ['bug', '_bug_', '_bug_']
     length, offsets = rstr_max(l)
+    print length, offsets
     assert offsets == (0, 1, 1)
     assert length == 3
 
@@ -219,8 +241,57 @@ def test_found_bug_3():
          '4592632"/>']
 
     length, offsets = rstr_max(l)
+    print length, offsets
     assert offsets == tuple([7] * len(l))
     assert length == 3
+
+
+def test_timestamp():
+    l = ['18:12:44',
+         '18:46:45',
+         '18:12:33',
+         '18:48:07',
+         '23:35:27',
+         '23:36:56',
+         '18:11:57',
+         '23:38:27',
+         '23:44:14',
+         '18:13:08',
+         '18:30:29',
+         '18:13:44',
+         '18:13:27',
+         '23:51:44',
+         '18:10:56',
+         '23:50:55',
+         '23:47:54',
+         '18:11:48',
+         '18:11:21',
+         '22:18:18',
+         '18:48:31',
+         '18:13:56',
+         '23:41:17',
+         '23:35:15',
+         '18:02:59',
+         '18:12:51',
+         '18:13:09',
+         '18:11:41',
+         '18:13:47',
+         '18:31:20',
+         '18:57:28',
+         '18:48:30',
+         '13:22:25',
+         '18:12:12',
+         '23:48:54',
+         '23:45:44',
+         '18:29:23',
+         '18:10:41',
+         '18:13:38',
+         '23:57:25']
+
+    length, offsets = rstr_max(l)
+    print length, offsets
+    assert offsets == tuple([2] * len(l))
+    assert length == 1
 
 if __name__ == '__main__':
     test_found_bug_2()

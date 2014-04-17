@@ -210,7 +210,6 @@ public:
     }
 
 
-
     int remove_many(std::stack<int_trip> &stack,
 		    int top,
 		    int m,
