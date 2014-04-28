@@ -50,4 +50,5 @@ cdef extern from "repeats.hpp":
 
     cdef cppclass RepeatFinderResult:
         int match_length
+        int matching
         vector[int] matches

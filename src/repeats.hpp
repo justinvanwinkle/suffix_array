@@ -242,7 +242,7 @@ public:
 
     void evaluate_match(int nb, int match_len, int start_ix,
 			RepeatFinderResult* result) {
-	if(match_len < 2 or nb < num_texts)
+	if(match_len < 1 or nb < num_texts)
 	    return;
 	for(int i=0; i < num_texts; ++i)
 	    sub_results[i] = -1;
@@ -265,11 +265,11 @@ public:
 	int hit_docs = num_texts;
 	for(int match_start : sub_results) {
 	    if(match_start == -1) {
-		return;
+		--hit_docs;
 	    }
 	}
 
-	if(match_len > result->match_length) {
+	if(match_len > result->match_length and hit_docs >= result->matching) {
 	    result->matching = hit_docs;
 	    result->match_length = match_len;
 	    result->matches = std::vector<int>(sub_results);
