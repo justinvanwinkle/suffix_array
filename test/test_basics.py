@@ -47,18 +47,20 @@ from suffix_array import rstr_max
 
 
 def test_simple_rstr():
-    l = ['a:',
-         'b:']
+    l = ['a::',
+         'b::']
 
     result = rstr_max(l)
     print result
-    assert result == (1, (1, 1))
+    assert result.match_length == 2
+    assert result.matches == (1, 1)
 
-    l = [':a',
-         ':b']
+    l = ['::a',
+         '::b']
     result = rstr_max(l)
     print result
-    assert result == (1, (0, 0))
+    assert result.match_length == 2
+    assert result.matches == (0, 0)
 
 
 def test_rstr_max():
@@ -66,8 +68,9 @@ def test_rstr_max():
     s2 = '2yyyy3yyyy4'
 
     result = rstr_max([s1, s2])
-    print result
-    assert result == (4, (1, 1))
+    assert False
+    assert result.match_length == 0
+    assert len(result.matches) == 0
 
 
 def _read_files(path):
@@ -78,13 +81,14 @@ def _read_files(path):
     return content
 
 
-def XXX_test_rstr_max_big():
+def test_rstr_max_big():
     ss = _read_files('test/data/html')
 
-    best = rstr_max(ss)
-    assert best == (27661, (6831, 7495, 6739, 6574, 6932, 6831, 6379, 6794,
-                            7176, 6920, 7007, 6921, 6561, 7742, 6757, 6843,
-                            6508, 6761, 6815))
+    result = rstr_max(ss)
+    assert result.match_length == 27661
+    assert result.matches == (6831, 7495, 6739, 6574, 6932, 6831, 6379, 6794,
+                              7176, 6920, 7007, 6921, 6561, 7742, 6757, 6843,
+                              6508, 6761, 6815)
 
 
 def test_rstr_max_logic():
@@ -115,11 +119,10 @@ def test_rstr_max_logic():
          '3715382","dpci":"248-73-0576',
          '4157298","dpci":"243-29-1957',
          '3104684","dpci":"243-19-8713']
-    length, offsets = rstr_max(l, 3)
-    print length, offsets
-    assert length == 10
-    assert offsets == tuple([7] * 27)
-
+    result = rstr_max(l, 3)
+    print result
+    assert result.match_length == 10
+    assert result.matches == tuple([7] * 27)
 
 def test_rstr_max_end():
     l = ['abaxxx',
@@ -127,10 +130,10 @@ def test_rstr_max_end():
          'dddxxx',
          'fgfxxx',
          'nonxxx']
-    length, offsets = rstr_max(l)
-    print length, offsets
-    assert offsets == tuple([3] * 5)
-    assert length == 3
+    result = rstr_max(l)
+    print result
+    assert result.matches == tuple([3] * 5)
+    assert result.match_length == 3
 
 
 def test_rstr_max_begin():
@@ -139,10 +142,10 @@ def test_rstr_max_begin():
          "xxxddd",
          "xxxfgf",
          "xxxnon"]
-    length, offsets = rstr_max(l)
-    print length, offsets
-    assert length == 3
-    assert offsets == tuple([0] * 5)
+    result = rstr_max(l)
+    print result
+    assert result.match_length == 3
+    assert result.matches == tuple([0] * 5)
 
 
 def test_rstr_max_wraparound():
@@ -151,10 +154,11 @@ def test_rstr_max_wraparound():
          'aaadddxxxx',
          'aaafgfxxxx',
          'aaanonxxxx']
-    length, offsets = rstr_max(l)
-    print length, offsets
-    assert offsets == (5, 6, 6, 6, 6)
-    assert length == 4
+    result = rstr_max(l)
+    print result
+    assert result.matches == (5, 6, 6, 6, 6)
+    assert result.match_length == 4
+
 
 
 def test_found_bug_1():
@@ -184,18 +188,19 @@ def test_found_bug_1():
          "3827191'); ",
          "4595830'); ",
          "4592632'); "]
-    length, offsets = rstr_max(l)
-    print length, offsets
-    assert offsets == tuple([7] * len(l))
-    assert length == 4
+    result = rstr_max(l)
+    print result
+    assert result.matches == tuple([7] * len(l))
+    assert result.match_length == 4
 
 
 def test_found_bug_2():
     l = ['bug', '_bug_', '_bug_']
-    length, offsets = rstr_max(l)
-    print length, offsets
-    assert offsets == (0, 1, 1)
-    assert length == 3
+    result = rstr_max(l)
+    print result
+    assert result.matches == (0, 1, 1)
+    assert result.match_length == 3
+
 
 
 def test_found_bug_3():
@@ -240,10 +245,10 @@ def test_found_bug_3():
          '4595830"/>',
          '4592632"/>']
 
-    length, offsets = rstr_max(l)
-    print length, offsets
-    assert offsets == tuple([7] * len(l))
-    assert length == 3
+    result = rstr_max(l)
+    print result
+    assert result.matches == tuple([7] * len(l))
+    assert result.match_length == 3
 
 
 def test_timestamp():
@@ -288,10 +293,11 @@ def test_timestamp():
          '18:13:38',
          '23:57:25']
 
-    length, offsets = rstr_max(l)
-    print length, offsets
-    assert offsets == tuple([2] * len(l))
-    assert length == 1
+    result = rstr_max(l)
+    print result
+    assert result.matches == tuple()
+    assert result.match_length == 0
+
 
 if __name__ == '__main__':
     test_found_bug_2()

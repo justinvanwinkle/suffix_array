@@ -44,11 +44,21 @@ cdef extern from "divsufsort.h":
 
 
 cdef extern from "repeats.hpp":
+    cdef double get_entropy(char*, int)
+
+    cdef cppclass SuffixArray:
+        SuffixArray(unsigned char*, int)
+        int len
+        unsigned char* s
+        int* suffix_array
+        vector[int] *lcp()
+
     cdef cppclass RepeatFinder:
-        RepeatFinder(vector[string], int) nogil except +
+        RepeatFinder(vector[string]) nogil except +
         RepeatFinderResult* rstr() nogil
 
     cdef cppclass RepeatFinderResult:
         int match_length
         int matching
+        double t_entropy
         vector[int] matches

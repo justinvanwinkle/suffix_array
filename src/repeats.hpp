@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <math.h>
 #include <tuple>
 #include <stack>
 #include <unordered_map>
@@ -74,21 +75,31 @@ public:
 };
 
 
+inline
+double dlog(int x) {
+    return log(x + 1) - log(x);
+}
+
+
+double lcp_entropy(std::vector<int> *lcp) {
+    std::sort(lcp->begin(), lcp->end());
+
+    double total = 0;
+    for(unsigned long i=0; i < lcp->size(); ++i)
+	total += dlog(lcp->at(i) + 1);
+
+    return total;
+}
+
+
+double get_entropy(char *bytes, int length) {
+    return 0.0;
+}
+
+
 typedef std::pair<int, int> int_pair;
 typedef std::pair<int_pair, int_pair> int_pair_pair;
 
-namespace std {
-    template <>
-    struct hash<int_pair> // denotes a specialization of hash<...>
-    {
-	size_t operator() (const int_pair& t) const
-	    {
-		return hash<int>()(t.first) ^ hash<int>()(t.second);
-	    }
-    };
-}
-
-typedef std::unordered_map<int_pair, int_pair> int_tuple_map;
 typedef std::tuple<int, int, int> int_trip;
 
 
@@ -96,6 +107,7 @@ class RepeatFinderResult {
 public:
     int match_length = 0;
     int matching = 0;
+    double t_entropy = 0.0;
     std::vector<int> matches;
 };
 
@@ -110,14 +122,12 @@ private:
     std::string* combined_texts;
     int length;
     SuffixArray *sa;
-    int min_matching;
     std::vector<int> sub_results;
     //int_tuple_map results;
 
 public:
 
-    RepeatFinder(std::vector<std::string> &texts, int _min_matching) {
-	min_matching = _min_matching;
+    RepeatFinder(std::vector<std::string> &texts) {
 	num_texts = texts.size();
 	text_positions = std::vector<int>();
 	sub_results = std::vector<int>(num_texts);
@@ -205,6 +215,7 @@ public:
 	    top = remove_many(stack, top, top, i + 1, result);
 	}
 
+	result->t_entropy = lcp_entropy(lcp);
 	delete lcp;
 	return result;
     }
@@ -242,11 +253,12 @@ public:
 
     void evaluate_match(int nb, int match_len, int start_ix,
 			RepeatFinderResult* result) {
-	if(match_len < 1 or nb < num_texts)
+	if(match_len < 1)
 	    return;
 	for(int i=0; i < num_texts; ++i)
 	    sub_results[i] = -1;
 
+	int hit_docs = 0;
 	for(int o=start_ix; o < start_ix + nb; ++o) {
 	    int offset_global = sa->suffix_array[o];
 	    if(o == length) {
@@ -257,19 +269,21 @@ public:
 
 	    if(sub_results[id_str] == -1) {
 		sub_results[id_str] = offset;
+		++hit_docs;
 	    } else {
 		return;
 	    }
 	}
 
-	int hit_docs = num_texts;
-	for(int match_start : sub_results) {
-	    if(match_start == -1) {
-		--hit_docs;
-	    }
+	for(int i=0; i < num_texts; ++i) {
+	    if(sub_results[i] == -1)
+		return;
 	}
 
-	if(match_len > result->match_length and hit_docs >= result->matching) {
+
+	if(hit_docs > result->matching or
+	   (match_len > result->match_length and
+	    hit_docs >= result->matching)) {
 	    result->matching = hit_docs;
 	    result->match_length = match_len;
 	    result->matches = std::vector<int>(sub_results);

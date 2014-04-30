@@ -17,6 +17,7 @@ FLAGS += -pthread
 FLAGS += -fwrapv
 FLAGS += -pedantic
 FLAGS += -ferror-limit=2
+FLAGS += -MMD
 #FLAGS += -fstandalone-debug
 
 CYTHON = cython
@@ -40,20 +41,32 @@ endif
 CPPFLAGS = $(FLAGS)
 CPPFLAGS += -std=c++11
 CPPFLAGS += -stdlib=libc++
-LFLAGS += $(CPPFLAGS)
+
+SRCS = src/flott/flott.c src/flott/flott_simple.c
+
+%.d : %.c
+	$(CC) $(CCFLAGS) -MF"$@" -MG -MM -MP -MT"$@" -MT"$(<:.c=.o)" "$<"
+
+DEPS = $(SRCS:.c=.d)
+
+include $(DEPS)
 
 .PHONY: test
 
 default: suffix_array.so
 
-src/%.o: src/%.cpp src/*.hpp
+src/flott/%.o: src/flott/%.c
+	$(CC) $(FLAGS) -c -o src/flott_all.o $(FLOTT_SRC)
+
+src/%.o: src/%.cpp
 	$(CXX) $(CPPFLAGS) $(INCLUDE) -c $< -o $@
 
 src/suffix_array.cpp: cython_src/suffix_array.pyx cython_src/suffix_array.pxd
 	cython $(CYTHON_FLAGS) --cplus cython_src/suffix_array.pyx -o src/suffix_array.cpp
 
-suffix_array.so: src/suffix_array.o src/divsufsort.o
-	$(CXX) $(LFLAGS) $(INCLUDE) src/suffix_array.o src/divsufsort.o -o suffix_array.so
+suffix_array.so: src/suffix_array.o src/divsufsort.o src/flott/f%.o
+	echo
+	$(CXX) $(CPPFLAGS) $(LFLAGS) $(INCLUDE) src/suffix_array.o src/divsufsort.o -o suffix_array.so
 
 test: suffix_array.so test/test_basics.py
 	PYTHONPATH=./ py.test -- test/test_basics.py
@@ -65,7 +78,7 @@ install: suffix_array.so
 	python setup.py install
 
 clean:
-	rm -rf suffix_array.so src/*.o build/ src/suffix_array.cpp
+	rm -rf suffix_array.so src/*.o src/flott/*.o build/ src/suffix_array.cpp
 
 check-syntax:
 	$(CXX) ${CPPFLAGS} -fsyntax-only -fno-color-diagnostics -Wall -Wextra $(INCLUDE) -pedantic -c ${CHK_SOURCES}
