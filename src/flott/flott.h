@@ -54,10 +54,32 @@ extern "C" {
  */
 typedef uint32_t flott_uint;
 
-typedef enum flott_vlevel flott_vlevel;
-typedef enum flott_symbol_type flott_symbol_type;
-typedef enum flott_storage_type flott_storage_type;
-typedef enum flott_mode flott_mode;
+typedef enum flott_vlevel
+{
+  FLOTT_VL_QUIET    = 0,
+  FLOTT_VL_FATAL    = 1,
+  FLOTT_VL_INFO     = 2,
+  FLOTT_VL_LOG      = 3,
+  FLOTT_VL_WARN     = 4,
+  FLOTT_VL_DEBUG    = 5,
+} flott_vlevel;
+
+typedef enum flott_symbol_type
+{
+  FLOTT_SYMBOL_BIT      =   2,  ///< 1-bit symbol length S={0,1}
+  FLOTT_SYMBOL_BYTE_DNA =   4,  ///< 8-bit symbol (DNA)  S={A, C, G, T}
+  FLOTT_SYMBOL_BYTE     = 256,  ///< 8-bit symbol length S={0, .., 255}
+} flott_symbol_type;
+
+typedef enum flott_storage_type
+{
+  FLOTT_DEV_MEM          = 1,       ///< read from static memory
+  FLOTT_DEV_DEALLOC_MEM  = 1 << 2,  ///< read/write from/to dynamic memory
+  FLOTT_DEV_FILE_TO_MEM  = 1 << 3,  ///< read file into memory
+  FLOTT_DEV_FILE         = 1 << 4,  ///< read/write from/to file
+  FLOTT_DEV_STDOUT       = 1 << 5,  ///< standard out
+  FLOTT_DEV_STOP_SYMBOL  = 1 << 6   ///< stop symbol (future use -- not implemented yet)
+} flott_storage_type;
 
 typedef struct flott_token flott_token;
 typedef struct flott_match_list flott_match_list;
@@ -87,32 +109,11 @@ typedef void (flott_step_handler) (flott_object *, const flott_uint,
 /**
  * verbosity levels
  */
-enum flott_vlevel
-{
-  FLOTT_VL_QUIET    = 0,
-  FLOTT_VL_FATAL    = 1,
-  FLOTT_VL_INFO     = 2,
-  FLOTT_VL_LOG      = 3,
-  FLOTT_VL_WARN     = 4,
-  FLOTT_VL_DEBUG    = 5,
-};
 
-enum flott_symbol_type
-{
-  FLOTT_SYMBOL_BIT      =   2,  ///< 1-bit symbol length S={0,1}
-  FLOTT_SYMBOL_BYTE_DNA =   4,  ///< 8-bit symbol (DNA)  S={A, C, G, T}
-  FLOTT_SYMBOL_BYTE     = 256,  ///< 8-bit symbol length S={0, .., 255}
-};
 
-enum flott_storage_type
-{
-  FLOTT_DEV_MEM          = 1,       ///< read from static memory
-  FLOTT_DEV_DEALLOC_MEM  = 1 << 2,  ///< read/write from/to dynamic memory
-  FLOTT_DEV_FILE_TO_MEM  = 1 << 3,  ///< read file into memory
-  FLOTT_DEV_FILE         = 1 << 4,  ///< read/write from/to file
-  FLOTT_DEV_STDOUT       = 1 << 5,  ///< standard out
-  FLOTT_DEV_STOP_SYMBOL  = 1 << 6   ///< stop symbol (future use -- not implemented yet)
-};
+
+
+
 
 struct flott_token
 {
@@ -222,7 +223,7 @@ struct flott_object
     verbosity_level;        ///< verbosity level [0 - 5] (default = 0)
   flott_uint alphabet_size; ///< actual unique symbols found in input.
   void *user;               ///< pointer to custom user application data
-  flott_private private;    ///< private object data (do not touch please)
+  flott_private _private;    ///< private object data (do not touch please)
 };
 
 flott_object *flott_create_instance (size_t input_source_count);

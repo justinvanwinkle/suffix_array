@@ -17,7 +17,12 @@
 #include <unordered_map>
 #include <map>
 #include <iostream>
+#include <string.h>
 #include "divsufsort.h"
+
+extern "C" {
+#include "flott/flott.h"
+}
 
 class SuffixArray {
 
@@ -81,19 +86,17 @@ double dlog(int x) {
 }
 
 
-double lcp_entropy(std::vector<int> *lcp) {
-    std::sort(lcp->begin(), lcp->end());
-
-    double total = 0;
-    for(unsigned long i=0; i < lcp->size(); ++i)
-	total += dlog(lcp->at(i) + 1);
-
-    return total;
-}
-
-
-double get_entropy(char *bytes, int length) {
-    return 0.0;
+flott_result get_entropy(char *bytes, size_t length) {
+    flott_object *op = flott_create_instance(1);
+    flott_source *source = &(op->input.source[0]);
+    source->storage_type = FLOTT_DEV_MEM;
+    source->length = length;
+    source->data.bytes = bytes;
+    flott_initialize(op);
+    flott_t_transform(op);
+    flott_result result = (op->result);
+    flott_destroy(op);
+    return result;
 }
 
 
@@ -107,7 +110,6 @@ class RepeatFinderResult {
 public:
     int match_length = 0;
     int matching = 0;
-    double t_entropy = 0.0;
     std::vector<int> matches;
 };
 
@@ -215,7 +217,6 @@ public:
 	    top = remove_many(stack, top, top, i + 1, result);
 	}
 
-	result->t_entropy = lcp_entropy(lcp);
 	delete lcp;
 	return result;
     }

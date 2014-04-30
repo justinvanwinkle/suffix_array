@@ -219,9 +219,9 @@ flott_initialize_input (flott_object *op)
 {
   int ret_val = FLOTT_SUCCESS;
 
-  void *bp = op->private.base_pointer;
+  void *bp = op->_private.base_pointer;
   flott_input input = op->input;
-  flott_uint tl_length = op->private.token_list.length;
+  flott_uint tl_length = op->_private.token_list.length;
 
   size_t token_offset = 1;
   flott_token *tl_bp = (flott_token *) bp;
@@ -371,22 +371,22 @@ flott_initialize_input (flott_object *op)
     }
 
   /* set seek position for 'flott_input_write' */
-  op->private.input_sequence_member = i - 1;
+  op->_private.input_sequence_member = i - 1;
 
 
   /* remove last symbol from input if no appended terminal character is used */
-  if (op->input.append_termchar == false && op->private.token_list.length > 0)
+  if (op->input.append_termchar == false && op->_private.token_list.length > 0)
     {
       tl_token = ((flott_token*) bp) + token_offset - 1;
       ml_header = ((flott_match_list*) bp) + tl_token->uid;
       (ml_header->length)--;
       ml_header->last_match = tl_token->previous_match;
-      op->private.token_list.second_last_token = (flott_uint) token_offset - 2;
-      (op->private.token_list.length)--;
+      op->_private.token_list.second_last_token = (flott_uint) token_offset - 2;
+      (op->_private.token_list.length)--;
     }
   else
     {
-      op->private.token_list.second_last_token = (flott_uint) token_offset - 1;
+      op->_private.token_list.second_last_token = (flott_uint) token_offset - 1;
     }
 
   /* update alphabet size with the actual number of unique symbols in input */
@@ -416,10 +416,10 @@ flott_initialize (flott_object *op)
 
   if (op != NULL && op->input.source != NULL)
     {
-      bp = op->private.base_pointer;
+      bp = op->_private.base_pointer;
 
       /* handy scaling factor if t-information/t-entropy are measured in nats */
-       op->private.ln2 = log (2.0);
+       op->_private.ln2 = log (2.0);
 
       /* sum up the total length of all input sources in bytes */
       input_length = 0;
@@ -489,7 +489,7 @@ flott_initialize (flott_object *op)
           /* allocate memory for t-decomposition data structures */
           allocation_length = tl_length + FLOTT_SYMBOL_BYTE + 3;
 
-          if (bp != NULL && (op->private.allocation_length < allocation_length))
+          if (bp != NULL && (op->_private.allocation_length < allocation_length))
             {
               free (bp);
               bp = NULL;
@@ -497,16 +497,16 @@ flott_initialize (flott_object *op)
 
           if (bp == NULL)
             {
-              op->private.allocation_length = 0;
+              op->_private.allocation_length = 0;
               bp = malloc (allocation_length * sizeof (flott_token));
-              op->private.base_pointer = bp;
+              op->_private.base_pointer = bp;
             }
 
           if (bp != NULL)
             {
-              if (op->private.allocation_length == 0)
+              if (op->_private.allocation_length == 0)
                 {
-                  op->private.allocation_length = allocation_length;
+                  op->_private.allocation_length = allocation_length;
                 }
 
               /* initialize token list head and tail nodes */
@@ -518,8 +518,8 @@ flott_initialize (flott_object *op)
               memset (tl_token, 0, sizeof (flott_token));
               tl_token->previous_token = tl_length;
 
-              op->private.token_list.first_token = 1;
-              op->private.token_list.length = tl_length;
+              op->_private.token_list.first_token = 1;
+              op->_private.token_list.length = tl_length;
               op->input.length = tl_length;
 
               /* load input(s) and initialize t-transform data structures */
@@ -553,8 +553,8 @@ void
 flott_input_write (flott_object *op, size_t start_offset,
                    size_t count, FILE *output_handle)
 {
-  flott_private *private = &(op->private);
-  size_t *seq_member = &(private->input_sequence_member);
+  flott_private *_private = &(op->_private);
+  size_t *seq_member = &(_private->input_sequence_member);
   FILE *source_handle;
   flott_source *input_source;
 
@@ -613,7 +613,7 @@ flott_input_write (flott_object *op, size_t start_offset,
               source_handle = fopen (input_source->path, "rb");
               input_source->data.handle = source_handle;
             }
-          data = private->output_buffer;
+          data = _private->output_buffer;
           /* set file offset from which to read */
           /*TODO check if handle NULL, error out */
           fseek (source_handle, data_offset, SEEK_SET);
@@ -667,11 +667,11 @@ flott_input_write (flott_object *op, size_t start_offset,
 void
 flott_t_transform_callback (flott_object *op)
 {
-  void *bp = op->private.base_pointer;
+  void *bp = op->_private.base_pointer;
   double t_complexity = 0.0; ///< holds sum resulting in t-complexity
   int terminate = false;
 
-  flott_token_list *tl_header = &(op->private.token_list);
+  flott_token_list *tl_header = &(op->_private.token_list);
   flott_uint tl_length = tl_header->length;
 
   flott_token *tl_bp = (flott_token *) bp;
@@ -937,10 +937,10 @@ flott_t_transform_callback (flott_object *op)
 void
 flott_t_transform_simple (flott_object *op)
 {
-  void *bp = op->private.base_pointer;
+  void *bp = op->_private.base_pointer;
   double t_complexity = 0.0; ///< holds sum resulting in t-complexity
 
-  flott_token_list *tl_header = &(op->private.token_list);
+  flott_token_list *tl_header = &(op->_private.token_list);
   flott_uint tl_length = tl_header->length;
 
   flott_token *tl_bp = (flott_token *) bp;
@@ -1187,7 +1187,7 @@ flott_inverse_t_transform (flott_object *op)
 }
 
 int
-flott_set_status (flott_object *op, int code, const int vlevel, ...)
+flott_set_status (flott_object *op, int code, const flott_vlevel vlevel, ...)
 {
   va_list args;
   va_list propagate_args;
@@ -1288,10 +1288,10 @@ flott_deinitialize (flott_object *op)
   flott_source *source;
   if (op != NULL)
     {
-      if (op->private.base_pointer != NULL)
+      if (op->_private.base_pointer != NULL)
       {
-        free (op->private.base_pointer);
-        op->private.base_pointer = NULL;
+        free (op->_private.base_pointer);
+        op->_private.base_pointer = NULL;
       }
 
       if (op->input.source != NULL)
@@ -1352,7 +1352,7 @@ flott_destroy (flott_object *op)
               free (op->input.sequence.member);
             }
         }
-      if (op->private.base_pointer != NULL) free (op->private.base_pointer);
+      if (op->_private.base_pointer != NULL) free (op->_private.base_pointer);
 
       free (op);
       op = NULL;

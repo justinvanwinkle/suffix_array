@@ -46,7 +46,7 @@ cdef class RepeatFinderP:
                     matches.append(None)
                 else:
                     matches.append(match)
-            return (result.match_length, tuple(matches), result.t_entropy)
+            return (result.match_length, tuple(matches))
         finally:
             del result
 
@@ -59,4 +59,8 @@ def rstr_max(ss, min_matching=None):
 
 
 def entropy(s):
-    return c_entropy(s, len(s))
+    result = c_entropy(s, len(s))
+    return {'t_entropy': result.t_entropy,
+            't_information': result.t_information,
+            't_complexity': result.t_complexity,
+            'levels': result.levels}
