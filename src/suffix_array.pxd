@@ -42,25 +42,24 @@ cdef extern from "divsufsort.h":
                             int c,
                             int *left) nogil
 
-cdef extern from "flott/flott.h":
-    struct flott_result:
-        unsigned int levels
-        double t_complexity
-        double t_information
-        double t_entropy
+# cdef extern from "flott/flott.h":
+#     struct flott_result:
+#         unsigned int levels
+#         double t_complexity
+#         double t_information
+#         double t_entropy
 
 
 cdef extern from "repeats.hpp":
-    cdef flott_result get_entropy(char*, int)
-    cdef double nti_distance(char*, int, char*, int)
-    cdef double ntc_distance(char*, int, char*, int)
+    # cdef flott_result get_entropy(char*, int)
+    # cdef double nti_distance(char*, int, char*, int)
+    # cdef double ntc_distance(char*, int, char*, int)
 
     cdef cppclass SuffixArray:
-        SuffixArray(unsigned char*, int)
-        int len
-        unsigned char* s
-        int* suffix_array
-        vector[int] *lcp()
+        SuffixArray(string)
+        vector[int] suffix_array
+        vector[int] lcp
+        vector[int] rank
 
     cdef cppclass RepeatFinder:
         RepeatFinder(vector[string]) nogil except +

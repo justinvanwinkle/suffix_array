@@ -10,9 +10,10 @@ from Cython.Build import cythonize
 VERSION = '0.9.81'
 
 if __name__ == '__main__':
-    src_files = (['src/suffix_array.pyx',
-                  'src/divsufsort.cpp'] +
-                 glob('src/flott/*.cpp'))
+    src_files = ['src/suffix_array.pyx',
+                 'src/divsufsort.cpp',
+                 'src/repeats.cpp']
+
     extensions = [Extension("suffix_array",
                             sources=src_files,
                             extra_compile_args=['-std=c++11',

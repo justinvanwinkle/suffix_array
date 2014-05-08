@@ -68,7 +68,6 @@ def test_rstr_max():
     s2 = '2yyyy3yyyy4'
 
     result = rstr_max([s1, s2])
-    assert False
     assert result.match_length == 0
     assert len(result.matches) == 0
 

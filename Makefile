@@ -8,19 +8,21 @@ INCLUDE = $(PYTHON_INCLUDES)
 FLAGS = -fno-strict-aliasing
 FLAGS += -fno-common
 FLAGS += -g
-FLAGS += -O2
+FLAGS += -O0
 FLAGS += -Wall
 FLAGS += -Wextra
 FLAGS += -Wstrict-prototypes
 FLAGS += -pipe
 #FLAGS += -pthread
-FLAGS += -fwrapv
+#FLAGS += -fwrapv
 FLAGS += -pedantic
 FLAGS += -ferror-limit=2
 #FLAGS += -fstandalone-debug
 
 CYTHON = cython
 CYTHON_FLAGS = -Wextra
+CYTHON_FLAGS += --gdb
+CYTHON_FLAGS += --cplus
 
 ifeq ($(shell uname), Darwin)
 LFLAGS += -bundle
@@ -34,32 +36,32 @@ LFLAGS += -shared
 # LFLAGS += -Wl,-Bsymbolic-functions
 # LFLAGS += -Wl,-z,relro
 FLAGS += -fPIC
-FLAGS += -fno-common
 endif
 
 CPPFLAGS = $(FLAGS)
 CPPFLAGS += -std=c++11
 CPPFLAGS += -stdlib=libc++
 CPPFLAGS += -Wc++11-long-long
+CPPFLAGS += -fno-omit-frame-pointer
 
 
-FLOTT_SRCS = $(wildcard src/flott/*.cpp)
-FLOTT_OBJECTS = $(FLOTT_SRCS:.cpp=.o)
+# FLOTT_SRCS = $(wildcard src/flott/*.cpp)
+# FLOTT_OBJECTS = $(FLOTT_SRCS:.cpp=.o)
 
 .PHONY: test
 
 default: suffix_array.so
 
-src/flott/%.o: src/flott/%.cpp
-	$(CC) $(CPPFLAGS) -c $< -o $@
+# src/flott/%.o: src/flott/%.cpp
+# 	$(CC) $(CPPFLAGS) -c $< -o $@
 
 src/%.o: src/%.cpp
 	$(CXX) $(CPPFLAGS) $(INCLUDE) -c $< -o $@
 
 src/suffix_array.cpp: src/suffix_array.pyx src/suffix_array.pxd
-	cython $(CYTHON_FLAGS) --cplus $< -o $@
+	cython $(CYTHON_FLAGS) $< -o $@
 
-suffix_array.so: src/suffix_array.o src/divsufsort.o $(FLOTT_OBJECTS)
+suffix_array.so: src/suffix_array.o src/repeats.o src/divsufsort.o
 	$(CXX) $(CPPFLAGS) $(LFLAGS) $(INCLUDE) $^ -o $@
 
 test: suffix_array.so test/test_basics.py
@@ -69,4 +71,4 @@ install: suffix_array.so
 	python setup.py install
 
 clean:
-	rm -rf suffix_array.so src/*.o src/flott/*.o build/ src/suffix_array.cpp
+	rm -rf suffix_array.so src/*.o build/ src/suffix_array.cpp
