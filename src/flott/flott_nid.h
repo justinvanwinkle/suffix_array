@@ -19,10 +19,6 @@
 #ifndef _FLOTT_NID_H_
 #define _FLOTT_NID_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct flott_user_stop_sequence flott_user_stop_sequence;
 
 struct flott_user_stop_sequence
@@ -33,9 +29,5 @@ struct flott_user_stop_sequence
 
 int flott_nti_dist (flott_object *op, double *nti_dist);
 int flott_ntc_dist (flott_object *op, double *ntc_dist);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _FLOTT_NID_H_ */

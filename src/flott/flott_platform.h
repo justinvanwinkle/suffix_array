@@ -19,10 +19,6 @@
 #ifndef _FLOTT_PLATFORM_H_
 #define _FLOTT_PLATFORM_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifdef _MSC_VER
   /* this section of 'defines' might apply to other non-C99 compilers as well */
   #include <windows.h>
@@ -57,9 +53,5 @@ extern "C" {
   #define FLOTT_PRINTF_T_SIZE_T     "zu"
 #endif /* _MSC_VER */
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _FLOTT_PATFORM_H_ */

@@ -52,6 +52,8 @@ cdef extern from "flott/flott.h":
 
 cdef extern from "repeats.hpp":
     cdef flott_result get_entropy(char*, int)
+    cdef double nti_distance(char*, int, char*, int)
+    cdef double ntc_distance(char*, int, char*, int)
 
     cdef cppclass SuffixArray:
         SuffixArray(unsigned char*, int)

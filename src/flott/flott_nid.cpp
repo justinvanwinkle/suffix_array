@@ -15,6 +15,13 @@
  * limitations under the License.
  *
  */
+/**
+ * Local Variables:
+ * flycheck-clang-language-standard: "c++11"
+ * flycheck-clang-include-path: ("../include")
+ * flycheck-clang-warnings: ("all" "extra")
+ * End:
+ */
 
 #include <stdlib.h>
 #include <math.h>
@@ -191,4 +198,3 @@ flott_ntc_dist (flott_object *op, double *ntc_dist)
   op->user = user;
   return ret_val;
 }
-

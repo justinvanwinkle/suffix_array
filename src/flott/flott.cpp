@@ -16,6 +16,14 @@
  *
  */
 
+/**
+ * Local Variables:
+ * flycheck-clang-language-standard: "c++11"
+ * flycheck-clang-include-path: ("../include")
+ * flycheck-clang-warnings: ("all" "extra")
+ * End:
+ */
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -563,7 +571,7 @@ flott_input_write (flott_object *op, size_t start_offset,
 
   /* determine the input source in which the copy patterns starts */
   seq_length = *seq_member;
-  while (*seq_member >= 0)
+  while (*seq_member != 0)
     {
       index = op->input.sequence.member[*seq_member];
       input_source = &(op->input.source[index]);
@@ -1193,8 +1201,8 @@ flott_set_status (flott_object *op, int code, const flott_vlevel vlevel, ...)
   va_list propagate_args;
   int propagate = true;
   FILE* outdev = stdout;
-  char* format;
-  char* message_type = "";
+  char* format = nullptr;
+  const char* message_type = "";
 
   if (op != NULL)
     {

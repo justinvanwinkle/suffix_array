@@ -19,10 +19,6 @@
 #ifndef _FLOTT_MATH_H_
 #define _FLOTT_MATH_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <math.h>
 #include "flott.h"
 #include "flott_config.h"
@@ -70,11 +66,6 @@ flott_log2 (const size_t x)
 #endif /* _MSC_VER */
 #endif /* FLOTT_USE_LOG2_LUT */
 
-#ifdef __cplusplus
-}
-#endif
-
 double flott_get_t_information (double t_complexity);
 
 #endif /* _FLOTT_MATH_H_ */
-

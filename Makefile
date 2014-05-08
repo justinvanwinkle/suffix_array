@@ -56,8 +56,8 @@ src/flott/%.o: src/flott/%.cpp
 src/%.o: src/%.cpp
 	$(CXX) $(CPPFLAGS) $(INCLUDE) -c $< -o $@
 
-src/suffix_array.cpp: cython_src/suffix_array.pyx cython_src/suffix_array.pxd
-	cython $(CYTHON_FLAGS) --cplus cython_src/suffix_array.pyx -o $@
+src/suffix_array.cpp: src/suffix_array.pyx src/suffix_array.pxd
+	cython $(CYTHON_FLAGS) --cplus $< -o $@
 
 suffix_array.so: src/suffix_array.o src/divsufsort.o $(FLOTT_OBJECTS)
 	$(CXX) $(CPPFLAGS) $(LFLAGS) $(INCLUDE) $^ -o $@

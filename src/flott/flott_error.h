@@ -19,10 +19,6 @@
 #ifndef _FLOTT_ERROR_H_
 #define _FLOTT_ERROR_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define FLOTT_MAX_ERROR_CODES   21
 
 //typedef enum flott_error_codes flott_error_codes;
@@ -48,9 +44,5 @@ enum flott_error_codes
   FLOTT_ERR_NULL_POINTER      = -19,
   FLOTT_ERR_NID_NUM_INPUTS    = -20
 };
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _FLOTT_ERROR_H_ */

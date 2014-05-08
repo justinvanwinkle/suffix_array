@@ -4,12 +4,14 @@ _THIS_FIXES_CYTHON_BUG = 'wtf'
 
 from suffix_array cimport RepeatFinder as RepeatFinder
 from suffix_array cimport get_entropy as c_entropy
+from suffix_array cimport nti_distance as c_nti_distance
+from suffix_array cimport ntc_distance as c_ntc_distance
 from suffix_array cimport SuffixArray
 
 
 cpdef make_sa_lcp(s):
     cdef SuffixArray* c_sa
-    cdef vector[int] *c_lcp
+    cdef vector[int] *c_lcp = NULL
 
     try:
         c_sa = new SuffixArray(s, len(s))
@@ -64,3 +66,10 @@ def entropy(s):
             't_information': result.t_information,
             't_complexity': result.t_complexity,
             'levels': result.levels}
+
+
+def nti_distance(s1, s2):
+    return c_nti_distance(s1, len(s1), s2, len(s2))
+
+def ntc_distance(s1, s2):
+    return c_ntc_distance(s1, len(s1), s2, len(s2))

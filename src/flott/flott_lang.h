@@ -19,10 +19,6 @@
 #ifndef _FLOTT_LANG_H_
 #define _FLOTT_LANG_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define FLOTT_MAX_MESSAGE_CODES   2
 
 /**
@@ -40,9 +36,5 @@ enum flott_msg_codes
 extern const char* flott_errmsg_lut_G[];
 extern const char* flott_msg_lut_G[];
 extern const char* flott_msg_help_G;
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _FLOTT_LANG_H_ */

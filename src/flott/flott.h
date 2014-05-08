@@ -19,10 +19,6 @@
 #ifndef _FLOTT_H_
 #define _FLOTT_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
 
 #include "flott_platform.h"
@@ -234,13 +230,9 @@ void flott_input_write (flott_object *op, size_t cp_start_offset,
                         size_t cp_length, FILE *output_handle);
 void flott_deinitialize (flott_object *op);
 void flott_destroy (flott_object *op);
-int flott_set_status (flott_object *op, int code, const int level, ...);
+int flott_set_status (flott_object *op, int code, const flott_vlevel level, ...);
 
 /* provide normalized t-information distance prototypes */
 #include "flott_nid.h"
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _FLOTT_H_ */

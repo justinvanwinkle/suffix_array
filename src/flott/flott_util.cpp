@@ -20,19 +20,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-
+#include <unistd.h>
 #include "flott_platform.h"
-
-#ifdef _MSC_VER
-  #include <sys/types.h>
-  /* stat is buggy in msvc 2008, use stat64 */
-  #define stat _stat64
-  #ifndef S_ISREG
-    #define S_ISREG(mode) (((mode) & _S_IFMT) == _S_IFREG)
-  #endif
-#else
-  #include <unistd.h>  
-#endif
 
 size_t
 flott_get_file_size (char *filename)

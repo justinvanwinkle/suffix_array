@@ -19,10 +19,6 @@
 #ifndef _FLOTT_CONFIG_H_
 #define _FLOTT_CONFIG_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define FLOTT_TERMINAL_APPLICATION
 #define FLOTT_USE_LOG2_LUT
 
@@ -30,10 +26,6 @@ extern "C" {
   #define FLOTT_INLINE __inline
 #else
   #define FLOTT_INLINE inline
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif /* _FLOTT_CONFIG_H_ */

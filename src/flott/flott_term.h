@@ -19,10 +19,6 @@
 #ifndef _FLOTT_CONSOLE_H_
 #define _FLOTT_CONSOLE_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "flott_config.h"
 
 typedef struct flott_getopt_object flott_getopt_object;
@@ -43,9 +39,5 @@ struct flott_getopt_object
 flott_getopt_object * flott_init_options (flott_getopt_object *op, char *tpl,
                                           char **argv, int argc);
 int flott_get_options (flott_getopt_object *op);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _FLOTT_CONSOLE_H_ */
