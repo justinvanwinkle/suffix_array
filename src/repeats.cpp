@@ -8,11 +8,10 @@
  */
 
 #include "repeats.hpp"
-#define _GLIBCXX_DEBUG
 
 using namespace std;
 
-SuffixArray::SuffixArray(string s) {
+SuffixArray::SuffixArray(string &s, vector<int> text_positions) {
     int len = s.size();
 
     suffix_array.resize(s.size(), 0);
@@ -44,6 +43,24 @@ SuffixArray::SuffixArray(string s) {
 	    l = 0;
 	}
     }
+
+    if(not text_positions.empty()) {
+	// Fix lcp for multi strings
+	for(unsigned int i=0; i < text_positions.size() - 1; ++i) {
+	    int doc_end = text_positions[i + 1] - 1;
+	    int doc_length = doc_end - text_positions[i] + 1;
+	    for(int k=0; k < doc_length; ++k) {
+		int lcp_value = lcp[rank[doc_end - k]];
+		if(lcp_value > k) {
+		    lcp[rank[doc_end - k]] = k;
+		}
+	    }
+	}
+    }
+
+    for(unsigned int ix=0; ix < 10; ix++)
+	cout << lcp[ix] << ", ";
+    cout << endl;
 }
 
 SuffixArray::~SuffixArray() {
@@ -60,12 +77,11 @@ RepeatFinder::RepeatFinder(std::vector<std::string> texts) {
 
     for(auto s : texts) {
 	text_positions.push_back(combined_texts.length());
-	text_lengths.push_back(s.length());
 	combined_texts.append(s);
 	combined_texts.append("\2");
     }
     text_positions.push_back(combined_texts.length());
-    sa = new SuffixArray(combined_texts);
+    sa = new SuffixArray(combined_texts, text_positions);
 }
 
 RepeatFinder::~RepeatFinder() {
@@ -90,27 +106,15 @@ RepeatFinderResult* RepeatFinder::rstr() {
 	previous_lcp_len = 0;
 
     auto result = new RepeatFinderResult();
-    vector<int> lcp = sa->lcp;
-    vector<int> rank = sa->rank;
+    vector<int> &lcp = sa->lcp;
 
-    // Fix lcp for multi strings
-    for(unsigned int i=0; i < text_positions.size() - 1; ++i) {
-	int doc_end = text_positions[i + 1] - 1;
-	int doc_length = doc_end - text_positions[i] + 1;
-	for(int k=0; k < doc_length; ++k) {
-	    int lcp_value = lcp[rank[doc_end - k]];
-	    if(lcp_value > k) {
-		lcp[rank[doc_end - k]] = std::min(k, lcp_value);
-	    }
-	}
-    }
     std::stack<int_trip> stack;
 
     int pos1 = sa->suffix_array[0];
 
     for(i=0; i < lcp.size() - 1; ++i) {
 	int current_lcp_len = lcp[i + 1];
-	int pos2 = sa->suffix_array[i + 1];
+	int pos2 = sa->suffix_array[i];
 	int end_ix = std::max(pos1, pos2) + current_lcp_len;
 	int n = previous_lcp_len - current_lcp_len;
 	if(n < 0) {
@@ -173,10 +177,12 @@ void RepeatFinder::evaluate_match(int nb, int match_len, int start_ix,
     int hit_docs = 0;
     for(int o=start_ix; o < start_ix + nb; ++o) {
 	int offset_global = sa->suffix_array[o];
-
+	if(o == sa->lcp.size()) {
+	    cout << o << ", " << start_ix << ", " << nb << ", " << sa->lcp.size() << endl;
+	    continue;
+	}
 	int id_str = text_at(offset_global);
 	int offset = text_index_at(offset_global, id_str);
-
 
 	if(sub_results[id_str] == -1) {
 	    sub_results[id_str] = offset;

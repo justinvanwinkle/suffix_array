@@ -8,20 +8,16 @@ INCLUDE = $(PYTHON_INCLUDES)
 FLAGS = -fno-strict-aliasing
 FLAGS += -fno-common
 FLAGS += -g
-FLAGS += -O0
+FLAGS += -O2
 FLAGS += -Wall
 FLAGS += -Wextra
 FLAGS += -Wstrict-prototypes
 FLAGS += -pipe
-#FLAGS += -pthread
-#FLAGS += -fwrapv
 FLAGS += -pedantic
 FLAGS += -ferror-limit=2
-#FLAGS += -fstandalone-debug
 
 CYTHON = cython
 CYTHON_FLAGS = -Wextra
-CYTHON_FLAGS += --gdb
 CYTHON_FLAGS += --cplus
 
 ifeq ($(shell uname), Darwin)
@@ -42,7 +38,6 @@ CPPFLAGS = $(FLAGS)
 CPPFLAGS += -std=c++11
 CPPFLAGS += -stdlib=libc++
 CPPFLAGS += -Wc++11-long-long
-CPPFLAGS += -fno-omit-frame-pointer
 
 
 # FLOTT_SRCS = $(wildcard src/flott/*.cpp)

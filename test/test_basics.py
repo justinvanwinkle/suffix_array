@@ -155,8 +155,8 @@ def test_rstr_max_wraparound():
          'aaanonxxxx']
     result = rstr_max(l)
     print result
-    assert result.matches == (5, 6, 6, 6, 6)
     assert result.match_length == 4
+    assert result.matches == (5, 6, 6, 6, 6)
 
 
 
@@ -189,16 +189,16 @@ def test_found_bug_1():
          "4592632'); "]
     result = rstr_max(l)
     print result
-    assert result.matches == tuple([7] * len(l))
     assert result.match_length == 4
+    assert result.matches == tuple([7] * len(l))
 
 
 def test_found_bug_2():
     l = ['bug', '_bug_', '_bug_']
     result = rstr_max(l)
     print result
-    assert result.matches == (0, 1, 1)
     assert result.match_length == 3
+    assert result.matches == (0, 1, 1)
 
 
 
@@ -294,8 +294,8 @@ def test_timestamp():
 
     result = rstr_max(l)
     print result
-    assert result.matches == tuple()
     assert result.match_length == 0
+    assert result.matches == tuple()
 
 
 if __name__ == '__main__':
