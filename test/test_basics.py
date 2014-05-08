@@ -51,14 +51,14 @@ def test_simple_rstr():
          'b::']
 
     result = rstr_max(l)
-    print result
+    ##print result
     assert result.match_length == 2
     assert result.matches == (1, 1)
 
     l = ['::a',
          '::b']
     result = rstr_max(l)
-    print result
+    #print result
     assert result.match_length == 2
     assert result.matches == (0, 0)
 
@@ -119,7 +119,7 @@ def test_rstr_max_logic():
          '4157298","dpci":"243-29-1957',
          '3104684","dpci":"243-19-8713']
     result = rstr_max(l, 3)
-    print result
+    #print result
     assert result.match_length == 10
     assert result.matches == tuple([7] * 27)
 
@@ -130,7 +130,7 @@ def test_rstr_max_end():
          'fgfxxx',
          'nonxxx']
     result = rstr_max(l)
-    print result
+    #print result
     assert result.matches == tuple([3] * 5)
     assert result.match_length == 3
 
@@ -142,7 +142,7 @@ def test_rstr_max_begin():
          "xxxfgf",
          "xxxnon"]
     result = rstr_max(l)
-    print result
+    #print result
     assert result.match_length == 3
     assert result.matches == tuple([0] * 5)
 
@@ -154,7 +154,7 @@ def test_rstr_max_wraparound():
          'aaafgfxxxx',
          'aaanonxxxx']
     result = rstr_max(l)
-    print result
+    #print result
     assert result.match_length == 4
     assert result.matches == (5, 6, 6, 6, 6)
 
@@ -188,7 +188,7 @@ def test_found_bug_1():
          "4595830'); ",
          "4592632'); "]
     result = rstr_max(l)
-    print result
+    #print result
     assert result.match_length == 4
     assert result.matches == tuple([7] * len(l))
 
@@ -196,7 +196,7 @@ def test_found_bug_1():
 def test_found_bug_2():
     l = ['bug', '_bug_', '_bug_']
     result = rstr_max(l)
-    print result
+    #print result
     assert result.match_length == 3
     assert result.matches == (0, 1, 1)
 
@@ -245,7 +245,7 @@ def test_found_bug_3():
          '4592632"/>']
 
     result = rstr_max(l)
-    print result
+    #print result
     assert result.matches == tuple([7] * len(l))
     assert result.match_length == 3
 
@@ -293,7 +293,7 @@ def test_timestamp():
          '23:57:25']
 
     result = rstr_max(l)
-    print result
+    #print result
     assert result.match_length == 0
     assert result.matches == tuple()
 

@@ -31,7 +31,7 @@ public:
     std::vector<int> lcp;
     std::vector<int> rank;
 
-    SuffixArray(std::string &s, std::vector<int> text_positions={});
+    SuffixArray(std::string &s, std::vector<int> length_before_docs={});
     ~SuffixArray();
 
 };
@@ -48,7 +48,7 @@ class RepeatFinder {
 
 protected:
     int num_texts;
-    std::vector<int> text_positions;
+    std::vector<int> length_before_docs;
     SuffixArray *sa;
     std::vector<int> sub_results;
     //int_tuple_map results;
