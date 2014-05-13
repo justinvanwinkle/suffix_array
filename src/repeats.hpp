@@ -48,6 +48,7 @@ class RepeatFinder {
 
 protected:
     int num_texts;
+    std::string combined_texts;
     std::vector<int> length_before_docs;
     SuffixArray *sa;
     std::vector<int> sub_results;
@@ -64,14 +65,32 @@ public:
 		    int m,
 		    int end_ix,
 		    RepeatFinderResult* result);
-    void evaluate_match(int nb, int match_len, int start_ix,
-			RepeatFinderResult* result);
+    virtual void evaluate_match(int nb, int match_len, int start_ix,
+				RepeatFinderResult* result);
 
 };
 
+
+class Table {
+public:
+    std::vector<int_pair> bounds;
+    std::vector<std::vector<int>> record_divides;
+};
+
+
 class CommonRepeatFinder: public RepeatFinder {
-    void evaluate_match(int nb, int match_len, int start_ix,
+public:
+    CommonRepeatFinder(std::vector<std::string> texts):
+	RepeatFinder(texts) {
+	std::vector<Table> tables;
+    };
+    ~CommonRepeatFinder();
+    std::vector<Table> tables;
+    virtual void evaluate_match(int nb, int match_len, int start_ix,
 			RepeatFinderResult* result);
+    int has_extension(std::vector<int> &starts,
+		      std::vector<int> &rests,
+		      int delta);
 };
 
 

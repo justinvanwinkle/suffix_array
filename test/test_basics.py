@@ -4,6 +4,7 @@ from glob import glob
 # from suffix_array import SuffixArray
 # from suffix_array import make_lcp
 from suffix_array import rstr_max
+from suffix_array import find_tables
 
 
 # def test_basic_sort():
@@ -296,6 +297,23 @@ def test_timestamp():
     #print result
     assert result.match_length == 0
     assert result.matches == tuple()
+
+
+def test_tables():
+    # l = ['<ul><li>this</li><li>is</li><li>a</li><li>fat</li><li>list</li></ul>',
+    #      '<ul><li>of crap</li><li>that</li></ul>',
+    #      '<ul><li>that</li><li>is</li></ul>',
+    #      '<ul><li>dumb</li></ul>']
+
+    # tables = find_tables(l)
+
+    fns = glob('/Users/jvanwink/scratch/dpreview/specs/*')[:20]
+    l = [open(fn).read() for fn in fns]
+
+    tables = find_tables(l)
+
+
+
 
 
 if __name__ == '__main__':

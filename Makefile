@@ -8,7 +8,7 @@ INCLUDE = $(PYTHON_INCLUDES)
 FLAGS = -fno-strict-aliasing
 FLAGS += -fno-common
 FLAGS += -g
-FLAGS += -O2
+FLAGS += -Os
 FLAGS += -Wall
 FLAGS += -Wextra
 FLAGS += -Wstrict-prototypes
@@ -38,6 +38,7 @@ CPPFLAGS = $(FLAGS)
 CPPFLAGS += -std=c++11
 CPPFLAGS += -stdlib=libc++
 CPPFLAGS += -Wc++11-long-long
+#CPPFLAGS += --analyze
 
 
 # FLOTT_SRCS = $(wildcard src/flott/*.cpp)

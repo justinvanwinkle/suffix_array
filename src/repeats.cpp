@@ -33,10 +33,8 @@ SuffixArray::SuffixArray(string &s, vector<int> length_before_docs) {
 	    --l;
 
 	int i = rank[j];
-	int j2 = suffix_array[i - 1];
-
 	if(i != 0) {
-
+	    int j2 = suffix_array[i - 1];
 	    while(j + l < len and j2 + l < len and s[j + l] == s[j2 + l]) {
 		++l;
 	    }
@@ -73,7 +71,7 @@ RepeatFinder::RepeatFinder(std::vector<std::string> texts) {
     length_before_docs = std::vector<int>();
     sub_results = std::vector<int>(num_texts);
 
-    string combined_texts;
+    //string combined_texts;
 
     for(auto s : texts) {
 	length_before_docs.push_back(combined_texts.length());
@@ -93,10 +91,13 @@ int RepeatFinder::text_index_at(int o, int text_num) {
 }
 
 int RepeatFinder::text_at(int o) {
-    for(unsigned int ix=0; ix < length_before_docs.size() - 2; ++ix) {
-	if(length_before_docs[ix + 1] > o)
+    for(unsigned int ix=0; ix < length_before_docs.size() - 1; ++ix) {
+	if(length_before_docs[ix + 1] > o){
 	    return ix;
+	}
     }
+
+    throw "FUCK";
 }
 
 
@@ -131,7 +132,7 @@ RepeatFinderResult* RepeatFinder::rstr() {
     }
 
     if(top > 0) {
-	top = remove_many(stack, top, top, i + 1, result);
+	remove_many(stack, top, top, i + 1, result);
     }
 
     return result;
@@ -148,6 +149,10 @@ int RepeatFinder::remove_many(std::stack<int_trip> &stack,
 	n,
 	start_ix,
 	nb;
+
+    if(m < 0)
+	throw "FUCK";
+    //cout << "WTF" << m << ", " << n << endl;
 
     while(m > 0) {
 	std::tie(n, start_ix, max_end_ix) = stack.top();
@@ -208,12 +213,14 @@ void RepeatFinder::evaluate_match(int nb, int match_len, int start_ix,
 }
 
 
+CommonRepeatFinder::~CommonRepeatFinder() {};
+
 void CommonRepeatFinder::evaluate_match(int nb, int match_len, int start_ix,
 					RepeatFinderResult* result) {
     if(match_len < 1)
 	return;
 
-    vector<vector<int>> positions(num_texts, vector<int>(0));
+    vector<vector<int>> positions(num_texts, vector<int>());
 
     for(int o=start_ix; o < start_ix + nb; ++o) {
 	int offset_global = sa->suffix_array[o];
@@ -221,8 +228,16 @@ void CommonRepeatFinder::evaluate_match(int nb, int match_len, int start_ix,
 	positions[id_str].push_back(offset_global);
     }
 
-    vector<int> starts(num_texts);
-    vector<int> rests;
+    for(auto single_page_positions : positions) {
+	if(single_page_positions.size() == 0) {
+	    return;
+	}
+    }
+    vector<int> lefts;
+    vector<int> left_rests;
+
+    vector<int> rights;
+    vector<int> right_rests;
 
     for(auto file_positions : positions) {
 	if(file_positions.empty())
@@ -230,22 +245,86 @@ void CommonRepeatFinder::evaluate_match(int nb, int match_len, int start_ix,
 
 	sort(file_positions.begin(), file_positions.end());
 
-	starts.push_back(file_positions[0]);
+	lefts.push_back(file_positions[0]);
+	rights.push_back(file_positions[file_positions.size() - 1] + match_len);
 
-	if(file_positions.size() == 1)
+	if(file_positions.size() < 2)
 	    continue;
 
 	for(unsigned int ix=1; ix < file_positions.size(); ++ix) {
-	    rests.push_back(file_positions[ix]);
+	    left_rests.push_back(file_positions[ix]);
 	}
-
-
-
+	for(unsigned int ix=0; ix < file_positions.size() - 1; ++ix) {
+	    right_rests.push_back(file_positions[ix] + match_len);
+	}
     }
 
 
+    if(has_extension(lefts, left_rests, -1) and
+       has_extension(rights, right_rests, 1)) {
+	//cout << "YAYAYAYAY" << endl;
+	for(int pos : lefts) {
+	    int doc_id = text_at(pos);
+	    int doc_pos = text_index_at(pos, doc_id);
+	    // cout << "left: '"
+	    // 	 << combined_texts.substr(pos - 1, match_len + 2)
+	    // 	 << "' in document: "
+	    // 	 << doc_id
+	    // 	 << " at: "
+	    // 	 << doc_pos << endl;
+	}
+	for(int pos : left_rests) {
+	    int doc_id = text_at(pos);
+	    int doc_pos = text_index_at(pos, doc_id);
+	    // cout << "repeat: '"
+	    // 	 << combined_texts.substr(pos - 1, match_len + 2)
+	    // 	 << "' in document: "
+	    // 	 << doc_id
+	    // 	 << " at: "
+	    // 	 << doc_pos << endl;
+	}
+
+    }
+
 }
 
+int CommonRepeatFinder::has_extension(vector<int> &starts,
+				      vector<int> &rests,
+				      int delta=1) {
+    // There is extension for rests
+    if(rests.size() < 3) {
+	return 0;
+    }
+
+    for(unsigned int i=0; i < rests.size() - 2 ; ++i) {
+	if(rests[i] + delta < 0 or
+	   rests[i + 1] + delta < 0 or
+	   rests[i] + delta >= combined_texts.size() or
+	   rests[i + 1] + delta >= combined_texts.size()) {
+	    return 0; // out of bounds
+	} else if(combined_texts[rests[i] + delta] !=
+		  combined_texts[rests[i + 1] + delta]) {
+	    return 0; // No extension
+	}
+    }
+
+    int first_rest = rests[0];
+
+    for(unsigned int i=0; i < starts.size() - 2 ; ++i) {
+
+	if(starts[i] + delta < 0 or
+	   starts[i + 1] + delta < 0 or
+	   starts[i] + delta >= combined_texts.size() or
+	   starts[i + 1] + delta >= combined_texts.size()) {
+	    return 0; // out of bounds
+	} else if(combined_texts[starts[i] + delta] ==
+		  combined_texts[first_rest + delta]) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
 
 
 // flott_result get_entropy(char *bytes, size_t length) {

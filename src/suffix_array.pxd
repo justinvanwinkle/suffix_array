@@ -2,6 +2,7 @@ _THIS_FIXES_CYTHON_BUG = 'wtf'
 
 from libcpp.vector cimport vector
 from libcpp.string cimport string
+from libcpp.pair cimport pair
 
 cdef extern from "divsufsort.h":
     int divsufsort(const unsigned char *T, int *SA, int n) nogil
@@ -36,11 +37,11 @@ cdef extern from "divsufsort.h":
                       int *left) nogil
 
     int sa_simplesearch(const unsigned char *T,
-                            int Tsize,
-                            const int *SA,
-                            int SAsize,
-                            int c,
-                            int *left) nogil
+                        int Tsize,
+                        const int *SA,
+                        int SAsize,
+                        int c,
+                        int *left) nogil
 
 # cdef extern from "flott/flott.h":
 #     struct flott_result:
@@ -65,7 +66,16 @@ cdef extern from "repeats.hpp":
         RepeatFinder(vector[string]) nogil except +
         RepeatFinderResult* rstr() nogil
 
+    cdef cppclass CommonRepeatFinder:
+        CommonRepeatFinder(vector[string]) nogil except +
+        RepeatFinderResult* rstr() nogil
+        vector[Table] tables
+
     cdef cppclass RepeatFinderResult:
         int match_length
         int matching
         vector[int] matches
+
+    cdef cppclass Table:
+        vector[pair[int, int]] bounds
+        vector[vector[int]] record_divides
