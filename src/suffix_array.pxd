@@ -69,6 +69,9 @@ cdef extern from "repeats.hpp":
     cdef cppclass CommonRepeatFinder:
         CommonRepeatFinder(vector[string]) nogil except +
         RepeatFinderResult* rstr() nogil
+        int match_tables(int)
+        int text_at(int)
+        int text_index_at(int, int)
         vector[Table] tables
 
     cdef cppclass RepeatFinderResult:
@@ -77,5 +80,7 @@ cdef extern from "repeats.hpp":
         vector[int] matches
 
     cdef cppclass Table:
-        vector[pair[int, int]] bounds
-        vector[vector[int]] record_divides
+        int left_match_length
+        int right_match_length
+        vector[vector[int]] left_extendables
+        vector[vector[int]] right_extendables

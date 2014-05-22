@@ -11,6 +11,13 @@
 
 using namespace std;
 
+template<typename T> ostream &operator<<(ostream &s,vector<T> t) {
+  s<<"[";
+  for(unsigned int i = 0; i < t.size(); i++)
+    s << t[i] << (i==t.size()-1 ? "" : ", ");
+  return s << "]";
+}
+
 SuffixArray::SuffixArray(string &s, vector<int> length_before_docs) {
     int len = s.size();
 
@@ -73,7 +80,7 @@ RepeatFinder::RepeatFinder(std::vector<std::string> texts) {
 
     //string combined_texts;
 
-    for(auto s : texts) {
+    for(auto &s : texts) {
 	length_before_docs.push_back(combined_texts.length());
 	combined_texts.append(s);
 	combined_texts.append("\x02");
@@ -217,18 +224,24 @@ CommonRepeatFinder::~CommonRepeatFinder() {};
 
 void CommonRepeatFinder::evaluate_match(int nb, int match_len, int start_ix,
 					RepeatFinderResult* result) {
-    if(match_len < 1)
+    if(match_len < 4)
 	return;
 
     vector<vector<int>> positions(num_texts, vector<int>());
-
+    vector<int> all_offsets;
     for(int o=start_ix; o < start_ix + nb; ++o) {
 	int offset_global = sa->suffix_array[o];
 	int id_str = text_at(offset_global);
 	positions[id_str].push_back(offset_global);
+	all_offsets.push_back(offset_global);
     }
 
-    for(auto single_page_positions : positions) {
+    if(extendable(all_offsets, -1) or
+       extendable(all_offsets, match_len)) {
+	return;
+    }
+
+    for(auto &single_page_positions : positions) {
 	if(single_page_positions.size() == 0) {
 	    return;
 	}
@@ -239,14 +252,14 @@ void CommonRepeatFinder::evaluate_match(int nb, int match_len, int start_ix,
     vector<int> rights;
     vector<int> right_rests;
 
-    for(auto file_positions : positions) {
+    for(auto &file_positions : positions) {
 	if(file_positions.empty())
-	    return;
+	    continue;
 
 	sort(file_positions.begin(), file_positions.end());
 
 	lefts.push_back(file_positions[0]);
-	rights.push_back(file_positions[file_positions.size() - 1] + match_len);
+	rights.push_back(file_positions[file_positions.size() - 1] + match_len - 1);
 
 	if(file_positions.size() < 2)
 	    continue;
@@ -255,57 +268,136 @@ void CommonRepeatFinder::evaluate_match(int nb, int match_len, int start_ix,
 	    left_rests.push_back(file_positions[ix]);
 	}
 	for(unsigned int ix=0; ix < file_positions.size() - 1; ++ix) {
-	    right_rests.push_back(file_positions[ix] + match_len);
+	    right_rests.push_back(file_positions[ix] + match_len - 1);
 	}
     }
 
+    Table table;
+    bool good_table = false;
+    if(has_extension(lefts, left_rests, -1)) {
+	table.left_extendables = positions;
+	table.left_match_length = match_len;
 
-    if(has_extension(lefts, left_rests, -1) and
-       has_extension(rights, right_rests, 1)) {
-	//cout << "YAYAYAYAY" << endl;
-	for(int pos : lefts) {
-	    int doc_id = text_at(pos);
-	    int doc_pos = text_index_at(pos, doc_id);
-	    // cout << "left: '"
-	    // 	 << combined_texts.substr(pos - 1, match_len + 2)
-	    // 	 << "' in document: "
-	    // 	 << doc_id
-	    // 	 << " at: "
-	    // 	 << doc_pos << endl;
-	}
-	for(int pos : left_rests) {
-	    int doc_id = text_at(pos);
-	    int doc_pos = text_index_at(pos, doc_id);
-	    // cout << "repeat: '"
-	    // 	 << combined_texts.substr(pos - 1, match_len + 2)
-	    // 	 << "' in document: "
-	    // 	 << doc_id
-	    // 	 << " at: "
-	    // 	 << doc_pos << endl;
-	}
-
+	//cout << "left extend" << match_len << " " << positions << endl;
+	good_table = true;
     }
 
+    if(has_extension(rights, right_rests, 1)) {
+	table.right_extendables = positions;
+	table.right_match_length = match_len;
+
+	//cout << "right extend" << match_len << " " << positions << endl;
+	good_table = true;
+    }
+
+    if(good_table)
+	tables.push_back(table);
+}
+
+
+bool CommonRepeatFinder::match_tables(int max_tables=1) {
+    vector<Table> good_tables;
+
+    for(auto &left_table : tables) {
+	auto &lefts = left_table.left_extendables;
+	if(left_table.left_extendables.empty())
+	    continue;
+	for(auto &right_table : tables) {
+	    if(right_table.right_extendables.empty())
+		continue;
+	    auto &rights = right_table.right_extendables;
+	    bool match = true;
+	    bool long_group_seen = false;
+	    int offset_delta = -1;
+	    for(size_t doc_id=0; doc_id < lefts.size(); ++doc_id) {
+		auto doc_left = lefts[doc_id];
+		auto doc_right = rights[doc_id];
+		if(doc_left.size() != doc_right.size()) {
+		    match = false;
+		    break;
+		}
+
+		if(doc_left.size() > 3) {
+		    long_group_seen = true;
+		}
+
+		int last_left_offset = -1;
+		for(size_t left_ix = 1, right_ix = 0;
+		    left_ix < doc_left.size() and right_ix < doc_right.size() - 1;
+		    left_ix++, right_ix++) {
+		    int right_offset = doc_right[right_ix];
+		    int left_offset = doc_left[left_ix];
+
+		    if((left_offset <= right_offset) or
+		       (last_left_offset >= right_offset)) {
+			match = false;
+			break;
+		    }
+
+		    last_left_offset = left_offset;
+
+		    if(left_offset - right_offset > left_table.left_match_length) {
+			match = false;
+			break;
+		    }
+
+		    if(offset_delta == -1) {
+			offset_delta = left_offset - right_offset;
+		    } else {
+			if(left_offset - right_offset != offset_delta) {
+			    match = false;
+			    break;
+			}
+		    }
+
+		}
+	    }
+	    if(match and long_group_seen) {
+		Table t;
+		t.left_match_length = left_table.left_match_length;
+		t.left_extendables = left_table.left_extendables;
+		t.right_match_length = right_table.right_match_length;
+		t.right_extendables = right_table.right_extendables;
+		good_tables.push_back(t);
+		// if(good_tables.size() > max_tables) {
+		//     tables = good_tables;
+		//     return false;
+		// }
+	    }
+	}
+    }
+    tables = good_tables;
+    return true;
+}
+
+bool CommonRepeatFinder::extendable(vector<int> &offsets,
+				    int delta) {
+
+    for(unsigned int i=0; i < offsets.size() - 2 ; ++i) {
+	if(offsets[i] + delta < 0 or
+	   offsets[i + 1] + delta < 0 or
+	   offsets[i] + delta >= combined_texts.size() or
+	   offsets[i + 1] + delta >= combined_texts.size()) {
+	    return false; // out of bounds
+	} else if(combined_texts[offsets[i] + delta] !=
+		  combined_texts[offsets[i + 1] + delta]) {
+	    return false; // No extension
+	}
+    }
+
+    return true;
 }
 
 int CommonRepeatFinder::has_extension(vector<int> &starts,
 				      vector<int> &rests,
-				      int delta=1) {
+				      int delta) {
     // There is extension for rests
     if(rests.size() < 3) {
 	return 0;
     }
 
-    for(unsigned int i=0; i < rests.size() - 2 ; ++i) {
-	if(rests[i] + delta < 0 or
-	   rests[i + 1] + delta < 0 or
-	   rests[i] + delta >= combined_texts.size() or
-	   rests[i + 1] + delta >= combined_texts.size()) {
-	    return 0; // out of bounds
-	} else if(combined_texts[rests[i] + delta] !=
-		  combined_texts[rests[i + 1] + delta]) {
-	    return 0; // No extension
-	}
+    if(not extendable(rests, delta)) {
+	return 0;
     }
 
     int first_rest = rests[0];
@@ -325,6 +417,9 @@ int CommonRepeatFinder::has_extension(vector<int> &starts,
 
     return 1;
 }
+
+
+
 
 
 // flott_result get_entropy(char *bytes, size_t length) {

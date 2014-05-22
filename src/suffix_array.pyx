@@ -58,25 +58,32 @@ cdef class RepeatFinderP:
             del result
 
 
-cdef class TableP:
-    def __cinit__(self, bounds, record_divides):
-        self.bounds = bounds
-        self.record_divides = record_divides
+class TableP:
+    def __init__(self,
+                 left_match_length,
+                 right_match_length,
+                 left_extendables,
+                 right_extendables):
+        self.left_match_length = left_match_length
+        self.right_match_length = right_match_length
+        self.left_extendables = left_extendables
+        self.right_extendables = right_extendables
 
-    @classmethod
-    def from_c(cls, bounds, record_divides):
-        new_bounds = []
-        for b in bounds:
-            new_bounds.append((b.left, b.right))
+    def __repr__(self):
+        return '<Table(left_match_length=%s, right_match_length=%s>' % (
+            self.left_match_length, self.right_match_length)
 
-        new_record_divides = []
-        for divides in record_divides:
-            new_divides = []
-            new_record_divides.append(new_divides)
-            for divide in divides:
-                new_divides.append(divide)
+    def start_offsets(self):
+        return [doc_offsets[0] for doc_offsets in self.left_extendables]
 
-        return cls(new_bounds, new_record_divides)
+    def end_offsets(self):
+        return [doc_offsets[-1] for doc_offsets in self.right_extendables]
+
+    def spans(self):
+        starts = self.start_offsets()
+        ends = self.end_offsets()
+        for start, end in zip(starts, ends):
+            yield start, end - start
 
 
 cdef class CommonRepeatFinderP:
@@ -86,11 +93,25 @@ cdef class CommonRepeatFinderP:
         with nogil:
             self.thisptr = new CommonRepeatFinder(ctexts)
 
+    cdef unbake_vecs(self, vecs):
+        offsets = []
+        for vec in vecs:
+            offsets.append([
+                self.thisptr.text_index_at(ix, self.thisptr.text_at(ix))
+                for ix in vec])
+
+        return offsets
+
     @property
     def tables(self):
+        self.thisptr.match_tables(1)
         tables = []
         for c_table in self.thisptr.tables:
-            tables.append(TableP.from_c(c_table.bounds, c_table.record_divides))
+            tables.append(TableP(
+                c_table.left_match_length,
+                c_table.right_match_length,
+                self.unbake_vecs(c_table.left_extendables),
+                self.unbake_vecs(c_table.right_extendables)))
         return tables
 
     def __dealloc__(self):
@@ -116,11 +137,63 @@ def rstr_max(ss, min_matching=None):
     return results
 
 
+def unbake_table(offset_set, match_length, ss):
+    unbaked = []
+    for offsets, s in zip(offset_set, ss):
+        unbaked.append([s[offset: offset + match_length] for offset in offsets])
+    return unbaked
+
+
+
 def find_tables(ss):
     cstr = CommonRepeatFinderP(ss)
-    cstr.go_rstr()
+    result = cstr.go_rstr()
     tables = cstr.tables
-    # print tables
+
+    # lefts = []
+    # rights = []
+
+    # matches = []
+    # for table in tables:
+    #     if table.left_extendables:
+    #         lefts.append(table.left_extendables)
+    #     if table.right_extendables:
+    #         rights.append(table.right_extendables)
+
+    # for left_table in [t for t in tables if t.left_extendables]:
+    #     for right_table in [t for t in tables if t.right_extendables]:
+    #         match = True
+    #         for doc_left, doc_right in zip(left_table.left_extendables,
+    #                                        right_table.right_extendables):
+    #             if len(doc_left) == len(doc_right):
+    #                 offset_delta = None
+    #                 for offset_l, offset_r in zip(doc_left[1:], doc_right[:-1]):
+    #                     if offset_l - offset_r < 0:
+    #                         match = False
+    #                         break
+    #                     elif offset_l - offset_r > left_table.left_match_length:
+    #                         match = False
+    #                         break
+
+    #                     if offset_delta is None:
+    #                         offset_delta = offset_l - offset_r
+    #                     else:
+    #                         if offset_delta != offset_l - offset_r:
+    #                             match = False
+    #                             break
+    #             else:
+    #                 match = False
+    #         if match:
+    #             matches.append((left_table, right_table))
+
+    # for table in tables:
+    #     print '*' * 200
+    #     print map(len, unbake_table(table.left_extendables, table.left_match_length, ss))
+    #     print table.left_extendables, table.left_match_length
+    #     print table.right_extendables, table.right_match_length
+    #     print unbake_table(table.left_extendables, table.left_match_length, ss)
+    #     print unbake_table(table.right_extendables, table.right_match_length, ss)
+    #     print '******'
     return tables
 
 

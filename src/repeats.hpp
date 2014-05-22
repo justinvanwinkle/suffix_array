@@ -55,7 +55,7 @@ protected:
     //int_tuple_map results;
 public:
     RepeatFinder(std::vector<std::string> texts);
-    ~RepeatFinder();
+    virtual ~RepeatFinder();
 
     RepeatFinderResult* rstr();
     int text_index_at(int o, int text_num);
@@ -73,24 +73,29 @@ public:
 
 class Table {
 public:
-    std::vector<int_pair> bounds;
-    std::vector<std::vector<int>> record_divides;
+    int left_match_length;
+    int right_match_length;
+    std::vector<std::vector<int>> left_extendables;
+    std::vector<std::vector<int>> right_extendables;
 };
 
 
 class CommonRepeatFinder: public RepeatFinder {
+private:
+    bool extendable(std::vector<int> &offsets, int delta);
 public:
     CommonRepeatFinder(std::vector<std::string> texts):
 	RepeatFinder(texts) {
 	std::vector<Table> tables;
     };
-    ~CommonRepeatFinder();
+    virtual ~CommonRepeatFinder();
     std::vector<Table> tables;
     virtual void evaluate_match(int nb, int match_len, int start_ix,
 			RepeatFinderResult* result);
     int has_extension(std::vector<int> &starts,
 		      std::vector<int> &rests,
 		      int delta);
+    bool match_tables(int);
 };
 
 

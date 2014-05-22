@@ -300,17 +300,19 @@ def test_timestamp():
 
 
 def test_tables():
-    # l = ['<ul><li>this</li><li>is</li><li>a</li><li>fat</li><li>list</li></ul>',
-    #      '<ul><li>of crap</li><li>that</li></ul>',
-    #      '<ul><li>that</li><li>is</li></ul>',
-    #      '<ul><li>dumb</li></ul>']
-
-    # tables = find_tables(l)
-
-    fns = glob('/Users/jvanwink/scratch/dpreview/specs/*')[:20]
-    l = [open(fn).read() for fn in fns]
+    l = ['<ul> <li>this</li> <li>is</li> <li>a</li> <li>fat</li> <li>list</li></ul>',
+         '<ul> <li>of crap</li> <li>that</li></ul>',
+         '<ul> <li>that</li> <li>is</li></ul>',
+         '<ul> <li>dumb</li></ul>']
 
     tables = find_tables(l)
+    assert len(tables) == 1
+
+    # fns = glob('/Users/jvanwink/scratch/dpreview/specs/*')[:20]
+    # l = [open(fn).read() for fn in fns]
+
+    # tables = find_tables(l)
+    # assert len(tables) == 50
 
 
 

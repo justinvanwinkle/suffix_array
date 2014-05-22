@@ -61,7 +61,7 @@ suffix_array.so: src/suffix_array.o src/repeats.o src/divsufsort.o
 	$(CXX) $(CPPFLAGS) $(LFLAGS) $(INCLUDE) $^ -o $@
 
 test: suffix_array.so test/test_basics.py
-	PYTHONPATH=./ py.test -- test/test_basics.py
+	PYTHONPATH=./ py.test -s -- test/test_basics.py
 
 install: suffix_array.so
 	python setup.py install
