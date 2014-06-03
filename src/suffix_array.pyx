@@ -60,18 +60,29 @@ cdef class RepeatFinderP:
 
 class TableP:
     def __init__(self,
+                 strings,
                  left_match_length,
                  right_match_length,
                  left_extendables,
                  right_extendables):
+        self.strings = strings
         self.left_match_length = left_match_length
         self.right_match_length = right_match_length
         self.left_extendables = left_extendables
         self.right_extendables = right_extendables
 
+    @property
+    def seperators(self):
+        left_sep = self.strings[0][self.left_extendables[0][0]:self.left_extendables[0][0] + self.left_match_length]
+        right_sep = self.strings[0][self.right_extendables[0][0]: self.right_extendables[0][0] + self.right_match_length]
+        return left_sep, right_sep
+
     def __repr__(self):
-        return '<Table(left_match_length=%s, right_match_length=%s>' % (
-            self.left_match_length, self.right_match_length)
+        return '<Table(left_match_length=%s, right_match_length=%s, len=%s, seps=%s>' % (
+            self.left_match_length,
+            self.right_match_length,
+            len(self.left_extendables),
+            self.seperators)
 
     def start_offsets(self):
         return [doc_offsets[0] for doc_offsets in self.left_extendables]
@@ -85,13 +96,22 @@ class TableP:
         for start, end in zip(starts, ends):
             yield start, end - start
 
+    def total_span(self):
+        total = 0
+        for start_group, end_group in zip(self.left_extendables,
+                                          self.right_extendables):
+            for start, end in zip(start_group, end_group):
+                total += end - start
+
+        return total
 
 cdef class CommonRepeatFinderP:
     cdef CommonRepeatFinder *thisptr
+    cdef vector[string] texts
     def __cinit__(self, texts):
-        cdef vector[string] ctexts = texts
+        self.texts = texts
         with nogil:
-            self.thisptr = new CommonRepeatFinder(ctexts)
+            self.thisptr = new CommonRepeatFinder(self.texts)
 
     cdef unbake_vecs(self, vecs):
         offsets = []
@@ -108,6 +128,7 @@ cdef class CommonRepeatFinderP:
         tables = []
         for c_table in self.thisptr.tables:
             tables.append(TableP(
+                self.texts,
                 c_table.left_match_length,
                 c_table.right_match_length,
                 self.unbake_vecs(c_table.left_extendables),

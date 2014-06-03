@@ -159,7 +159,6 @@ int RepeatFinder::remove_many(std::stack<int_trip> &stack,
 
     if(m < 0)
 	throw "FUCK";
-    //cout << "WTF" << m << ", " << n << endl;
 
     while(m > 0) {
 	std::tie(n, start_ix, max_end_ix) = stack.top();
@@ -224,7 +223,7 @@ CommonRepeatFinder::~CommonRepeatFinder() {};
 
 void CommonRepeatFinder::evaluate_match(int nb, int match_len, int start_ix,
 					RepeatFinderResult* result) {
-    if(match_len < 4)
+    if((match_len < 3) or (nb < 2))
 	return;
 
     vector<vector<int>> positions(num_texts, vector<int>());
@@ -277,16 +276,12 @@ void CommonRepeatFinder::evaluate_match(int nb, int match_len, int start_ix,
     if(has_extension(lefts, left_rests, -1)) {
 	table.left_extendables = positions;
 	table.left_match_length = match_len;
-
-	//cout << "left extend" << match_len << " " << positions << endl;
 	good_table = true;
     }
 
     if(has_extension(rights, right_rests, 1)) {
 	table.right_extendables = positions;
 	table.right_match_length = match_len;
-
-	//cout << "right extend" << match_len << " " << positions << endl;
 	good_table = true;
     }
 
@@ -376,8 +371,8 @@ bool CommonRepeatFinder::extendable(vector<int> &offsets,
     for(unsigned int i=0; i < offsets.size() - 2 ; ++i) {
 	if(offsets[i] + delta < 0 or
 	   offsets[i + 1] + delta < 0 or
-	   offsets[i] + delta >= combined_texts.size() or
-	   offsets[i + 1] + delta >= combined_texts.size()) {
+	   offsets[i] + delta >= (int)combined_texts.size() or
+	   offsets[i + 1] + delta >= (int)combined_texts.size()) {
 	    return false; // out of bounds
 	} else if(combined_texts[offsets[i] + delta] !=
 		  combined_texts[offsets[i + 1] + delta]) {
@@ -406,8 +401,8 @@ int CommonRepeatFinder::has_extension(vector<int> &starts,
 
 	if(starts[i] + delta < 0 or
 	   starts[i + 1] + delta < 0 or
-	   starts[i] + delta >= combined_texts.size() or
-	   starts[i + 1] + delta >= combined_texts.size()) {
+	   starts[i] + delta >= (int)combined_texts.size() or
+	   starts[i + 1] + delta >= (int)combined_texts.size()) {
 	    return 0; // out of bounds
 	} else if(combined_texts[starts[i] + delta] ==
 		  combined_texts[first_rest + delta]) {
