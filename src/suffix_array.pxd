@@ -51,7 +51,7 @@ cdef extern from "divsufsort.h":
 #         double t_entropy
 
 
-cdef extern from "repeats.hpp":
+cdef extern from "repeats.hpp" namespace "RepeatFinder":
     # cdef flott_result get_entropy(char*, int)
     # cdef double nti_distance(char*, int, char*, int)
     # cdef double ntc_distance(char*, int, char*, int)
@@ -64,11 +64,11 @@ cdef extern from "repeats.hpp":
 
     cdef cppclass RepeatFinder:
         RepeatFinder(vector[string]) nogil except +
-        RepeatFinderResult* rstr() nogil
+        RepeatFinderResult rstr() nogil
 
     cdef cppclass CommonRepeatFinder:
         CommonRepeatFinder(vector[string]) nogil except +
-        RepeatFinderResult* rstr() nogil
+        RepeatFinderResult rstr() nogil
         int match_tables(int)
         int text_at(int)
         int text_index_at(int, int)

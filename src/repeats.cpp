@@ -9,6 +9,8 @@
 
 #include "repeats.hpp"
 
+namespace RepeatFinder {
+
 using namespace std;
 
 template<typename T> ostream &operator<<(ostream &s,vector<T> t) {
@@ -17,6 +19,8 @@ template<typename T> ostream &operator<<(ostream &s,vector<T> t) {
     s << t[i] << (i==t.size()-1 ? "" : ", ");
   return s << "]";
 }
+
+SuffixArray::SuffixArray() {};
 
 SuffixArray::SuffixArray(string &s, vector<int> length_before_docs) {
     int len = s.size();
@@ -73,12 +77,11 @@ SuffixArray::~SuffixArray() {
 }
 
 
-RepeatFinder::RepeatFinder(std::vector<std::string> texts) {
+RepeatFinder::RepeatFinder(vector<string> texts) {
     num_texts = texts.size();
-    length_before_docs = std::vector<int>();
-    sub_results = std::vector<int>(num_texts);
-
-    //string combined_texts;
+    length_before_docs = vector<int>();
+    sub_results = vector<int>(num_texts, -1);
+    match_count = vector<int>(num_texts, 0);
 
     for(auto &s : texts) {
 	length_before_docs.push_back(combined_texts.length());
@@ -86,7 +89,7 @@ RepeatFinder::RepeatFinder(std::vector<std::string> texts) {
 	combined_texts.append("\x02");
     }
     length_before_docs.push_back(combined_texts.length());
-    sa = new SuffixArray(combined_texts, length_before_docs);
+    sa = SuffixArray(combined_texts, length_before_docs);
 }
 
 RepeatFinder::~RepeatFinder() {
@@ -108,30 +111,30 @@ int RepeatFinder::text_at(int o) {
 }
 
 
-RepeatFinderResult* RepeatFinder::rstr() {
+RepeatFinderResult RepeatFinder::rstr() {
     unsigned int i = 0,
 	top = 0,
 	previous_lcp_len = 0;
 
-    auto result = new RepeatFinderResult();
-    vector<int> &lcp = sa->lcp;
+    auto result = RepeatFinderResult();
+    auto &lcp = sa.lcp;
 
-    std::stack<int_trip> stack;
+    stack<int_trip> stack;
 
-    int pos1 = sa->suffix_array[0];
+    int pos1 = sa.suffix_array[0];
 
     for(i=0; i < lcp.size() - 2; ++i) {
 	int current_lcp_len = lcp[i + 1];
-	int pos2 = sa->suffix_array[i + 1];
-	int end_ix = std::max(pos1, pos2) + current_lcp_len;
+	int pos2 = sa.suffix_array[i + 1];
+	int end_ix = max(pos1, pos2) + current_lcp_len;
 	int n = previous_lcp_len - current_lcp_len;
 	if(n < 0) {
 	    stack.push(int_trip(-n, i, end_ix));
 	    top -= n;
 	} else if(n > 0) {
 	    top = remove_many(stack, top, n, i, result);
-	} else if(top > 0 and end_ix > std::get<2>(stack.top())) {
-	    std::get<2>(stack.top()) = end_ix;
+	} else if(top > 0 and end_ix > get<2>(stack.top())) {
+	    get<2>(stack.top()) = end_ix;
 	}
 
 	previous_lcp_len = current_lcp_len;
@@ -146,11 +149,11 @@ RepeatFinderResult* RepeatFinder::rstr() {
 }
 
 
-int RepeatFinder::remove_many(std::stack<int_trip> &stack,
+int RepeatFinder::remove_many(stack<int_trip> &stack,
 			      int top,
 			      int m,
 			      int end_ix,
-			      RepeatFinderResult* result) {
+			      RepeatFinderResult& result) {
     int last_start_ix = -1,
 	max_end_ix,
 	n,
@@ -161,7 +164,7 @@ int RepeatFinder::remove_many(std::stack<int_trip> &stack,
 	throw "FUCK";
 
     while(m > 0) {
-	std::tie(n, start_ix, max_end_ix) = stack.top();
+	tie(n, start_ix, max_end_ix) = stack.top();
 	stack.pop();
 	if(last_start_ix != start_ix) {
 	    nb = end_ix - start_ix + 1;
@@ -172,7 +175,7 @@ int RepeatFinder::remove_many(std::stack<int_trip> &stack,
 	top -= n;
     }
     if(m < 0) {
-	stack.push(std::make_tuple(-m, start_ix, max_end_ix - n - m));
+	stack.push(make_tuple(-m, start_ix, max_end_ix - n - m));
 	top -= m;
     }
     return top;
@@ -180,40 +183,49 @@ int RepeatFinder::remove_many(std::stack<int_trip> &stack,
 
 
 void RepeatFinder::evaluate_match(int nb, int match_len, int start_ix,
-				  RepeatFinderResult* result) {
-    if(match_len < 1)
-	return;
-    for(int i=0; i < num_texts; ++i)
-	sub_results[i] = -1;
+				  RepeatFinderResult& result) {
+    if (match_len < 2) { return; }
 
-    int hit_docs = 0;
-    for(int o=start_ix; o < start_ix + nb; ++o) {
-	int offset_global = sa->suffix_array[o];
+    for (int i=0; i < num_texts; ++i) {
+    	sub_results[i] = -1;
+	match_count[i] = 0;
+    }
+
+    for (int o=start_ix; o < start_ix + nb; ++o) {
+	int offset_global = sa.suffix_array[o];
 
 	int id_str = text_at(offset_global);
 
 	int offset = text_index_at(offset_global, id_str);
 
-	if(sub_results[id_str] == -1) {
+	++match_count[id_str];
+
+	if ((sub_results[id_str] == -1) or
+	    (offset < sub_results[id_str])) {
 	    sub_results[id_str] = offset;
-	    ++hit_docs;
-	} else {
-	    return;
 	}
     }
 
-    for(int i=0; i < num_texts; ++i) {
+    for (int i=0; i < num_texts; ++i) {
 	if(sub_results[i] == -1)
 	    return;
     }
 
+    int first_count = match_count[0];
+    for (auto &k : match_count) {
+	if (k != first_count)
+	    return;
+    }
 
-    if(hit_docs > result->matching or
-       (match_len > result->match_length and
-	hit_docs >= result->matching)) {
-	result->matching = hit_docs;
-	result->match_length = match_len;
-	result->matches = std::vector<int>(sub_results);
+    for (auto &k : sub_results) {
+	if (k == -1)
+	    return;
+    }
+
+    if ((match_len > result.match_length)) {
+	result.matching = num_texts;
+	result.match_length = match_len;
+	result.matches = vector<int>(sub_results);
     }
 
 }
@@ -222,14 +234,14 @@ void RepeatFinder::evaluate_match(int nb, int match_len, int start_ix,
 CommonRepeatFinder::~CommonRepeatFinder() {};
 
 void CommonRepeatFinder::evaluate_match(int nb, int match_len, int start_ix,
-					RepeatFinderResult* result) {
-    if((match_len < 3) or (nb < 2))
+					RepeatFinderResult& result) {
+    if((match_len < 2) or (nb < num_texts))
 	return;
 
     vector<vector<int>> positions(num_texts, vector<int>());
     vector<int> all_offsets;
     for(int o=start_ix; o < start_ix + nb; ++o) {
-	int offset_global = sa->suffix_array[o];
+	int offset_global = sa.suffix_array[o];
 	int id_str = text_at(offset_global);
 	positions[id_str].push_back(offset_global);
 	all_offsets.push_back(offset_global);
@@ -305,8 +317,8 @@ bool CommonRepeatFinder::match_tables(int max_tables=1) {
 	    bool long_group_seen = false;
 	    int offset_delta = -1;
 	    for(size_t doc_id=0; doc_id < lefts.size(); ++doc_id) {
-		auto doc_left = lefts[doc_id];
-		auto doc_right = rights[doc_id];
+		auto &doc_left = lefts[doc_id];
+		auto &doc_right = rights[doc_id];
 		if(doc_left.size() != doc_right.size()) {
 		    match = false;
 		    break;
@@ -331,10 +343,10 @@ bool CommonRepeatFinder::match_tables(int max_tables=1) {
 
 		    last_left_offset = left_offset;
 
-		    if(left_offset - right_offset > left_table.left_match_length) {
-			match = false;
-			break;
-		    }
+		    // if(left_offset - right_offset > left_table.left_match_length) {
+		    // 	match = false;
+		    // 	break;
+		    // }
 
 		    if(offset_delta == -1) {
 			offset_delta = left_offset - right_offset;
@@ -413,8 +425,7 @@ int CommonRepeatFinder::has_extension(vector<int> &starts,
     return 1;
 }
 
-
-
+}
 
 
 // flott_result get_entropy(char *bytes, size_t length) {

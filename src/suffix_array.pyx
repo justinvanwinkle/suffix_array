@@ -46,16 +46,13 @@ cdef class RepeatFinderP:
 
     def go_rstr(self):
         result = self.thisptr.rstr()
-        try:
-            matches = []
-            for match in result.matches:
-                if match == -1:
-                    matches.append(None)
-                else:
-                    matches.append(match)
-            return Result(result.match_length, tuple(matches))
-        finally:
-            del result
+        matches = []
+        for match in result.matches:
+            if match == -1:
+                matches.append(None)
+            else:
+                matches.append(match)
+        return Result(result.match_length, tuple(matches))
 
 
 class TableP:
@@ -140,16 +137,13 @@ cdef class CommonRepeatFinderP:
 
     def go_rstr(self):
         result = self.thisptr.rstr()
-        try:
-            matches = []
-            for match in result.matches:
-                if match == -1:
-                    matches.append(None)
-                else:
-                    matches.append(match)
-            return Result(result.match_length, tuple(matches))
-        finally:
-            del result
+        matches = []
+        for match in result.matches:
+            if match == -1:
+                matches.append(None)
+            else:
+                matches.append(match)
+        return Result(result.match_length, tuple(matches))
 
 
 def rstr_max(ss, min_matching=None):
