@@ -5,10 +5,10 @@ CXX = clang++
 PYTHON_INCLUDES=$(shell python-config --includes)
 INCLUDE = $(PYTHON_INCLUDES)
 
-FLAGS = -fno-strict-aliasing
-FLAGS += -fno-common
-FLAGS += -g
-FLAGS += -Os
+#FLAGS = -fno-strict-aliasing
+#FLAGS += -fno-common
+FLAGS = -g
+FLAGS += -O3
 FLAGS += -Wall
 FLAGS += -Wextra
 FLAGS += -Wstrict-prototypes
@@ -39,17 +39,11 @@ CPPFLAGS += -std=c++11
 CPPFLAGS += -stdlib=libc++
 CPPFLAGS += -Wc++11-long-long
 #CPPFLAGS += --analyze
-
-
-# FLOTT_SRCS = $(wildcard src/flott/*.cpp)
-# FLOTT_OBJECTS = $(FLOTT_SRCS:.cpp=.o)
+#CPPFLAGS += -fsanitize=address
 
 .PHONY: test
 
 default: suffix_array.so
-
-# src/flott/%.o: src/flott/%.cpp
-# 	$(CC) $(CPPFLAGS) -c $< -o $@
 
 src/%.o: src/%.cpp
 	$(CXX) $(CPPFLAGS) $(INCLUDE) -c $< -o $@

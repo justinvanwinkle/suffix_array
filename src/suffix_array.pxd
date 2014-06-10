@@ -43,19 +43,8 @@ cdef extern from "divsufsort.h":
                         int c,
                         int *left) nogil
 
-# cdef extern from "flott/flott.h":
-#     struct flott_result:
-#         unsigned int levels
-#         double t_complexity
-#         double t_information
-#         double t_entropy
-
 
 cdef extern from "repeats.hpp" namespace "RepeatFinder":
-    # cdef flott_result get_entropy(char*, int)
-    # cdef double nti_distance(char*, int, char*, int)
-    # cdef double ntc_distance(char*, int, char*, int)
-
     cdef cppclass SuffixArray:
         SuffixArray(string)
         vector[int] suffix_array

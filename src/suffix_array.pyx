@@ -6,9 +6,6 @@ from collections import namedtuple
 
 from suffix_array cimport RepeatFinder as RepeatFinder
 from suffix_array cimport CommonRepeatFinder as CommonRepeatFinder
-# from suffix_array cimport get_entropy as c_entropy
-# from suffix_array cimport nti_distance as c_nti_distance
-# from suffix_array cimport ntc_distance as c_ntc_distance
 from suffix_array cimport SuffixArray
 
 
@@ -210,19 +207,3 @@ def find_tables(ss):
     #     print unbake_table(table.right_extendables, table.right_match_length, ss)
     #     print '******'
     return tables
-
-
-
-# def entropy(s):
-#     result = c_entropy(s, len(s))
-#     return {'t_entropy': result.t_entropy,
-#             't_information': result.t_information,
-#             't_complexity': result.t_complexity,
-#             'levels': result.levels}
-
-
-# def nti_distance(s1, s2):
-#     return c_nti_distance(s1, len(s1), s2, len(s2))
-
-# def ntc_distance(s1, s2):
-#     return c_ntc_distance(s1, len(s1), s2, len(s2))
