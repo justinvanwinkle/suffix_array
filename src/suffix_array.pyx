@@ -90,6 +90,15 @@ class TableP:
         for start, end in zip(starts, ends):
             yield start, end - start
 
+    def key(self):
+        offsets = set()
+        map(offsets.update, self.left_extendables)
+        map(offsets.update, self.right_extendables)
+        key = (self.left_match_length,
+               self.right_match_length,
+               frozenset(offsets))
+        return key
+
     def total_span(self):
         total = 0
         for start_group, end_group in zip(self.left_extendables,
@@ -118,7 +127,7 @@ cdef class CommonRepeatFinderP:
 
     @property
     def tables(self):
-        self.thisptr.match_tables(1)
+        self.thisptr.match_tables()
         tables = []
         for c_table in self.thisptr.tables:
             tables.append(TableP(

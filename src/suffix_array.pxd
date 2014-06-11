@@ -58,7 +58,7 @@ cdef extern from "repeats.hpp" namespace "RepeatFinder":
     cdef cppclass CommonRepeatFinder:
         CommonRepeatFinder(vector[string]) nogil except +
         RepeatFinderResult rstr() nogil
-        int match_tables(int)
+        int match_tables()
         int text_at(int)
         int text_index_at(int, int)
         vector[Table] tables

@@ -11,8 +11,7 @@ VERSION = '0.9.81'
 
 if __name__ == '__main__':
     src_files = ['src/suffix_array.pyx',
-                 'src/divsufsort.cpp',
-                 'src/repeats.cpp']
+                 'src/divsufsort.cpp']
 
     extensions = [Extension("suffix_array",
                             sources=src_files,

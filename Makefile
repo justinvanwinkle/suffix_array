@@ -45,13 +45,13 @@ CPPFLAGS += -Wc++11-long-long
 
 default: suffix_array.so
 
-src/%.o: src/%.cpp
+src/%.o: src/%.cpp src/*.hpp
 	$(CXX) $(CPPFLAGS) $(INCLUDE) -c $< -o $@
 
 src/suffix_array.cpp: src/suffix_array.pyx src/suffix_array.pxd
 	cython $(CYTHON_FLAGS) $< -o $@
 
-suffix_array.so: src/suffix_array.o src/repeats.o src/divsufsort.o
+suffix_array.so: src/suffix_array.o src/divsufsort.o
 	$(CXX) $(CPPFLAGS) $(LFLAGS) $(INCLUDE) $^ -o $@
 
 test: suffix_array.so test/test_basics.py
