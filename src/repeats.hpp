@@ -47,7 +47,6 @@ public:
 
 	divsufsort((const unsigned char *) s.data(), suffix_array.data(), len);
 
-
 	lcp.resize(len, 0);
 	rank.resize(len, 0);
 
@@ -332,7 +331,7 @@ public:
 
     virtual void evaluate_match(int nb, int match_len, int start_ix,
 				RepeatFinderResult& result)  {
-	if((match_len < 2) or (nb < num_texts))
+	if (match_len < 2)
 	    return;
 
 	vector<vector<int>> positions(num_texts, vector<int>());
@@ -345,16 +344,23 @@ public:
 	    all_offsets.push_back(offset_global);
 	}
 
-	if(extendable(all_offsets, -1) or
-	   extendable(all_offsets, match_len)) {
+	// int prev_offset = -1;
+	// bool maximal = false;
+	// for (auto &offset : all_offsets) {
+	//     if (offset == 0)
+	// 	return;
+
+	//     if (prev_offset != -1 and
+	// 	combined_texts[prev_offset - 1] != combined_texts[offset] and
+	// 	prev_offset
+
+
+	if (extendable(all_offsets, -1) or
+	    extendable(all_offsets, match_len)) {
 	    return;
 	}
 
-	for(auto &single_page_positions : positions) {
-	    if(single_page_positions.size() == 0) {
-		return;
-	    }
-	}
+
 	vector<int> lefts;
 	vector<int> left_rests;
 
@@ -363,7 +369,7 @@ public:
 
 	for(auto &file_positions : positions) {
 	    if(file_positions.empty())
-		continue;
+		return;
 
 	    sort(file_positions.begin(), file_positions.end());
 
@@ -413,7 +419,7 @@ public:
 		    continue;
 		bool match = true;
 		bool long_group_seen = false;
-		int offset_delta = -1;
+
 		for(size_t doc_id=0; doc_id != lefts.size(); ++doc_id) {
 		    auto &doc_left = lefts[doc_id];
 		    auto &doc_right = rights[doc_id];
@@ -422,24 +428,30 @@ public:
 			break;
 		    }
 
-		    if(doc_left.size() > 3) {
+		    if(doc_left.size() > 2) {
 			long_group_seen = true;
 		    }
 
 		    for (size_t ix = 0; ix != doc_left.size(); ++ix) {
-			auto left_offset = doc_left[ix];
-			auto right_offset = doc_right[ix];
+			auto &left_offset = doc_left[ix];
+			auto &right_offset = doc_right[ix];
 
-			if (left_offset > right_offset) {
+			if (left_offset >= right_offset) {
 			    match = false;
 			    break;
 			}
 
-			if ((ix < doc_left.size() - 1) and
-			    (doc_left[ix + 1] < right_offset)) {
-			    match = false;
-			    break;
+			if (ix < doc_left.size() - 1) {
+			    auto &next_left = doc_left[ix + 1];
+			    if((next_left <= right_offset) or
+			       (right_table.right_match_length + right_offset < next_left)) {
+				match = false;
+				break;
+			    }
 			}
+		    }
+		    if (not match) {
+			break;
 		    }
 		}
 		if(match and long_group_seen) {

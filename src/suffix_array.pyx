@@ -82,22 +82,14 @@ class TableP:
         return [doc_offsets[0] for doc_offsets in self.left_extendables]
 
     def end_offsets(self):
-        return [doc_offsets[-1] for doc_offsets in self.right_extendables]
+        return [doc_offsets[-1] + self.right_match_length
+                for doc_offsets in self.right_extendables]
 
     def spans(self):
         starts = self.start_offsets()
         ends = self.end_offsets()
         for start, end in zip(starts, ends):
             yield start, end - start
-
-    def key(self):
-        offsets = set()
-        map(offsets.update, self.left_extendables)
-        map(offsets.update, self.right_extendables)
-        key = (self.left_match_length,
-               self.right_match_length,
-               frozenset(offsets))
-        return key
 
     def total_span(self):
         total = 0
