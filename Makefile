@@ -14,6 +14,7 @@ FLAGS += -Wextra
 FLAGS += -Wstrict-prototypes
 FLAGS += -pipe
 FLAGS += -pedantic
+FLAGS += -march=native
 FLAGS += -ferror-limit=2
 
 CYTHON = cython

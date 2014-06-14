@@ -10,7 +10,7 @@
 #include <tuple>
 #include <stack>
 #include <iostream>
-#include <string.h>
+#include <string>
 #include "divsufsort.h"
 #include <math.h>
 #include <sstream>
@@ -32,7 +32,7 @@ typedef tuple<int, int, int> int_trip;
 
 class SuffixArray {
 
-public:
+  public:
     vector<int> suffix_array;
     vector<int> lcp;
     vector<int> rank;
@@ -90,14 +90,14 @@ public:
 };
 
 class RepeatFinderResult {
-public:
+  public:
     int match_length = 0;
     int matching = 0;
     vector<int> matches;
 };
 
 class RepeatFinder {
-protected:
+  protected:
     int num_texts;
     string combined_texts;
     vector<int> length_before_docs;
@@ -105,7 +105,7 @@ protected:
     vector<int> sub_results;
     vector<int> match_count;
 
-public:
+  public:
     RepeatFinder(vector<string> texts) {
         num_texts = texts.size();
         sub_results.resize(num_texts, -1);
@@ -245,7 +245,7 @@ public:
 };
 
 class Table {
-public:
+  public:
     int left_match_length;
     int right_match_length;
     vector<vector<int>> left_extendables;
@@ -253,7 +253,7 @@ public:
 };
 
 class CommonRepeatFinder : public RepeatFinder {
-private:
+  private:
     bool extendable(vector<int> &offsets, int delta) {
 
         for (unsigned int i = 0; i < offsets.size() - 2; ++i) {
@@ -297,7 +297,7 @@ private:
         return true;
     }
 
-public:
+  public:
     vector<Table> tables;
 
     CommonRepeatFinder(vector<string> texts) : RepeatFinder(texts){};
