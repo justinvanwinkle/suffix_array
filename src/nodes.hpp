@@ -4,31 +4,23 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <numeric>
 #include "repeats.hpp"
-
+#include "estl.hpp"
 
 namespace Nodes {
 
 using namespace std;
 using namespace RepeatFinding;
-
-string html_list(vector<string> ss, string tag = "td") {
-    ostringstream os;
-    for (auto &s : ss) {
-        os << "\n <" << tag << ">"
-           << "\n   <div class=\"dataXX\">\n" << s // needs to be escaped!
-           << "\n    </div>\n  </" << tag << ">";
-    }
-
-    return os.str();
-}
+using namespace estl;
 
 class Node {
   public:
     static const bool leaf = false;
-    Node(){};
+    strings texts;
+    vector<unique_ptr<Node>> children;
 
-    Node(vector<string> texts, vector<int> grouping = {}) {
+    Node(strings texts, ints grouping = {}) : texts(texts) {
         if (grouping.empty())
             grouping.resize(texts.size(), 1);
     }
@@ -36,7 +28,7 @@ class Node {
     virtual int length_of_data() {
         int total = 0;
         for (auto &child : children) {
-            total += child.length_of_data();
+            total += child->length_of_data();
         }
         return total;
     }
@@ -44,47 +36,53 @@ class Node {
     virtual int number_of_data_elements() {
         int total = 0;
         for (auto &child : children) {
-            total += child.number_of_data_elements();
+            total += child->number_of_data_elements();
         }
         return total;
     }
 
-    virtual Node construct() {}
-    virtual string to_html() {return "Not Implemented";}
-
   protected:
-    vector<Node> children;
-    vector<string> texts;
-    vector<int> grouping;
+    ints grouping;
 };
 
 class DataNode : public Node {
-
   public:
     static const bool leaf = true;
-    DataNode(vector<string> texts, vector<int> grouping = {}) : Node(texts, grouping) {}
+    using Node::Node;
 
-    string to_html() {
-        ostringstream os;
-        os << "<tr>" << html_list(texts) << "</tr>";
-        return os.str();
+    int length_of_data() override {
+        return accumulate(texts.begin(), texts.end(), int(0), [](int sum, string val) {
+            return sum + val.size();
+        });
     }
 };
 
 class BinarySplitNode : public Node {
-public:
-    virtual Node construct() {
-        if (texts.size() < 2)
-            return DataNode(texts);
-        RepeatFinder rpf(texts);
-        RepeatFinderResult rstr = rpf.rstr();
-        if (rstr.match_length < 2)
-            return DataNode(texts);
-
-
-    }
-
+  public:
+    using Node::Node;
 };
+
+unique_ptr<Node> construct(strings texts, ints grouping = {}) {
+    if (texts.size() < 2)
+        return unique_ptr<Node>(new DataNode(texts));
+    RepeatFinder rpf(texts);
+    RepeatFinderResult result = rpf.rstr();
+    if (result.match_length < 2)
+        return unique_ptr<Node>(new DataNode(texts));
+
+    vector<string> lefts;
+    vector<string> rights;
+
+    enumerate(texts, [&](size_t ix, string s) {
+        auto start_offset = result.matches[ix];
+        lefts.push_back(s.substr(0, start_offset));
+        rights.push_back(s.substr(start_offset + result.match_length));
+    });
+    unique_ptr<Node> node(new BinarySplitNode(texts, grouping));
+    node->children.emplace_back(construct(lefts, grouping));
+    node->children.emplace_back(construct(rights, grouping));
+    return node;
+}
 };
 
 #endif

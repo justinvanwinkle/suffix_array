@@ -1,6 +1,8 @@
 #ifndef REPEATS_HPP
 #define REPEATS_HPP
 
+#include "suffix.hpp"
+
 #include <algorithm>
 #include <vector>
 #include <map>
@@ -11,83 +13,19 @@
 #include <stack>
 #include <iostream>
 #include <string>
-#include "divsufsort.h"
+//#include "divsufsort.h"
 #include <math.h>
 #include <sstream>
 
-namespace RepeatFinder {
+namespace RepeatFinding {
 
 using namespace std;
+using namespace Suffix;
 
-template <typename T> ostream &operator<<(ostream &s, vector<T> t) {
-    s << "[";
-    for (unsigned int i = 0; i < t.size(); i++)
-        s << t[i] << (i == t.size() - 1 ? "" : ", ");
-    return s << "]";
-}
 
 typedef pair<int, int> int_pair;
 typedef pair<int_pair, int_pair> int_pair_pair;
-typedef tuple<int, int, int> int_trip;
-
-class SuffixArray {
-
-  public:
-    vector<int> suffix_array;
-    vector<int> lcp;
-    vector<int> rank;
-    SuffixArray() {}
-    SuffixArray(string &s, vector<int> length_before_docs = vector<int>()) {
-        int len = s.size();
-
-        suffix_array.resize(len, 0);
-
-        divsufsort((const unsigned char *)s.data(), suffix_array.data(), len);
-
-        lcp.resize(len, 0);
-        rank.resize(len, 0);
-
-        for (int i = 0; i < len; ++i) {
-            rank[suffix_array[i]] = i;
-        }
-
-        int l = 0;
-
-        for (int j = 0; j < len; ++j) {
-            if (l != 0)
-                --l;
-
-            int i = rank[j];
-            if (i != 0) {
-                int j2 = suffix_array[i - 1];
-                while (j + l < len and j2 + l < len and s[j + l] == s[j2 + l]) {
-                    ++l;
-                }
-
-                lcp[i] = l;
-            } else {
-                l = 0;
-            }
-        }
-
-        if (not length_before_docs.empty()) {
-            // Fix lcp for multi strings
-            for (unsigned int doc_idx = 0; doc_idx < length_before_docs.size() - 1;
-                 ++doc_idx) {
-                int doc_end_pos = length_before_docs[doc_idx + 1] - 1;
-                int doc_start_pos = length_before_docs[doc_idx];
-                for (int needle_pos = doc_end_pos; needle_pos >= doc_start_pos;
-                     --needle_pos) {
-                    int lcp_value = lcp[rank[needle_pos]];
-                    if (lcp_value > doc_end_pos - needle_pos) {
-                        lcp[rank[needle_pos]] = doc_end_pos - needle_pos;
-                    }
-                }
-            }
-        }
-    }
-    ~SuffixArray(){};
-};
+using stack_entry = tuple<int, int, size_t>;
 
 class RepeatFinderResult {
   public:
@@ -98,30 +36,21 @@ class RepeatFinderResult {
 
 class RepeatFinder {
   protected:
-    int num_texts;
-    string combined_texts;
-    vector<int> length_before_docs;
-    SuffixArray sa;
     vector<int> sub_results;
     vector<int> match_count;
 
   public:
-    RepeatFinder(vector<string> texts) {
-        num_texts = texts.size();
-        sub_results.resize(num_texts, -1);
-        match_count.resize(num_texts, 0);
+    SuffixArray sa;
 
-        for (auto &s : texts) {
-            length_before_docs.push_back(combined_texts.length());
-            combined_texts.append(s);
-            combined_texts.append("\x02");
-        }
-        length_before_docs.push_back(combined_texts.length());
-
-        sa = SuffixArray(combined_texts, length_before_docs);
+    RepeatFinder(SuffixArray sa)
+        : sub_results(sa.num_texts), match_count(sa.num_texts), sa(sa) {
     }
 
-    virtual ~RepeatFinder(){};
+    RepeatFinder(vector<string> texts) : RepeatFinder(SuffixArray(texts)) {
+    }
+
+    virtual ~RepeatFinder(){
+    };
 
     RepeatFinderResult rstr() {
         unsigned int i = 0, top = 0, previous_lcp_len = 0;
@@ -129,17 +58,17 @@ class RepeatFinder {
         auto result = RepeatFinderResult();
         auto &lcp = sa.lcp;
 
-        stack<int_trip> stack;
+        stack<stack_entry> stack;
 
-        int pos1 = sa.suffix_array[0];
+        size_t pos1 = sa.suffix_array[0];
 
-        for (i = 0; i < lcp.size() - 2; ++i) {
-            int current_lcp_len = lcp[i + 1];
-            int pos2 = sa.suffix_array[i + 1];
-            int end_ix = max(pos1, pos2) + current_lcp_len;
+        for (i = 0; i < sa.s_len - 2; ++i) {
+            size_t current_lcp_len = lcp[i + 1];
+            size_t pos2 = sa.suffix_array[i + 1];
+            size_t end_ix = max(pos1, pos2) + current_lcp_len;
             int n = previous_lcp_len - current_lcp_len;
             if (n < 0) {
-                stack.push(int_trip(-n, i, end_ix));
+                stack.push(stack_entry(-n, i, end_ix));
                 top -= n;
             } else if (n > 0) {
                 top = remove_many(stack, top, n, i, result);
@@ -158,25 +87,14 @@ class RepeatFinder {
         return result;
     }
 
-    int text_index_at(int o, int text_num) { return o - length_before_docs[text_num]; }
-
-    int text_at(int o) {
-        for (unsigned int ix = 0; ix < length_before_docs.size() - 1; ++ix) {
-            if (length_before_docs[ix + 1] > o) {
-                return ix;
-            }
-        }
-
-        throw "FUCK";
-    }
-
-    int remove_many(stack<int_trip> &stack, int top, int m, int end_ix,
+    int remove_many(stack<stack_entry> &stack,
+                    int top,
+                    int m,
+                    int end_ix,
                     RepeatFinderResult &result) {
         int last_start_ix = -1, max_end_ix, n, start_ix, nb;
 
-        if (m < 0)
-            throw "FUCK";
-
+        assert(m >= 0);
         while (m > 0) {
             tie(n, start_ix, max_end_ix) = stack.top();
             stack.pop();
@@ -195,23 +113,21 @@ class RepeatFinder {
         return top;
     }
 
-    virtual void evaluate_match(int nb, int match_len, int start_ix,
-                                RepeatFinderResult &result) {
+    virtual void
+    evaluate_match(int nb, int match_len, int start_ix, RepeatFinderResult &result) {
         if (match_len < 2) {
             return;
         }
 
-        for (int i = 0; i < num_texts; ++i) {
+        for (unsigned int i = 0; i < sa.num_texts; ++i) {
             sub_results[i] = -1;
             match_count[i] = 0;
         }
 
         for (int o = start_ix; o < start_ix + nb; ++o) {
             int offset_global = sa.suffix_array[o];
-
-            int id_str = text_at(offset_global);
-
-            int offset = text_index_at(offset_global, id_str);
+            int id_str = sa.text_at(offset_global);
+            int offset = sa.text_index_at(offset_global, id_str);
 
             ++match_count[id_str];
 
@@ -220,7 +136,7 @@ class RepeatFinder {
             }
         }
 
-        for (int i = 0; i < num_texts; ++i) {
+        for (unsigned int i = 0; i < sa.num_texts; ++i) {
             if (sub_results[i] == -1)
                 return;
         }
@@ -237,7 +153,7 @@ class RepeatFinder {
         }
 
         if ((match_len > result.match_length)) {
-            result.matching = num_texts;
+            result.matching = sa.num_texts;
             result.match_length = match_len;
             result.matches = sub_results;
         }
@@ -253,84 +169,37 @@ class Table {
 };
 
 class CommonRepeatFinder : public RepeatFinder {
-  private:
-    bool extendable(vector<int> &offsets, int delta) {
-
-        for (unsigned int i = 0; i < offsets.size() - 2; ++i) {
-            if (offsets[i] + delta < 0 or offsets[i + 1] + delta < 0 or
-                offsets[i] + delta >= (int)combined_texts.size() or
-                offsets[i + 1] + delta >= (int)combined_texts.size()) {
-                return false; // out of bounds
-            } else if (combined_texts[offsets[i] + delta] !=
-                       combined_texts[offsets[i + 1] + delta]) {
-                return false; // No extension
-            }
-        }
-
-        return true;
-    }
-
-    bool has_extension(vector<int> &starts, vector<int> &rests, int delta) {
-        // There is extension for rests
-        if (rests.size() < 3) {
-            return false;
-        }
-
-        if (not extendable(rests, delta)) {
-            return false;
-        }
-
-        int first_rest = rests[0];
-
-        for (unsigned int i = 0; i < starts.size() - 2; ++i) {
-
-            if (starts[i] + delta < 0 or starts[i + 1] + delta < 0 or
-                starts[i] + delta >= (int)combined_texts.size() or
-                starts[i + 1] + delta >= (int)combined_texts.size()) {
-                return false; // out of bounds
-            } else if (combined_texts[starts[i] + delta] ==
-                       combined_texts[first_rest + delta]) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
   public:
     vector<Table> tables;
+    CommonRepeatFinder(SuffixArray sa) : RepeatFinder(sa) {
+    }
+    CommonRepeatFinder(vector<string> texts) : RepeatFinder(texts) {
+    }
 
-    CommonRepeatFinder(vector<string> texts) : RepeatFinder(texts){};
+    virtual ~CommonRepeatFinder() {
+    }
 
-    virtual ~CommonRepeatFinder() {}
-
-    virtual void evaluate_match(int nb, int match_len, int start_ix,
-                                RepeatFinderResult &result) {
+    virtual void
+    evaluate_match(int nb, int match_len, int start_ix, RepeatFinderResult &) {
         if (match_len < 2)
             return;
 
-        vector<vector<int>> positions(num_texts, vector<int>());
         vector<int> all_offsets;
         all_offsets.reserve(nb);
         for (int o = start_ix; o < start_ix + nb; ++o) {
             int offset_global = sa.suffix_array[o];
-            int id_str = text_at(offset_global);
-            positions[id_str].push_back(offset_global);
             all_offsets.push_back(offset_global);
         }
 
-        // int prev_offset = -1;
-        // bool maximal = false;
-        // for (auto &offset : all_offsets) {
-        //     if (offset == 0)
-        // 	return;
-
-        //     if (prev_offset != -1 and
-        // 	combined_texts[prev_offset - 1] != combined_texts[offset] and
-        // 	prev_offset
-
         if (extendable(all_offsets, -1) or extendable(all_offsets, match_len)) {
-            return;
+            return;  // Not Maximal
+        }
+        sort(all_offsets.begin(), all_offsets.end());
+
+        vector<vector<int>> positions(sa.num_texts, vector<int>());
+        for (auto &offset_global : all_offsets) {
+            int id_str = sa.text_at(offset_global);
+            positions[id_str].push_back(offset_global);
         }
 
         vector<int> lefts;
@@ -342,8 +211,6 @@ class CommonRepeatFinder : public RepeatFinder {
         for (auto &file_positions : positions) {
             if (file_positions.empty())
                 return;
-
-            sort(file_positions.begin(), file_positions.end());
 
             lefts.push_back(file_positions[0]);
             rights.push_back(file_positions[file_positions.size() - 1] + match_len - 1);
@@ -437,6 +304,50 @@ class CommonRepeatFinder : public RepeatFinder {
             }
         }
         tables = good_tables;
+
+        return true;
+    }
+
+  private:
+    bool extendable(vector<int> &offsets, int delta) {
+        for (auto &k : offsets) {
+            if (k + delta < 0 or k + delta >= (int)sa.s_len) {
+                return false;  // out of bounds
+            }
+        }
+
+        auto first_extension = sa.s[offsets[0] + delta];
+        for (auto &k : offsets) {
+            if (sa.s[k + delta] != first_extension) {
+                return false;  // No extension
+            }
+        }
+
+        return true;
+    }
+
+    bool has_extension(vector<int> &starts, vector<int> &rests, int delta) {
+        // There is extension for rests
+        if (rests.size() < 3) {
+            return false;
+        }
+
+        if (not extendable(rests, delta)) {
+            return false;
+        }
+
+        auto first_extension = sa.s[rests[0] + delta];
+
+        // for (unsigned int i = 0, starts_size=starts.size(); i < starts_size - 2; ++i)
+        // {
+        for (auto &k : starts) {
+            if (k + delta < 0 or k + delta >= (int)sa.s_len) {
+                return false;  // out of bounds
+            }
+            if (sa.s[k + delta] == first_extension) {
+                return false;
+            }
+        }
 
         return true;
     }

@@ -10,8 +10,7 @@ from Cython.Build import cythonize
 VERSION = '0.9.81'
 
 if __name__ == '__main__':
-    src_files = ['src/suffix_array.pyx',
-                 'src/divsufsort.cpp']
+    src_files = ['src/suffix_array.pyx']
 
     extensions = [Extension("suffix_array",
                             sources=src_files,

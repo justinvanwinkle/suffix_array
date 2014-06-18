@@ -8,48 +8,26 @@ from suffix_array cimport RepeatFinder as RepeatFinder
 from suffix_array cimport CommonRepeatFinder as CommonRepeatFinder
 from suffix_array cimport SuffixArray
 
-
 from libcpp.string cimport string
 
-cpdef make_sa_lcp(s):
-    cdef SuffixArray *c_sa = NULL
-    cdef string c_s = s
-    try:
-        c_sa = new SuffixArray(c_s)
+# cpdef make_sa_lcp(s):
+#     cdef SuffixArray *c_sa = NULL
+#     cdef string c_s = s
+#     try:
+#         c_sa = new SuffixArray(c_s)
 
-        sa = []
-        lcp = []
-        for i in range(len(s)):
-            sa.append(c_sa.suffix_array[i])
-            lcp.append(c_sa.lcp[i])
+#         sa = []
+#         lcp = []
+#         for i in range(len(s)):
+#             sa.append(c_sa.suffix_array[i])
+#             lcp.append(c_sa.lcp[i])
 
-        return sa, lcp
-    finally:
-        del c_sa
+#         return sa, lcp
+#     finally:
+#         del c_sa
 
 
 Result = namedtuple('Result', ['match_length', 'matches'])
-
-
-cdef class RepeatFinderP:
-    cdef RepeatFinder *thisptr
-    def __cinit__(self, texts):
-        cdef vector[string] ctexts = texts
-        with nogil:
-            self.thisptr = new RepeatFinder(ctexts)
-
-    def __dealloc__(self):
-        del self.thisptr
-
-    def go_rstr(self):
-        result = self.thisptr.rstr()
-        matches = []
-        for match in result.matches:
-            if match == -1:
-                matches.append(None)
-            else:
-                matches.append(match)
-        return Result(result.match_length, tuple(matches))
 
 
 class TableP:
@@ -78,6 +56,7 @@ class TableP:
             len(self.left_extendables),
             self.seperators)
 
+
     def start_offsets(self):
         return [doc_offsets[0] for doc_offsets in self.left_extendables]
 
@@ -88,8 +67,7 @@ class TableP:
     def spans(self):
         starts = self.start_offsets()
         ends = self.end_offsets()
-        for start, end in zip(starts, ends):
-            yield start, end - start
+        return zip(starts, ends)
 
     def total_span(self):
         total = 0
@@ -100,19 +78,41 @@ class TableP:
 
         return total
 
+
+cdef class RepeatFinderP:
+    cdef RepeatFinder *thisptr
+    cdef vector[string] texts
+
+    def __cinit__(self, texts):
+        self.texts = texts
+        self.thisptr = new RepeatFinder(self.texts)
+
+    def __dealloc__(self):
+        del self.thisptr
+
+    def go_rstr(self):
+        result = self.thisptr.rstr()
+        matches = []
+        for match in result.matches:
+            if match == -1:
+                matches.append(None)
+            else:
+                matches.append(match)
+        return Result(result.match_length, tuple(matches))
+
+
 cdef class CommonRepeatFinderP:
     cdef CommonRepeatFinder *thisptr
     cdef vector[string] texts
     def __cinit__(self, texts):
         self.texts = texts
-        with nogil:
-            self.thisptr = new CommonRepeatFinder(self.texts)
+        self.thisptr = new CommonRepeatFinder(self.texts)
 
     cdef unbake_vecs(self, vecs):
         offsets = []
         for vec in vecs:
             offsets.append([
-                self.thisptr.text_index_at(ix, self.thisptr.text_at(ix))
+                self.thisptr.sa.text_index_at(ix, self.thisptr.sa.text_at(ix))
                 for ix in vec])
 
         return offsets
@@ -144,7 +144,7 @@ cdef class CommonRepeatFinderP:
         return Result(result.match_length, tuple(matches))
 
 
-def rstr_max(ss, min_matching=None):
+def rstr_max(ss):
     rstr = RepeatFinderP(ss)
     results = rstr.go_rstr()
     return results

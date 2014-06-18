@@ -1,6 +1,6 @@
 
-CC = clang
-CXX = clang++
+CC = clang-mp-3.5
+CXX = clang++-mp-3.5
 
 PYTHON_INCLUDES=$(shell python-config --includes)
 INCLUDE = $(PYTHON_INCLUDES)
@@ -11,11 +11,11 @@ FLAGS = -g
 FLAGS += -O3
 FLAGS += -Wall
 FLAGS += -Wextra
-FLAGS += -Wstrict-prototypes
 FLAGS += -pipe
 FLAGS += -pedantic
-FLAGS += -march=native
 FLAGS += -ferror-limit=2
+#FLAGS += -fprofile-use
+#FLAGS += -fprofile-dir=/tmp/gcc-prof
 
 CYTHON = cython
 CYTHON_FLAGS = -Wextra
@@ -38,7 +38,6 @@ endif
 CPPFLAGS = $(FLAGS)
 CPPFLAGS += -std=c++11
 CPPFLAGS += -stdlib=libc++
-CPPFLAGS += -Wc++11-long-long
 #CPPFLAGS += --analyze
 #CPPFLAGS += -fsanitize=address
 
@@ -46,13 +45,13 @@ CPPFLAGS += -Wc++11-long-long
 
 default: suffix_array.so
 
-src/%.o: src/%.cpp src/*.hpp
+src/%.o: src/%.cpp src/*.hpp Makefile
 	$(CXX) $(CPPFLAGS) $(INCLUDE) -c $< -o $@
 
 src/suffix_array.cpp: src/suffix_array.pyx src/suffix_array.pxd
 	cython $(CYTHON_FLAGS) $< -o $@
 
-suffix_array.so: src/suffix_array.o src/divsufsort.o
+suffix_array.so: src/suffix_array.o
 	$(CXX) $(CPPFLAGS) $(LFLAGS) $(INCLUDE) $^ -o $@
 
 test: suffix_array.so test/test_basics.py
@@ -63,3 +62,6 @@ install: suffix_array.so
 
 clean:
 	rm -rf suffix_array.so src/*.o build/ src/suffix_array.cpp
+
+analyze:
+	/opt/local/libexec/llvm-3.5/libexec/scan-build/scan-build -enable-checker alpha -analyze-headers -V make -j

@@ -119,7 +119,7 @@ def test_rstr_max_logic():
          '3715382","dpci":"248-73-0576',
          '4157298","dpci":"243-29-1957',
          '3104684","dpci":"243-19-8713']
-    result = rstr_max(l, 3)
+    result = rstr_max(l)
     #print result
     assert result.match_length == 10
     assert result.matches == tuple([7] * 27)
