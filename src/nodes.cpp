@@ -1,36 +1,33 @@
 
 #include "nodes.hpp"
-#include <fstream>
 #include "estl.hpp"
+#include <future>
+#include <mutex>
 
 using namespace Nodes;
 using namespace estl;
 
-std::string get_file_contents(const char *filename)
-{
-  std::ifstream in(filename, std::ios::in | std::ios::binary);
-  if (in)
-  {
-    std::string contents;
-    in.seekg(0, std::ios::end);
-    contents.resize(in.tellg());
-    in.seekg(0, std::ios::beg);
-    in.read(&contents[0], contents.size());
-    in.close();
-    return(contents);
-  }
-  throw(errno);
-}
-
-
-
 
 int main() {
-    strings texts {"thesexxxare", "theseyyyare", "thesezzzare"};
-    auto node = construct(texts);
+    vector<future<void>> jobs;
+    mutex io_mutex;
+    strings fns = glob("~/scratch/target_products/*", true);
+    for (auto &fn0 : fns) {
+        for (auto &fn1 : fns) {
+            if (fn0.compare(fn1) <= 0)
+                continue;
 
-    cout << node->texts << endl;
-    cout << node->length_of_data() << endl;
-    cout << list_dir("/Users/jvanwink/scratch") << endl;
-    cout << glob("~/scratch/*") << endl;
+            jobs.push_back(async(launch::async, [&]() {
+                float dist = bisect_distance(fn0, fn1);
+                io_mutex.lock();
+                cout << dist << " " << fn0 << " " << fn1 << endl;
+                io_mutex.unlock();
+            }));
+        }
+    }
+
+    cout << "waiting on jobs: " << jobs.size() << endl;
+    for (auto &job : jobs) {
+        job.get();
+    }
 }

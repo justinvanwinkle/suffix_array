@@ -3,6 +3,8 @@
 
 #include <dirent.h>
 #include <glob.h>
+#include <sys/stat.h>
+#include <fstream>
 #include <vector>
 #include <iostream>
 #include <stdexcept>
@@ -16,7 +18,8 @@ using strings = vector<string>;
 using ints = vector<int>;
 
 
-template <typename T, class Function> void enumerate(vector<T> &vec, Function fn) {
+template <typename T, class Function>
+void enumerate(vector<T> &vec, Function fn) {
     size_t ix = 0;
     for (auto &val : vec) {
         fn(ix, val);
@@ -24,8 +27,33 @@ template <typename T, class Function> void enumerate(vector<T> &vec, Function fn
     }
 }
 
-inline vector<string> glob(string pattern) {
-    unique_ptr<glob_t, void (*) (glob_t *)> glob_buffer(new glob_t(), globfree);
+
+bool is_dir(string fn) {
+    struct stat statbuf;
+    stat(fn.c_str(), &statbuf);
+    if (S_ISDIR(statbuf.st_mode))
+        return true;
+    return false;
+}
+
+
+string read_file(string fn) {
+    ifstream in(fn, ios::in | ios::binary);
+    if (in) {
+        string contents;
+        in.seekg(0, ios::end);
+        contents.resize(in.tellg());
+        in.seekg(0, ios::beg);
+        in.read(&contents[0], contents.size());
+        in.close();
+        return (contents);
+    }
+    throw(errno);
+}
+
+
+inline vector<string> glob(string pattern, bool only_files = false) {
+    unique_ptr<glob_t, decltype(&globfree)> glob_buffer(new glob_t(), globfree);
 
     glob(pattern.c_str(), GLOB_TILDE, NULL, glob_buffer.get());
 
@@ -33,23 +61,52 @@ inline vector<string> glob(string pattern) {
     for (size_t i = 0; i < glob_buffer->gl_pathc; ++i) {
         fns.push_back(string(glob_buffer->gl_pathv[i]));
     }
+
+    if (only_files) {
+        strings file_fns;
+        for (auto &fn : fns) {
+            if (not is_dir(fn))
+                file_fns.push_back(fn);
+        }
+        return file_fns;
+    }
     return fns;
 }
 
 
-strings list_dir(string path) {
-    strings files;
-
-    unique_ptr<DIR, int (*) (DIR *)> dir(opendir(path.c_str()), closedir);
+strings list_dir(string path, bool only_files = false) {
+    strings fns;
+    unique_ptr<DIR, decltype(&closedir)> dir(opendir(path.c_str()), closedir);
     if (not dir) {
         throw system_error(errno, system_category());
     }
 
     while (struct dirent *entry = readdir(dir.get())) {
-        files.push_back(string(entry->d_name));
+        fns.push_back(string(entry->d_name));
     }
-    return files;
+
+    if (only_files) {
+        strings file_fns;
+        for (auto &fn : fns) {
+            if (not is_dir(fn))
+                file_fns.push_back(fn);
+        }
+        return file_fns;
+    }
+    return fns;
 }
+
+strings read_files(strings fns) {
+    strings file_contents;
+    for (auto &fn : fns)
+        file_contents.push_back(read_file(fn));
+    return file_contents;
+}
+
+// strings read_files(initializer_list<string> &fns) {
+//     return read_files(fns);
+// }
+
 };
 
 #endif

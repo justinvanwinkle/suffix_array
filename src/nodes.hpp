@@ -25,16 +25,24 @@ class Node {
             grouping.resize(texts.size(), 1);
     }
 
-    virtual int length_of_data() {
-        int total = 0;
+    virtual size_t length_of_data() {
+        size_t total = 0;
         for (auto &child : children) {
             total += child->length_of_data();
         }
         return total;
     }
 
-    virtual int number_of_data_elements() {
-        int total = 0;
+    virtual size_t length_of_data(size_t text_ix) {
+        size_t total = 0;
+        for (auto &child : children) {
+            total += child->length_of_data(text_ix);
+        }
+        return total;
+    }
+
+    virtual size_t number_of_data_elements() {
+        size_t total = 0;
         for (auto &child : children) {
             total += child->number_of_data_elements();
         }
@@ -50,10 +58,14 @@ class DataNode : public Node {
     static const bool leaf = true;
     using Node::Node;
 
-    int length_of_data() override {
-        return accumulate(texts.begin(), texts.end(), int(0), [](int sum, string val) {
+    size_t length_of_data() override {
+        return accumulate(texts.begin(), texts.end(), size_t(0), [](size_t sum, string val) {
             return sum + val.size();
         });
+    }
+
+    size_t length_of_data(size_t text_ix) override {
+        return texts[text_ix].length();
     }
 };
 
@@ -83,6 +95,21 @@ unique_ptr<Node> construct(strings texts, ints grouping = {}) {
     node->children.emplace_back(construct(rights, grouping));
     return node;
 }
+
+double bisect_distance(string fn0, string fn1) {
+    string content0 = read_file(fn0);
+    string content1 = read_file(fn1);
+
+    size_t size0 = content0.size();
+    size_t size1 = content1.size();
+
+    unique_ptr<Node> root = construct({content0, content1});
+    size_t data_left0 = root->length_of_data(0);
+    size_t data_left1 = root->length_of_data(1);
+
+    return float(max(data_left0, data_left1)) / max(size0, size1);
+}
+
 };
 
 #endif
