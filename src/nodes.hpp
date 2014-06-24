@@ -59,9 +59,10 @@ class DataNode : public Node {
     using Node::Node;
 
     size_t length_of_data() override {
-        return accumulate(texts.begin(), texts.end(), size_t(0), [](size_t sum, string val) {
-            return sum + val.size();
-        });
+        return accumulate(texts.begin(),
+                          texts.end(),
+                          size_t(0),
+                          [](size_t sum, string val) { return sum + val.size(); });
     }
 
     size_t length_of_data(size_t text_ix) override {
@@ -100,16 +101,15 @@ double bisect_distance(string fn0, string fn1) {
     string content0 = read_file(fn0);
     string content1 = read_file(fn1);
 
-    size_t size0 = content0.size();
-    size_t size1 = content1.size();
+    //size_t size0 = content0.size();
+    //size_t size1 = content1.size();
 
     unique_ptr<Node> root = construct({content0, content1});
-    size_t data_left0 = root->length_of_data(0);
-    size_t data_left1 = root->length_of_data(1);
+    //size_t data_left0 = root->length_of_data(0);
+    //size_t data_left1 = root->length_of_data(1);
 
-    return float(max(data_left0, data_left1)) / max(size0, size1);
+    return root->length_of_data();
 }
-
 };
 
 #endif

@@ -11,7 +11,7 @@ using namespace estl;
 int main() {
     vector<future<void>> jobs;
     mutex io_mutex;
-    strings fns = glob("~/scratch/target_products/*", true);
+    strings fns = glob("~/scratch/bestbuy/*", true);
     for (auto &fn0 : fns) {
         for (auto &fn1 : fns) {
             if (fn0.compare(fn1) <= 0)
@@ -26,7 +26,6 @@ int main() {
         }
     }
 
-    cout << "waiting on jobs: " << jobs.size() << endl;
     for (auto &job : jobs) {
         job.get();
     }

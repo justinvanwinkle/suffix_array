@@ -100,7 +100,8 @@ class RepeatFinder {
             stack.pop();
             if (last_start_ix != start_ix) {
                 nb = end_ix - start_ix + 1;
-                evaluate_match(nb, top, start_ix, result);
+                if (top > 1 and nb >= sa.num_texts)
+                    evaluate_match(nb, top, start_ix, result);
                 last_start_ix = start_ix;
             }
             m -= n;
@@ -115,14 +116,12 @@ class RepeatFinder {
 
     virtual void
     evaluate_match(int nb, int match_len, int start_ix, RepeatFinderResult &result) {
-        if (match_len < 2) {
-            return;
-        }
 
         for (unsigned int i = 0; i < sa.num_texts; ++i) {
             sub_results[i] = -1;
             match_count[i] = 0;
         }
+
 
         for (int o = start_ix; o < start_ix + nb; ++o) {
             int offset_global = sa.suffix_array[o];
@@ -181,9 +180,6 @@ class CommonRepeatFinder : public RepeatFinder {
 
     virtual void
     evaluate_match(int nb, int match_len, int start_ix, RepeatFinderResult &) {
-        if (match_len < 2)
-            return;
-
         vector<int> all_offsets;
         all_offsets.reserve(nb);
         for (int o = start_ix; o < start_ix + nb; ++o) {
@@ -246,7 +242,11 @@ class CommonRepeatFinder : public RepeatFinder {
 
     bool match_tables() {
         vector<Table> good_tables;
-
+        cout << "***************************" << endl;
+        for (auto &table : tables) {
+            cout << table.left_extendables << endl;
+            cout << table.right_extendables << endl;
+        }
         for (auto &left_table : tables) {
             auto &lefts = left_table.left_extendables;
             if (lefts.empty())
@@ -255,45 +255,49 @@ class CommonRepeatFinder : public RepeatFinder {
                 auto &rights = right_table.right_extendables;
                 if (rights.empty())
                     continue;
-                bool match = true;
                 bool long_group_seen = false;
+                bool all_same_size = false;
+                int last_left_size = -1;
 
-                for (size_t doc_id = 0; doc_id != lefts.size(); ++doc_id) {
+                for (size_t doc_id = 0, size=lefts.size(); doc_id != size; ++doc_id) {
                     auto &doc_left = lefts[doc_id];
                     auto &doc_right = rights[doc_id];
-                    if (doc_left.size() != doc_right.size()) {
-                        match = false;
-                        break;
+                    auto doc_left_size = doc_left.size();
+                    auto doc_right_size = doc_right.size();
+
+                    if (last_left_size != -1 and last_left_size != doc_left_size) {
+                        all_same_size = false;
                     }
 
-                    if (doc_left.size() > 2) {
+                    last_left_size = doc_left_size;
+
+                    if (doc_left_size != doc_right_size) {
+                        goto nomatch;
+                    }
+
+                    if (doc_left_size > 3) {
                         long_group_seen = true;
                     }
 
-                    for (size_t ix = 0; ix != doc_left.size(); ++ix) {
+                    for (size_t ix = 0; ix != doc_left_size; ++ix) {
                         auto &left_offset = doc_left[ix];
                         auto &right_offset = doc_right[ix];
 
                         if (left_offset >= right_offset) {
-                            match = false;
-                            break;
+                            goto nomatch;
                         }
 
-                        if (ix < doc_left.size() - 1) {
+                        if (ix < doc_left_size - 1) {
                             auto &next_left = doc_left[ix + 1];
-                            if ((next_left <= right_offset) or
-                                (right_table.right_match_length + right_offset <
-                                 next_left)) {
-                                match = false;
-                                break;
+                            if (right_table.right_match_length + right_offset - 1 !=
+                                 next_left) {
+                                goto nomatch;
                             }
                         }
                     }
-                    if (not match) {
-                        break;
-                    }
                 }
-                if (match and long_group_seen) {
+
+                if (long_group_seen and not all_same_size) {
                     Table t;
                     t.left_match_length = left_table.left_match_length;
                     t.left_extendables = left_table.left_extendables;
@@ -301,6 +305,7 @@ class CommonRepeatFinder : public RepeatFinder {
                     t.right_extendables = right_table.right_extendables;
                     good_tables.push_back(t);
                 }
+            nomatch:;
             }
         }
         tables = good_tables;
