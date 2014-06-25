@@ -24,23 +24,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef _SAIS_HXX
-#define _SAIS_HXX 1
-#ifdef __cplusplus
+#ifndef _SAIS_HPP
+#define _SAIS_HPP
 
 #include <cassert>
 #include <iterator>
 #include <limits>
 #include <tuple>
-
-#ifdef __INTEL_COMPILER
-#pragma warning(disable : 383 981 1418)
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4365)
-#endif
 
 namespace saisxx_private {
 
@@ -71,10 +61,18 @@ void getBuckets(const bucketC_type C, bucketB_type B, index_type k, bool end) {
     }
 }
 
-template <typename string_type, typename sarray_type, typename bucketC_type,
-          typename bucketB_type, typename index_type>
-void LMSsort1(string_type T, sarray_type SA, bucketC_type C, bucketB_type B,
-              index_type n, index_type k, bool recount) {
+template <typename string_type,
+          typename sarray_type,
+          typename bucketC_type,
+          typename bucketB_type,
+          typename index_type>
+void LMSsort1(string_type T,
+              sarray_type SA,
+              bucketC_type C,
+              bucketB_type B,
+              index_type n,
+              index_type k,
+              bool recount) {
     typedef typename std::iterator_traits<string_type>::value_type char_type;
     sarray_type b;
     index_type i, j;
@@ -128,7 +126,6 @@ index_type LMSpostproc1(string_type T, sarray_type SA, index_type n, index_type 
     typedef typename std::iterator_traits<string_type>::value_type char_type;
     index_type i, j, p, q, plen, qlen, name;
     char_type c0, c1;
-    bool diff;
 
     /* compact all the sorted substrings into the first m items of SA
         2*m must be not larger than n (proveable) */
@@ -172,7 +169,9 @@ index_type LMSpostproc1(string_type T, sarray_type SA, index_type n, index_type 
 
     /* find the lexicographic names of all substrings */
     for (i = 0, name = 0, q = n, qlen = 0; i < m; ++i) {
-        p = SA[i], plen = SA[m + (p >> 1)], diff = true;
+        p = SA[i];
+        plen = SA[m + (p >> 1)];
+        bool diff = true;
         if ((plen == qlen) && ((q + plen) < n)) {
             for (j = 0; (j < plen) && (T[p + j] == T[q + j]); ++j) {
             }
@@ -188,10 +187,19 @@ index_type LMSpostproc1(string_type T, sarray_type SA, index_type n, index_type 
 
     return name;
 }
-template <typename string_type, typename sarray_type, typename bucketC_type,
-          typename bucketB_type, typename bucketD_type, typename index_type>
-void LMSsort2(string_type T, sarray_type SA, bucketC_type C, bucketB_type B,
-              bucketD_type D, index_type n, index_type k) {
+template <typename string_type,
+          typename sarray_type,
+          typename bucketC_type,
+          typename bucketB_type,
+          typename bucketD_type,
+          typename index_type>
+void LMSsort2(string_type T,
+              sarray_type SA,
+              bucketC_type C,
+              bucketB_type B,
+              bucketD_type D,
+              index_type n,
+              index_type k) {
     typedef typename std::iterator_traits<string_type>::value_type char_type;
     sarray_type b;
     index_type i, j, t, d;
@@ -321,10 +329,18 @@ index_type LMSpostproc2(sarray_type SA, index_type n, index_type m) {
 }
 
 /* compute SA and BWT */
-template <typename string_type, typename sarray_type, typename bucketC_type,
-          typename bucketB_type, typename index_type>
-void induceSA(string_type T, sarray_type SA, bucketC_type C, bucketB_type B,
-              index_type n, index_type k, bool recount) {
+template <typename string_type,
+          typename sarray_type,
+          typename bucketC_type,
+          typename bucketB_type,
+          typename index_type>
+void induceSA(string_type T,
+              sarray_type SA,
+              bucketC_type C,
+              bucketB_type B,
+              index_type n,
+              index_type k,
+              bool recount) {
     typedef typename std::iterator_traits<string_type>::value_type char_type;
     sarray_type b;
     index_type i, j;
@@ -363,10 +379,18 @@ void induceSA(string_type T, sarray_type SA, bucketC_type C, bucketB_type B,
         }
     }
 }
-template <typename string_type, typename sarray_type, typename bucketC_type,
-          typename bucketB_type, typename index_type>
-int computeBWT(string_type T, sarray_type SA, bucketC_type C, bucketB_type B,
-               index_type n, index_type k, bool recount) {
+template <typename string_type,
+          typename sarray_type,
+          typename bucketC_type,
+          typename bucketB_type,
+          typename index_type>
+int computeBWT(string_type T,
+               sarray_type SA,
+               bucketC_type C,
+               bucketB_type B,
+               index_type n,
+               index_type k,
+               bool recount) {
     typedef typename std::iterator_traits<string_type>::value_type char_type;
     sarray_type b;
     index_type i, j, pidx = -1;
@@ -412,11 +436,18 @@ int computeBWT(string_type T, sarray_type SA, bucketC_type C, bucketB_type B,
     return pidx;
 }
 
-template <typename string_type, typename sarray_type, typename bucketC_type,
-          typename bucketB_type, typename index_type>
-std::pair<index_type, index_type>
-stage1sort(string_type T, sarray_type SA, bucketC_type C, bucketB_type B, index_type n,
-           index_type k, unsigned flags) {
+template <typename string_type,
+          typename sarray_type,
+          typename bucketC_type,
+          typename bucketB_type,
+          typename index_type>
+std::pair<index_type, index_type> stage1sort(string_type T,
+                                             sarray_type SA,
+                                             bucketC_type C,
+                                             bucketB_type B,
+                                             index_type n,
+                                             index_type k,
+                                             unsigned flags) {
     typedef typename std::iterator_traits<string_type>::value_type char_type;
     sarray_type b;
     index_type i, j, name, m;
@@ -457,14 +488,8 @@ stage1sort(string_type T, sarray_type SA, bucketC_type C, bucketB_type B, index_
             ++B[T[j + 1]];
             if (flags & 16) {
                 index_type *D;
-                try {
-                    D = new index_type[k * 2];
-                } catch (...) {
-                    D = 0;
-                }
-                if (D == 0) {
-                    return std::make_pair(-2, -2);
-                }
+                D = new index_type[k * 2];
+
                 for (i = 0, j = 0; i < k; ++i) {
                     j += C[i];
                     if (B[i] != j) {
@@ -500,10 +525,19 @@ stage1sort(string_type T, sarray_type SA, bucketC_type C, bucketB_type B, index_
     }
     return std::make_pair(m, name);
 }
-template <typename string_type, typename sarray_type, typename bucketC_type,
-          typename bucketB_type, typename index_type>
-index_type stage3sort(string_type T, sarray_type SA, bucketC_type C, bucketB_type B,
-                      index_type n, index_type m, index_type k, unsigned flags,
+template <typename string_type,
+          typename sarray_type,
+          typename bucketC_type,
+          typename bucketB_type,
+          typename index_type>
+index_type stage3sort(string_type T,
+                      sarray_type SA,
+                      bucketC_type C,
+                      bucketB_type B,
+                      index_type n,
+                      index_type m,
+                      index_type k,
+                      unsigned flags,
                       bool isbwt) {
     typedef typename std::iterator_traits<string_type>::value_type char_type;
     index_type i, j, p, q, pidx = 0;
@@ -543,7 +577,11 @@ index_type stage3sort(string_type T, sarray_type SA, bucketC_type C, bucketB_typ
 /* find the suffix array SA of T[0..n-1] in {0..k}^n
    use a working space (excluding s and SA) of at most 2n+O(1) for a constant alphabet */
 template <typename string_type, typename sarray_type, typename index_type>
-int suffixsort(string_type T, sarray_type SA, index_type fs, index_type n, index_type k,
+int suffixsort(string_type T,
+               sarray_type SA,
+               index_type fs,
+               index_type n,
+               index_type k,
                bool isbwt) {
     typedef typename std::iterator_traits<string_type>::value_type char_type;
     sarray_type RA, C, B;
@@ -557,26 +595,12 @@ int suffixsort(string_type T, sarray_type SA, index_type fs, index_type n, index
     C = B = SA; /* for warnings */
     Cp = 0, Bp = 0;
     if (k <= 256) {
-        try {
-            Cp = new index_type[k];
-        } catch (...) {
-            Cp = 0;
-        }
-        if (Cp == 0) {
-            return -2;
-        }
+        Cp = new index_type[k];
         if (k <= fs) {
             B = SA + (n + fs - k);
             flags = 1;
         } else {
-            try {
-                Bp = new index_type[k];
-            } catch (...) {
-                Bp = 0;
-            }
-            if (Bp == 0) {
-                return -2;
-            }
+            Bp = new index_type[k];
             flags = 3;
         }
     } else if (k <= fs) {
@@ -585,28 +609,14 @@ int suffixsort(string_type T, sarray_type SA, index_type fs, index_type n, index
             B = C - k;
             flags = 0;
         } else if (k <= 1024) {
-            try {
-                Bp = new index_type[k];
-            } catch (...) {
-                Bp = 0;
-            }
-            if (Bp == 0) {
-                return -2;
-            }
+            Bp = new index_type[k];
             flags = 2;
         } else {
             B = C;
             flags = 64 | 8;
         }
     } else {
-        try {
-            Cp = new index_type[k];
-        } catch (...) {
-            Cp = 0;
-        }
-        if (Cp == 0) {
-            return -2;
-        }
+        Cp = new index_type[k];
         Bp = Cp;
         flags = 4 | 8;
     }
@@ -695,28 +705,11 @@ int suffixsort(string_type T, sarray_type SA, index_type fs, index_type n, index
             SA[i] = RA[SA[i]];
         }
         if (flags & 4) {
-            try {
-                Cp = new index_type[k];
-            } catch (...) {
-                Cp = 0;
-            }
-            if (Cp == 0) {
-                return -2;
-            }
+            Cp = new index_type[k];
             Bp = Cp;
         }
         if (flags & 2) {
-            try {
-                Bp = new index_type[k];
-            } catch (...) {
-                Bp = 0;
-            }
-            if (Bp == 0) {
-                if (flags & 1) {
-                    delete[] Cp;
-                }
-                return -2;
-            }
+            Bp = new index_type[k];
         }
     }
 
@@ -786,8 +779,8 @@ int saisxx(string_type T, sarray_type SA, index_type n, index_type k = 256) {
  * @return The primary index if no error occurred, -1 or -2 otherwise.
  */
 template <typename string_type, typename sarray_type, typename index_type>
-index_type saisxx_bwt(string_type T, string_type U, sarray_type A, index_type n,
-                      index_type k = 256) {
+index_type saisxx_bwt(
+    string_type T, string_type U, sarray_type A, index_type n, index_type k = 256) {
     typedef typename std::iterator_traits<sarray_type>::value_type savalue_type;
     typedef typename std::iterator_traits<string_type>::value_type char_type;
     index_type i, pidx;
@@ -820,9 +813,4 @@ index_type saisxx_bwt(string_type T, string_type U, sarray_type A, index_type n,
     return pidx;
 }
 
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-#endif /* __cplusplus */
-#endif /* _SAIS_HXX */
+#endif /* _SAIS_HPP */

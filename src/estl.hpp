@@ -9,6 +9,22 @@
 #include <iostream>
 #include <stdexcept>
 #include <memory>
+#include <iostream>
+
+
+template <typename T>
+std::ostream &operator<<(std::ostream &s, std::pair<T, T> t) {
+    s << "(" << t.first << ", " << t.second << ")";
+    return s;
+}
+
+template <typename T>
+std::ostream &operator<<(std::ostream &s, std::vector<T> t) {
+    s << "[";
+    for (unsigned int i = 0; i < t.size(); i++)
+        s << t[i] << (i == t.size() - 1 ? "" : ", ");
+    return s << "]";
+}
 
 namespace estl {
 
@@ -18,8 +34,8 @@ using strings = vector<string>;
 using ints = vector<int>;
 
 
-template <typename T, class Function>
-void enumerate(vector<T> &vec, Function fn) {
+template <class C, class Function>
+void enumerate(C &vec, Function fn) {
     size_t ix = 0;
     for (auto &val : vec) {
         fn(ix, val);

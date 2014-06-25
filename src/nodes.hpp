@@ -56,7 +56,7 @@ class Node {
 class DataNode : public Node {
   public:
     static const bool leaf = true;
-    using Node::Node;
+    DataNode(strings texts, ints groupings = {}) : Node(texts, groupings){};
 
     size_t length_of_data() override {
         return accumulate(texts.begin(),
@@ -72,7 +72,7 @@ class DataNode : public Node {
 
 class BinarySplitNode : public Node {
   public:
-    using Node::Node;
+    BinarySplitNode(strings texts, ints groupings = {}) : Node(texts, groupings){};
 };
 
 unique_ptr<Node> construct(strings texts, ints grouping = {}) {
@@ -101,12 +101,12 @@ double bisect_distance(string fn0, string fn1) {
     string content0 = read_file(fn0);
     string content1 = read_file(fn1);
 
-    //size_t size0 = content0.size();
-    //size_t size1 = content1.size();
+    // size_t size0 = content0.size();
+    // size_t size1 = content1.size();
 
     unique_ptr<Node> root = construct({content0, content1});
-    //size_t data_left0 = root->length_of_data(0);
-    //size_t data_left1 = root->length_of_data(1);
+    // size_t data_left0 = root->length_of_data(0);
+    // size_t data_left1 = root->length_of_data(1);
 
     return root->length_of_data();
 }

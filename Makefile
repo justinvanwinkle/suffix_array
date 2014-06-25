@@ -15,6 +15,7 @@ FLAGS += -pipe
 FLAGS += -pedantic
 FLAGS += -ferror-limit=2
 #FLAGS += -fprofile-use
+#FLAGS += -fprofile-generate
 #FLAGS += -fprofile-dir=/tmp/gcc-prof
 
 CYTHON = cython
@@ -37,7 +38,7 @@ endif
 
 CPPFLAGS = $(FLAGS)
 CPPFLAGS += -std=c++11
-CPPFLAGS += -stdlib=libc++
+#CPPFLAGS += -stdlib=libc++
 #CPPFLAGS += --analyze
 #CPPFLAGS += -fsanitize=address
 
