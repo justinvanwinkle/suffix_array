@@ -51,40 +51,41 @@ class SuffixArray {
 
     template <class Function>
     void walk_maximal_substrings(Function fn) {
-        int i = 0, top = 0, previous_lcp_len = 0;
+        int top = 0;
 
         stack<stack_entry> stack;
 
-        int pos1 = suffix_array[0];
+        int last_lcp_len = lcp[0];
+        int last_string_ix = suffix_array[0];
 
-        for (i = 0; i < s_len - 2; ++i) {
-            auto &current_lcp_len = lcp[i + 1];
-            auto &pos2 = suffix_array[i + 1];
-            auto end_ix = max(pos1, pos2) + current_lcp_len;
-            int n = previous_lcp_len - current_lcp_len;
-            if (n < 0) {
-                stack.emplace(-n, i, end_ix);
-                top -= n;
-            } else if (n > 0) {
-                top = remove_many(stack, top, n, i, fn);
+        for (int low_ix = 1; low_ix < s_len - 1; ++low_ix) {
+            auto &lcp_len = lcp[low_ix];
+            auto &string_ix = suffix_array[low_ix];
+            auto end_ix = max(last_string_ix, string_ix) + lcp_len;
+            int lcp_diff = last_lcp_len - lcp_len;
+            if (lcp_diff < 0) {
+                stack.emplace(-lcp_diff, low_ix - 1, end_ix);
+                top -= lcp_diff;
+            } else if (lcp_diff > 0) {
+                top = remove_many(stack, top, lcp_diff, low_ix - 1, fn);
             } else if (top > 0 and end_ix > get<2>(stack.top())) {
                 get<2>(stack.top()) = end_ix;
             }
 
-            previous_lcp_len = current_lcp_len;
-            pos1 = pos2;
+            last_lcp_len = lcp_len;
+            last_string_ix = string_ix;
         }
 
         if (top > 0) {
-            remove_many(stack, top, top, i + 1, fn);
+            remove_many(stack, top, top, s_len - 1, fn);
         }
     }
 
-    int text_index_at(size_t o, size_t text_num) {
+    ssize_t text_index_at(size_t o, size_t text_num) {
         return o - length_before_docs[text_num];
     }
 
-    int text_at(size_t o) {
+    ssize_t text_at(size_t o) {
         size_t ix = 0;
         while (length_before_docs[++ix] <= o)
             ;
@@ -97,23 +98,22 @@ class SuffixArray {
     template <class Function>
     int remove_many(
         stack<stack_entry> &stack, int top, int m, int end_ix, Function fn) {
-        int last_start_ix = -1, max_end_ix, n, start_ix, nb;
+        int last_start_ix = -1, max_end_ix, lcp_diff, start_ix, nb;
 
-        assert(m >= 0);
         while (m > 0) {
-            tie(n, start_ix, max_end_ix) = stack.top();
+            tie(lcp_diff, start_ix, max_end_ix) = stack.top();
             stack.pop();
             if (last_start_ix != start_ix) {
                 nb = end_ix - start_ix + 1;
-                if (top > 1 and nb >= num_texts)
+                if (top > 1)
                     fn(nb, top, start_ix, max_end_ix);
                 last_start_ix = start_ix;
             }
-            m -= n;
-            top -= n;
+            m -= lcp_diff;
+            top -= lcp_diff;
         }
         if (m < 0) {
-            stack.push(make_tuple(-m, start_ix, max_end_ix - n - m));
+            stack.push(make_tuple(-m, start_ix, max_end_ix - lcp_diff - m));
             top -= m;
         }
         return top;

@@ -27,7 +27,7 @@
 #ifndef _SAIS_HPP
 #define _SAIS_HPP
 
-#include <cassert>
+//#include <cassert>
 #include <iterator>
 #include <limits>
 #include <tuple>
@@ -37,24 +37,24 @@ namespace saisxx_private {
 /* find the start or end of each bucket */
 template <typename string_type, typename bucket_type, typename index_type>
 void getCounts(const string_type T, bucket_type C, index_type n, index_type k) {
-    index_type i;
-    for (i = 0; i < k; ++i) {
+    for (index_type i = 0; i < k; ++i) {
         C[i] = 0;
     }
-    for (i = 0; i < n; ++i) {
+    for (index_type i = 0; i < n; ++i) {
         ++C[T[i]];
     }
 }
 template <typename bucketC_type, typename bucketB_type, typename index_type>
 void getBuckets(const bucketC_type C, bucketB_type B, index_type k, bool end) {
-    index_type i, sum = 0;
     if (end != false) {
-        for (i = 0; i < k; ++i) {
+        index_type sum = 0;
+        for (index_type i = 0; i < k; ++i) {
             sum += C[i];
             B[i] = sum;
         }
     } else {
-        for (i = 0; i < k; ++i) {
+        index_type sum = 0;
+        for (index_type i = 0; i < k; ++i) {
             sum += C[i];
             B[i] = sum - C[i];
         }
@@ -89,12 +89,12 @@ void LMSsort1(string_type T,
     *b++ = (T[j] < c1) ? ~j : j;
     for (i = 0; i < n; ++i) {
         if (0 < (j = SA[i])) {
-            assert(T[j] >= T[j + 1]);
+            // assert(T[j] >= T[j + 1]);
             if ((c0 = T[j]) != c1) {
                 B[c1] = b - SA;
                 b = SA + B[c1 = c0];
             }
-            assert(i < (b - SA));
+            // assert(i < (b - SA));
             --j;
             *b++ = (T[j] < c1) ? ~j : j;
             SA[i] = 0;
@@ -109,12 +109,12 @@ void LMSsort1(string_type T,
     getBuckets(C, B, k, true); /* find ends of buckets */
     for (i = n - 1, b = SA + B[c1 = 0]; 0 <= i; --i) {
         if (0 < (j = SA[i])) {
-            assert(T[j] <= T[j + 1]);
+            // assert(T[j] <= T[j + 1]);
             if ((c0 = T[j]) != c1) {
                 B[c1] = b - SA;
                 b = SA + B[c1 = c0];
             }
-            assert((b - SA) <= i);
+            // assert((b - SA) <= i);
             --j;
             *--b = (T[j] > c1) ? ~(j + 1) : j;
             SA[i] = 0;
@@ -129,14 +129,14 @@ index_type LMSpostproc1(string_type T, sarray_type SA, index_type n, index_type 
 
     /* compact all the sorted substrings into the first m items of SA
         2*m must be not larger than n (proveable) */
-    assert(0 < n);
+    // assert(0 < n);
     for (i = 0; (p = SA[i]) < 0; ++i) {
         SA[i] = ~p;
-        assert((i + 1) < n);
+        // assert((i + 1) < n);
     }
     if (i < m) {
         for (j = i, ++i;; ++i) {
-            assert(i < n);
+            // assert(i < n);
             if ((p = SA[i]) < 0) {
                 SA[j++] = ~p;
                 SA[i] = 0;
@@ -153,17 +153,17 @@ index_type LMSpostproc1(string_type T, sarray_type SA, index_type n, index_type 
     c0 = T[n - 1];
     do {
         c1 = c0;
-    } while ((0 <= --i) && ((c0 = T[i]) >= c1));
-    for (; 0 <= i;) {
+    } while ((0 <= --i) and ((c0 = T[i]) >= c1));
+    while(0 <= i) {
         do {
             c1 = c0;
-        } while ((0 <= --i) && ((c0 = T[i]) <= c1));
+        } while ((0 <= --i) and ((c0 = T[i]) <= c1));
         if (0 <= i) {
             SA[m + ((i + 1) >> 1)] = j - i;
             j = i + 1;
             do {
                 c1 = c0;
-            } while ((0 <= --i) && ((c0 = T[i]) >= c1));
+            } while ((0 <= --i) and ((c0 = T[i]) >= c1));
         }
     }
 
@@ -172,8 +172,8 @@ index_type LMSpostproc1(string_type T, sarray_type SA, index_type n, index_type 
         p = SA[i];
         plen = SA[m + (p >> 1)];
         bool diff = true;
-        if ((plen == qlen) && ((q + plen) < n)) {
-            for (j = 0; (j < plen) && (T[p + j] == T[q + j]); ++j) {
+        if ((plen == qlen) and ((q + plen) < n)) {
+            for (j = 0; (j < plen) and (T[p + j] == T[q + j]); ++j) {
             }
             if (j == plen) {
                 diff = false;
@@ -219,12 +219,12 @@ void LMSsort2(string_type T,
                 d += 1;
                 j -= n;
             }
-            assert(T[j] >= T[j + 1]);
+            // assert(T[j] >= T[j + 1]);
             if ((c0 = T[j]) != c1) {
                 B[c1] = b - SA;
                 b = SA + B[c1 = c0];
             }
-            assert(i < (b - SA));
+            // assert(i < (b - SA));
             --j;
             t = c0;
             t = (t << 1) | (T[j] < c1);
@@ -258,12 +258,12 @@ void LMSsort2(string_type T,
                 d += 1;
                 j -= n;
             }
-            assert(T[j] <= T[j + 1]);
+            // assert(T[j] <= T[j + 1]);
             if ((c0 = T[j]) != c1) {
                 B[c1] = b - SA;
                 b = SA + B[c1 = c0];
             }
-            assert((b - SA) <= i);
+            // assert((b - SA) <= i);
             --j;
             t = c0;
             t = (t << 1) | (T[j] > c1);
@@ -281,19 +281,22 @@ index_type LMSpostproc2(sarray_type SA, index_type n, index_type m) {
     index_type i, j, d, name;
 
     /* compact all the sorted LMS substrings into the first m items of SA */
-    assert(0 < n);
+    // assert(0 < n);
     for (i = 0, name = 0; (j = SA[i]) < 0; ++i) {
         j = ~j;
         if (n <= j) {
             name += 1;
         }
         SA[i] = j;
-        assert((i + 1) < n);
+        // assert((i + 1) < n);
     }
     if (i < m) {
-        for (d = i, ++i;; ++i) {
-            assert(i < n);
-            if ((j = SA[i]) < 0) {
+        d = i;
+        ++i;
+        while (true) {
+            // assert(i < n);
+            j = SA[i];
+            if (j < 0) {
                 j = ~j;
                 if (n <= j) {
                     name += 1;
@@ -304,6 +307,7 @@ index_type LMSpostproc2(sarray_type SA, index_type n, index_type m) {
                     break;
                 }
             }
+            ++i;
         }
     }
     if (name < m) {
@@ -350,8 +354,10 @@ void induceSA(string_type T,
         getCounts(T, C, n, k);
     }
     getBuckets(C, B, k, false); /* find starts of buckets */
-    b = SA + B[c1 = T[j = n - 1]];
-    *b++ = ((0 < j) && (T[j - 1] < c1)) ? ~j : j;
+    j = n - 1;
+    c1 = T[j];
+    b = SA + B[c1];
+    *b++ = ((0 < j) and (T[j - 1] < c1)) ? ~j : j;
     for (i = 0; i < n; ++i) {
         j = SA[i], SA[i] = ~j;
         if (0 < j) {
@@ -359,7 +365,7 @@ void induceSA(string_type T,
                 B[c1] = b - SA;
                 b = SA + B[c1 = c0];
             }
-            *b++ = ((0 < j) && (T[j - 1] < c1)) ? ~j : j;
+            *b++ = ((0 < j) and (T[j - 1] < c1)) ? ~j : j;
         }
     }
     /* compute SAs */
@@ -373,7 +379,7 @@ void induceSA(string_type T,
                 B[c1] = b - SA;
                 b = SA + B[c1 = c0];
             }
-            *--b = ((j == 0) || (T[j - 1] > c1)) ? ~j : j;
+            *--b = ((j == 0) or (T[j - 1] > c1)) ? ~j : j;
         } else {
             SA[i] = ~j;
         }
@@ -401,7 +407,7 @@ int computeBWT(string_type T,
     }
     getBuckets(C, B, k, false); /* find starts of buckets */
     b = SA + B[c1 = T[j = n - 1]];
-    *b++ = ((0 < j) && (T[j - 1] < c1)) ? ~j : j;
+    *b++ = ((0 < j) and (T[j - 1] < c1)) ? ~j : j;
     for (i = 0; i < n; ++i) {
         if (0 < (j = SA[i])) {
             SA[i] = ~((index_type)(c0 = T[--j]));
@@ -409,7 +415,7 @@ int computeBWT(string_type T,
                 B[c1] = b - SA;
                 b = SA + B[c1 = c0];
             }
-            *b++ = ((0 < j) && (T[j - 1] < c1)) ? ~j : j;
+            *b++ = ((0 < j) and (T[j - 1] < c1)) ? ~j : j;
         } else if (j != 0) {
             SA[i] = ~j;
         }
@@ -426,7 +432,7 @@ int computeBWT(string_type T,
                 B[c1] = b - SA;
                 b = SA + B[c1 = c0];
             }
-            *--b = ((0 < j) && (T[j - 1] > c1)) ? ~((index_type)T[j - 1]) : j;
+            *--b = ((0 < j) and (T[j - 1] > c1)) ? ~((index_type)T[j - 1]) : j;
         } else if (j != 0) {
             SA[i] = ~j;
         } else {
@@ -464,27 +470,27 @@ std::pair<index_type, index_type> stage1sort(string_type T,
     c0 = T[n - 1];
     do {
         c1 = c0;
-    } while ((0 <= --i) && ((c0 = T[i]) >= c1));
+    } while ((0 <= --i) and ((c0 = T[i]) >= c1));
     for (; 0 <= i;) {
         do {
             c1 = c0;
-        } while ((0 <= --i) && ((c0 = T[i]) <= c1));
+        } while ((0 <= --i) and ((c0 = T[i]) <= c1));
         if (0 <= i) {
             *b = j;
             b = SA + --B[c1];
             j = i;
             ++m;
-            assert(B[c1] != (n - 1));
+            // assert(B[c1] != (n - 1));
             do {
                 c1 = c0;
-            } while ((0 <= --i) && ((c0 = T[i]) >= c1));
+            } while ((0 <= --i) and ((c0 = T[i]) >= c1));
         }
     }
     SA[n - 1] = 0;
 
     if (1 < m) {
         if (flags & (16 | 32)) {
-            assert((j + 1) < n);
+            // assert((j + 1) < n);
             ++B[T[j + 1]];
             if (flags & 16) {
                 index_type *D;
@@ -493,7 +499,7 @@ std::pair<index_type, index_type> stage1sort(string_type T,
                 for (i = 0, j = 0; i < k; ++i) {
                     j += C[i];
                     if (B[i] != j) {
-                        assert(SA[B[i]] != 0);
+                        // assert(SA[B[i]] != 0);
                         SA[B[i]] += n;
                     }
                     D[i] = D[i + k] = 0;
@@ -505,7 +511,7 @@ std::pair<index_type, index_type> stage1sort(string_type T,
                 for (i = 0, j = 0; i < k; ++i) {
                     j += C[i];
                     if (B[i] != j) {
-                        assert(SA[B[i]] != 0);
+                        // assert(SA[B[i]] != 0);
                         SA[B[i]] += n;
                     }
                     D[i] = D[i + k] = 0;
@@ -575,7 +581,8 @@ index_type stage3sort(string_type T,
 }
 
 /* find the suffix array SA of T[0..n-1] in {0..k}^n
-   use a working space (excluding s and SA) of at most 2n+O(1) for a constant alphabet */
+   use a working space (excluding s and SA) of at most 2n+O(1) for a constant
+   alphabet */
 template <typename string_type, typename sarray_type, typename index_type>
 int suffixsort(string_type T,
                sarray_type SA,
@@ -620,10 +627,11 @@ int suffixsort(string_type T,
         Bp = Cp;
         flags = 4 | 8;
     }
-    if ((n <= ((std::numeric_limits<index_type>::max)() / 2)) && (2 <= (n / k))) {
+    if ((n <= ((std::numeric_limits<index_type>::max)() / 2)) and
+        (2 <= (n / k))) {
         if (flags & 1) {
             flags |= ((k * 2) <= (fs - k)) ? 32 : 16;
-        } else if ((flags == 0) && ((k * 2) <= (fs - k * 2))) {
+        } else if ((flags == 0) and ((k * 2) <= (fs - k * 2))) {
             flags |= 32;
         }
     }
@@ -671,7 +679,7 @@ int suffixsort(string_type T,
                 flags |= 8;
             }
         }
-        assert((n >> 1) <= (newfs + m));
+        // assert((n >> 1) <= (newfs + m));
         RA = SA + m + newfs;
         for (i = m + (n >> 1) - 1, j = m - 1; m <= i; --i) {
             if (SA[i] != 0) {
@@ -689,16 +697,16 @@ int suffixsort(string_type T,
         c0 = T[n - 1];
         do {
             c1 = c0;
-        } while ((0 <= --i) && ((c0 = T[i]) >= c1));
-        for (; 0 <= i;) {
+        } while ((0 <= --i) and ((c0 = T[i]) >= c1));
+        while (0 <= i) {
             do {
                 c1 = c0;
-            } while ((0 <= --i) && ((c0 = T[i]) <= c1));
+            } while ((0 <= --i) and ((c0 = T[i]) <= c1));
             if (0 <= i) {
                 RA[j--] = i + 1;
                 do {
                     c1 = c0;
-                } while ((0 <= --i) && ((c0 = T[i]) >= c1));
+                } while ((0 <= --i) and ((c0 = T[i]) >= c1));
             }
         }
         for (i = 0; i < m; ++i) {
@@ -750,13 +758,13 @@ int suffixsort(string_type T,
 template <typename string_type, typename sarray_type, typename index_type>
 int saisxx(string_type T, sarray_type SA, index_type n, index_type k = 256) {
     typedef typename std::iterator_traits<sarray_type>::value_type savalue_type;
-    assert((std::numeric_limits<index_type>::min)() < 0);
-    assert((std::numeric_limits<savalue_type>::min)() < 0);
-    assert((std::numeric_limits<savalue_type>::max)() ==
-           (std::numeric_limits<index_type>::max)());
-    assert((std::numeric_limits<savalue_type>::min)() ==
-           (std::numeric_limits<index_type>::min)());
-    if ((n < 0) || (k <= 0)) {
+    // assert((std::numeric_limits<index_type>::min)() < 0);
+    // assert((std::numeric_limits<savalue_type>::min)() < 0);
+    // assert((std::numeric_limits<savalue_type>::max)() ==
+    //(std::numeric_limits<index_type>::max)());
+    // assert((std::numeric_limits<savalue_type>::min)() ==
+    //(std::numeric_limits<index_type>::min)());
+    if ((n < 0) or (k <= 0)) {
         return -1;
     }
     if (n <= 1) {
@@ -769,7 +777,8 @@ int saisxx(string_type T, sarray_type SA, index_type n, index_type k = 256) {
 }
 
 /**
- * @brief Constructs the burrows-wheeler transformed string of a given string in linear
+ * @brief Constructs the burrows-wheeler transformed string of a given string
+ * in linear
  * time.
  * @param T[0..n-1] The input string. (random access iterator)
  * @param U[0..n-1] The output string. (random access iterator)
@@ -779,18 +788,21 @@ int saisxx(string_type T, sarray_type SA, index_type n, index_type k = 256) {
  * @return The primary index if no error occurred, -1 or -2 otherwise.
  */
 template <typename string_type, typename sarray_type, typename index_type>
-index_type saisxx_bwt(
-    string_type T, string_type U, sarray_type A, index_type n, index_type k = 256) {
+index_type saisxx_bwt(string_type T,
+                      string_type U,
+                      sarray_type A,
+                      index_type n,
+                      index_type k = 256) {
     typedef typename std::iterator_traits<sarray_type>::value_type savalue_type;
     typedef typename std::iterator_traits<string_type>::value_type char_type;
     index_type i, pidx;
-    assert((std::numeric_limits<index_type>::min)() < 0);
-    assert((std::numeric_limits<savalue_type>::min)() < 0);
-    assert((std::numeric_limits<savalue_type>::max)() ==
-           (std::numeric_limits<index_type>::max)());
-    assert((std::numeric_limits<savalue_type>::min)() ==
-           (std::numeric_limits<index_type>::min)());
-    if ((n < 0) || (k <= 0)) {
+    // assert((std::numeric_limits<index_type>::min)() < 0);
+    // assert((std::numeric_limits<savalue_type>::min)() < 0);
+    // assert((std::numeric_limits<savalue_type>::max)() ==
+    //        (std::numeric_limits<index_type>::max)());
+    // assert((std::numeric_limits<savalue_type>::min)() ==
+    //        (std::numeric_limits<index_type>::min)());
+    if ((n < 0) or (k <= 0)) {
         return -1;
     }
     if (n <= 1) {

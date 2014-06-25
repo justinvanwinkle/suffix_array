@@ -6,26 +6,24 @@
 #include <algorithm>
 #include <vector>
 #include <map>
-#include <memory>
 #include <string>
-#include <math.h>
-#include <tuple>
 #include <stack>
 #include <iostream>
 #include <string>
 #include "estl.hpp"
-//#include "divsufsort.h"
-#include <math.h>
-#include <sstream>
+#include <seqan/basic.h>
+#include <seqan/sequence.h>
+#include <seqan/file.h>
+#include <seqan/index.h>
 
 namespace RepeatFinding {
 
 using namespace std;
 using namespace Suffix;
-
+using namespace estl;
+using namespace seqan;
 
 using int_pair = pair<int, int>;
-using int_triple = tuple<int, int, int>;
 using repeat_map = map<int_pair, int_pair>;
 
 
@@ -127,6 +125,27 @@ class RepeatFinder {
         return repeats;
     }
 
+    vector<ints> expanded_repeats(strings contents) {
+        StringSet<String<char>> stringSet;
+        for (auto &s : contents) {
+            appendValue(stringSet, s);
+            std::cout << "Number of elements: " << length(stringSet)
+                      << std::endl;
+
+            typedef Iterator<StringSet<String<char>>, Standard>::Type TIterator;
+            for (TIterator it = begin(stringSet, Standard());
+                 it != end(stringSet, Standard());
+                 ++it)
+                std::cout << "Element " << position(it, stringSet) << ": "
+                          << *it << std::endl;
+
+            clear(stringSet);  // Clear the contents of the StringSet.
+
+            std::cout << "Number of elements: " << length(stringSet)
+                      << std::endl;
+        }
+        return vector<ints>();
+    }
     void print_repeats() {
         repeat_map repeats = all_repeats();
 
