@@ -11,17 +11,12 @@
 #include <iostream>
 #include <string>
 #include "estl.hpp"
-#include <seqan/basic.h>
-#include <seqan/sequence.h>
-#include <seqan/file.h>
-#include <seqan/index.h>
 
 namespace RepeatFinding {
 
 using namespace std;
 using namespace Suffix;
 using namespace estl;
-using namespace seqan;
 
 using int_pair = pair<int, int>;
 using repeat_map = map<int_pair, int_pair>;
