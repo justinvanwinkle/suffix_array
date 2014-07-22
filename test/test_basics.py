@@ -300,7 +300,7 @@ def test_timestamp():
     assert result.matches == tuple()
 
 
-def XXX_test_tables():
+def test_tables():
     l = ['<ul> <li>this</li> <li>is</li> <li>a</li> <li>fat</li> <li>list</li></ul>',
          '<ul> <li>of crap</li> <li>that</li></ul>',
          '<ul> <li>that</li> <li>is</li></ul>',

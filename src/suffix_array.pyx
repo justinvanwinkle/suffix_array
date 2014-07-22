@@ -83,6 +83,15 @@ cdef class RepeatFinderP:
                 matches.append(match)
         return Result(result.match_length, tuple(matches))
 
+    cdef unbake_vecs(self, vecs):
+        offsets = []
+        for vec in vecs:
+            offsets.append([
+                self.thisptr.sa.text_index_at(ix, self.thisptr.sa.text_at(ix))
+                for ix in vec])
+
+        return offsets
+
     def find_tables(self):
         cdef vector[Table] c_tables = self.thisptr.find_tables()
         cdef Table c_table
@@ -108,7 +117,6 @@ def unbake_table(offset_set, match_length, ss):
     for offsets, s in zip(offset_set, ss):
         unbaked.append([s[offset: offset + match_length] for offset in offsets])
     return unbaked
-
 
 
 def find_tables(ss):
