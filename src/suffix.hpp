@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <stack>
+#include <iostream>
 
 namespace Suffix {
 
@@ -14,19 +15,24 @@ using namespace std;
 
 using stack_entry = tuple<int, int, int>;
 
+
 class SuffixArray {
   public:
-    vector<int> suffix_array;
-    vector<int> lcp;
-    vector<int> rank;
     string s;
     int s_len;
     int num_texts;
-    vector<size_t> length_before_docs;
+    vector<int> length_before_docs;
 
     SuffixArray(vector<string> &texts) {
         num_texts = texts.size();
-        for (auto &text : texts) {
+        for (int text_id = 0; text_id < num_texts; ++text_id) {
+            auto &text = texts[text_id];
+            int text_len = text.length();
+            for (int doc_offset = 0; doc_offset < text_len; ++doc_offset) {
+                text_ids.push_back(text_id);
+            }
+            text_ids.push_back(text_id);
+
             length_before_docs.push_back(s.length());
             s.append(text);
             s.append("\x02");
@@ -37,16 +43,23 @@ class SuffixArray {
 
         suffix_array.resize(s_len, 0);
 
-        // divsufsort((const unsigned char *)s.data(), suffix_array.data(), len);
+        // divsufsort((const unsigned char *)s.data(), suffix_array.data(),
+        // len);
         saisxx((const unsigned char *)s.data(), suffix_array.data(), (int)s_len);
 
-        rank.resize(s_len, 0);
-
-        for (int i = 0; i < s_len; ++i) {
-            rank[suffix_array[i]] = i;
-        }
-
         setup_lcp();
+    }
+
+    int SA(size_t ix) {
+        return suffix_array[ix];
+    }
+
+    int text_index_at(int o, int text_num) {
+        return o - length_before_docs[text_num];
+    }
+
+    int text_at(int o) {
+        return text_ids[o];
     }
 
     template <class Function>
@@ -81,23 +94,19 @@ class SuffixArray {
         }
     }
 
-    ssize_t text_index_at(size_t o, size_t text_num) {
-        return o - length_before_docs[text_num];
-    }
-
-    ssize_t text_at(size_t o) {
-        size_t ix = 0;
-        while (length_before_docs[++ix] <= o)
-            ;
-        return ix - 1;
-    }
-
     ~SuffixArray(){};
 
-  private:
+  protected:
+    vector<int> suffix_array;
+    vector<int> lcp;
+    vector<short> text_ids;
+
     template <class Function>
-    int remove_many(
-        stack<stack_entry> &stack, int top, int m, int end_ix, Function fn) {
+    int remove_many(stack<stack_entry> &stack,
+                    int top,
+                    int m,
+                    int end_ix,
+                    Function fn) {
         int last_start_ix = -1, max_end_ix, lcp_diff, start_ix, nb;
 
         while (m > 0) {
@@ -119,7 +128,6 @@ class SuffixArray {
         return top;
     }
 
-  protected:
     int get_delta(vector<pair<int, int>> &skips, int index) {
         int new_index = index;
         for (auto &key_val : skips) {
@@ -133,6 +141,12 @@ class SuffixArray {
     }
 
     void setup_lcp() {
+        vector<int> rank(s_len, 0);
+
+        for (int i = 0; i < s_len; ++i) {
+            rank[suffix_array[i]] = i;
+        }
+
         lcp.resize(s_len, 0);
 
         int l = 0;
@@ -141,10 +155,11 @@ class SuffixArray {
             if (l != 0)
                 --l;
 
-            size_t i = rank[j];
+            int i = rank[j];
             if (i != 0) {
                 int j2 = suffix_array[i - 1];
-                while (j + l < s_len and j2 + l < s_len and s[j + l] == s[j2 + l]) {
+                while (j + l < s_len and j2 + l < s_len and
+                       s[j + l] == s[j2 + l]) {
                     ++l;
                 }
 
@@ -156,7 +171,8 @@ class SuffixArray {
 
         if (not length_before_docs.empty()) {
             // Fix lcp for multi strings
-            for (int doc_idx = 0, max= length_before_docs.size() - 1; doc_idx < max;
+            for (int doc_idx = 0, max = length_before_docs.size() - 1;
+                 doc_idx < max;
                  ++doc_idx) {
                 int doc_end_pos = length_before_docs[doc_idx + 1] - 1;
                 int doc_start_pos = length_before_docs[doc_idx];

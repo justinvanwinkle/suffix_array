@@ -36,5 +36,3 @@ cdef extern from "repeats.hpp" namespace "RepeatFinding":
         int right_match_length
         vector[vector[int]] left_extendables
         vector[vector[int]] right_extendables
-
-    cdef SuffixArray narrow_sa(SuffixArray, vector[pair[int, int]])

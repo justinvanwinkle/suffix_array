@@ -68,7 +68,7 @@ class RepeatFinder {
 
 
             for (int o = start_ix; o < start_ix + nb; ++o) {
-                int offset_global = sa.suffix_array[o];
+                int offset_global = sa.SA(o);
                 int id_str = sa.text_at(offset_global);
                 int offset = sa.text_index_at(offset_global, id_str);
 
@@ -108,7 +108,7 @@ class RepeatFinder {
     repeat_map all_repeats() {
         repeat_map repeats;
         sa.walk_maximal_substrings([&repeats](
-            int nb, int match_len, int start_ix, int max_end_ix) {
+            int, int match_len, int start_ix, int max_end_ix) {
             int_pair key = make_pair(start_ix, max_end_ix - start_ix + 1);
             auto &val = repeats[key];
             if (get<0>(val) < match_len) {
@@ -121,26 +121,8 @@ class RepeatFinder {
     }
 
     vector<ints> expanded_repeats(strings contents) {
-        StringSet<String<char>> stringSet;
-        for (auto &s : contents) {
-            appendValue(stringSet, s);
-            std::cout << "Number of elements: " << length(stringSet)
-                      << std::endl;
-
-            typedef Iterator<StringSet<String<char>>, Standard>::Type TIterator;
-            for (TIterator it = begin(stringSet, Standard());
-                 it != end(stringSet, Standard());
-                 ++it)
-                std::cout << "Element " << position(it, stringSet) << ": "
-                          << *it << std::endl;
-
-            clear(stringSet);  // Clear the contents of the StringSet.
-
-            std::cout << "Number of elements: " << length(stringSet)
-                      << std::endl;
-        }
-        return vector<ints>();
     }
+
     void print_repeats() {
         repeat_map repeats = all_repeats();
 
