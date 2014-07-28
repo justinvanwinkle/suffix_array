@@ -43,8 +43,7 @@ extern "C" {
  * @param n The length of the given string.
  * @return 0 if no error occurred, -1 or -2 otherwise.
  */
-int
-divsufsort(const unsigned char *T, int *SA, int n);
+int divsufsort(const unsigned char *T, int *SA, int n);
 
 /**
  * Constructs the burrows-wheeler transformed string of a given string.
@@ -54,26 +53,23 @@ divsufsort(const unsigned char *T, int *SA, int n);
  * @param n The length of the given string.
  * @return The primary index if no error occurred, -1 or -2 otherwise.
  */
-int
-divbwt(const unsigned char *T, unsigned char *U, int *A, int n);
+int divbwt(const unsigned char *T, unsigned char *U, int *A, int n);
 
-int
-binarysearch_lower(const int *A, int size, int value);
+int binarysearch_lower(const int *A, int size, int value);
 
-int
-binary_cmov(const int *arr, int n, int key);
+int binary_cmov(const int *arr, int n, int key);
 
-int
-bw_transform(const uint8_t *T, uint8_t *U, int *SA, int n, int *idx);
+int bw_transform(const uint8_t *T, uint8_t *U, int *SA, int n, int *idx);
 
-int
-inverse_bw_transform(const uint8_t *T, uint8_t *U, int *A, int n, int idx);
+int inverse_bw_transform(const uint8_t *T, uint8_t *U, int *A, int n, int idx);
 
-int
-sa_search(const uint8_t *T, int Tsize,
-          const uint8_t *P, int Psize,
-          const int *SA, int SAsize,
-          int *idx);
+int sa_search(const uint8_t *T,
+              int Tsize,
+              const uint8_t *P,
+              int Psize,
+              const int *SA,
+              int SAsize,
+              int *idx);
 
 #ifdef __cplusplus
 } /* extern "C" */
