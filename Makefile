@@ -8,7 +8,7 @@ INCLUDE = $(PYTHON_INCLUDES)
 #FLAGS = -fno-strict-aliasing
 #FLAGS += -fno-common
 FLAGS = -g
-FLAGS += -O3
+FLAGS += -O2
 FLAGS += -Wall
 FLAGS += -Wextra
 FLAGS += -pipe
@@ -52,7 +52,7 @@ src/%.o: src/%.cpp src/*.hpp Makefile
 src/suffix_array.cpp: src/suffix_array.pyx src/suffix_array.pxd
 	cython $(CYTHON_FLAGS) $< -o $@
 
-build/suffix_array.so: src/suffix_array.o
+build/suffix_array.so: src/suffix_array.o src/divsufsort.o
 	$(shell mkdir build)
 	$(CXX) $(CPPFLAGS) $(LFLAGS) $(INCLUDE) $^ -o $@
 

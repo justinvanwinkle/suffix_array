@@ -6,6 +6,7 @@ from collections import namedtuple
 
 from suffix_array cimport RepeatFinder as RepeatFinder
 from suffix_array cimport SuffixArray
+from suffix_array cimport bisect_distance
 
 from libcpp.string cimport string
 
@@ -20,17 +21,29 @@ class TableP:
                  right_match_length,
                  left_extendables,
                  right_extendables):
-        self.strings = strings
+        self.strings = tuple(strings)
         self.left_match_length = left_match_length
         self.right_match_length = right_match_length
-        self.left_extendables = left_extendables
-        self.right_extendables = right_extendables
+        self.left_extendables = tuple([tuple(l) for l in left_extendables])
+        self.right_extendables = tuple([tuple(l) for l in right_extendables])
 
     @property
     def seperators(self):
         left_sep = self.strings[0][self.left_extendables[0][0]:self.left_extendables[0][0] + self.left_match_length]
         right_sep = self.strings[0][self.right_extendables[0][0]: self.right_extendables[0][0] + self.right_match_length]
         return left_sep, right_sep
+
+    def values(self):
+        vals = []
+        for lefts, rights, s in zip(self.left_extendables,
+                                    self.right_extendables,
+                                    self.strings):
+            current_vals = []
+            for start, end in zip(lefts, rights):
+                end = end + self.right_match_length
+                current_vals.append(s[start:end])
+            vals.append(current_vals)
+        return vals
 
     def __repr__(self):
         return '<Table(left_match_length=%s, right_match_length=%s, len=%s, seps=%s>' % (
@@ -39,6 +52,20 @@ class TableP:
             len(self.left_extendables),
             self.seperators)
 
+    def tuple(self):
+        return (self.strings,
+                self.left_match_length,
+                self.right_match_length,
+                self.left_extendables,
+                self.right_extendables)
+
+    def __hash__(self):
+        return hash(self.tuple())
+
+    def __eq__(self, o):
+        if hasattr(o, 'tuple'):
+            return self.tuple() == o.tuple()
+        return False
 
     def start_offsets(self):
         return [doc_offsets[0] for doc_offsets in self.left_extendables]
@@ -54,13 +81,18 @@ class TableP:
 
     def total_span(self):
         total = 0
-        for start_group, end_group in zip(self.left_extendables,
-                                          self.right_extendables):
-            for start, end in zip(start_group, end_group):
-                total += end - start
-
+        for start, end in zip(self.start_offsets(), self.end_offsets()):
+            total += end - start
         return total
 
+    def intersects(self, o):
+        for (my_start, my_end), (o_start, o_end) in zip(self.spans(), o.spans()):
+            if ((my_start <= o_start < my_end or
+                 my_start < o_end < my_end or
+                 o_start <= my_start < o_end or
+                 o_start < my_end < o_end)):
+                return True
+        return False
 
 cdef class RepeatFinderP:
     cdef RepeatFinder *thisptr
@@ -123,3 +155,7 @@ def find_tables(ss):
     cstr = RepeatFinderP(ss)
     tables = cstr.find_tables()
     return tables
+
+
+cpdef double file_bisect_distance(string fn0, string fn1):
+    return bisect_distance(fn0, fn1)

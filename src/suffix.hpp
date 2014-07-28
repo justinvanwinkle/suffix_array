@@ -1,8 +1,8 @@
 #ifndef SUFFIX_HPP
 #define SUFFIX_HPP
 
-#include "sais.hpp"
-
+//#include "sais.hpp"
+#include "divsufsort.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -43,9 +43,9 @@ class SuffixArray {
 
         suffix_array.resize(s_len, 0);
 
-        // divsufsort((const unsigned char *)s.data(), suffix_array.data(),
-        // len);
-        saisxx((const unsigned char *)s.data(), suffix_array.data(), (int)s_len);
+        divsufsort((const unsigned char *)s.data(), suffix_array.data(), (int)s_len);
+        // saisxx((const unsigned char *)s.data(), suffix_array.data(),
+        // (int)s_len);
 
         setup_lcp();
     }

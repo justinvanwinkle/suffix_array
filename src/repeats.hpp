@@ -164,7 +164,7 @@ class RepeatFinder {
 
         sa.walk_maximal_substrings([this, &tables](
             int nb, int match_len, int start_ix, int) {
-            if (match_len < 2)
+            if (match_len < 5)
                 return;
 
             vector<vector<int>> positions(sa.num_texts, vector<int>());
@@ -241,41 +241,51 @@ class RepeatFinder {
 
         for (auto &left_table : tables) {
             auto &lefts = left_table.left_extendables;
-            if (lefts.empty())
+            auto lefts_size = lefts.size();
+            if (not lefts_size)
                 continue;
+            if (left_table.left_match_length != 25 or lefts[0].size() != 8)
+                continue;
+            cout << lefts << " -- " << left_table.left_match_length << endl;
+
             for (auto &right_table : tables) {
                 auto &rights = right_table.right_extendables;
-                if (rights.empty())
+                auto rights_size = rights.size();
+                if (not rights_size)
                     continue;
-                bool match = true;
-                bool long_group_seen = false;
+                if (right_table.right_match_length != 16)
+                    continue;
 
-                for (size_t doc_id = 0; doc_id != lefts.size(); ++doc_id) {
+                bool match = true;
+
+                for (size_t doc_id = 0; doc_id != lefts_size; ++doc_id) {
                     auto &doc_left = lefts[doc_id];
+                    auto doc_left_size = doc_left.size();
                     auto &doc_right = rights[doc_id];
-                    if (doc_left.size() != doc_right.size()) {
+                    auto doc_right_size = doc_right.size();
+
+                    if (doc_left_size != doc_right_size) {
                         match = false;
                         break;
                     }
 
-                    if (doc_left.size() > 2) {
-                        long_group_seen = true;
-                    }
-
-                    for (size_t ix = 0; ix != doc_left.size(); ++ix) {
+                    for (size_t ix = 0; ix != doc_left_size; ++ix) {
                         auto &left_offset = doc_left[ix];
                         auto &right_offset = doc_right[ix];
 
                         if (left_offset >= right_offset) {
+                            cout << "NOT ZIPPED " << rights << " -- "
+                                 << right_table.right_match_length << endl;
                             match = false;
                             break;
                         }
 
-                        if (ix < doc_left.size() - 1) {
+                        if (ix < doc_left_size - 1) {
                             auto &next_left = doc_left[ix + 1];
-                            if ((next_left <= right_offset) or
-                                (right_table.right_match_length + right_offset <
+                            if ((right_table.right_match_length + right_offset !=
                                  next_left)) {
+                                cout << "NOT EXACT " << rights << " -- "
+                                     << right_table.right_match_length << endl;
                                 match = false;
                                 break;
                             }
@@ -285,7 +295,7 @@ class RepeatFinder {
                         break;
                     }
                 }
-                if (match and long_group_seen) {
+                if (match) {
                     Table t;
                     t.left_match_length = left_table.left_match_length;
                     t.left_extendables = left_table.left_extendables;
@@ -295,7 +305,6 @@ class RepeatFinder {
                 }
             }
         }
-
         return good_tables;
     }
 };
