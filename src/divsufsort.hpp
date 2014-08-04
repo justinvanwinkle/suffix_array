@@ -57,8 +57,6 @@ int divbwt(const unsigned char *T, unsigned char *U, int *A, int n);
 
 int binarysearch_lower(const int *A, int size, int value);
 
-int binary_cmov(const int *arr, int n, int key);
-
 int bw_transform(const uint8_t *T, uint8_t *U, int *SA, int n, int *idx);
 
 int inverse_bw_transform(const uint8_t *T, uint8_t *U, int *A, int n, int idx);

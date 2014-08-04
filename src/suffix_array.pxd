@@ -23,6 +23,7 @@ cdef extern from "repeats.hpp" namespace "RepeatFinding":
         RepeatFinder(vector[string])
         RepeatFinder(SuffixArray) except +
         RepeatFinderResult rstr()
+        string LCS()
         vector[Table] find_tables()
         SuffixArray sa
 

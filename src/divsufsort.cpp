@@ -24,7 +24,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "divsufsort.h"
+#include "divsufsort.hpp"
 
 #include <assert.h>
 #include <stdio.h>

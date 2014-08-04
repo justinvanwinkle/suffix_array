@@ -38,7 +38,7 @@ endif
 
 CPPFLAGS = $(FLAGS)
 CPPFLAGS += -std=c++11
-#CPPFLAGS += -stdlib=libc++
+CPPFLAGS += -stdlib=libc++
 #CPPFLAGS += --analyze
 #CPPFLAGS += -fsanitize=address
 

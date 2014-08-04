@@ -137,6 +137,9 @@ cdef class RepeatFinderP:
                 self.unbake_vecs(c_table.right_extendables)))
         return tables
 
+    def LCS(self):
+        return self.thisptr.LCS()
+
 
 def rstr_max(ss):
     rstr = RepeatFinderP(ss)
@@ -155,6 +158,12 @@ def find_tables(ss):
     cstr = RepeatFinderP(ss)
     tables = cstr.find_tables()
     return tables
+
+
+def LCS(ss):
+    rstr = RepeatFinderP(ss)
+    lcs = rstr.LCS()
+    return lcs
 
 
 cpdef double file_bisect_distance(string fn0, string fn1):

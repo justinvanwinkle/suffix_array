@@ -103,7 +103,37 @@ class RepeatFinder {
             }
         });
         return result;
-    };
+    }
+
+    string LCS() {
+        string lcs;
+        sa.walk_maximal_substrings([this, &lcs](
+            int nb, int match_len, int start_ix, int) {
+
+            for (int i = 0; i < sa.num_texts; ++i) {
+                match_count[i] = 0;
+            }
+
+
+            for (int o = start_ix; o < start_ix + nb; ++o) {
+                int offset_global = sa.SA(o);
+                int id_str = sa.text_at(offset_global);
+                int offset = sa.text_index_at(offset_global, id_str);
+
+                ++match_count[id_str];
+            }
+
+            for (int i = 0; i < sa.num_texts; ++i) {
+                if (match_count[i] == 0)
+                    return;
+            }
+
+            if ((match_len > lcs.size())) {
+                lcs = sa.s.substr(sa.SA(start_ix), match_len);
+            }
+        });
+        return lcs;
+    }
 
     repeat_map all_repeats() {
         repeat_map repeats;
@@ -121,7 +151,8 @@ class RepeatFinder {
     }
 
     bool extendable(vector<int> &offsets, int delta) {
-        for (unsigned int i = 0; i < offsets.size() - 2; ++i) {
+        auto offsets_size = offsets.size();
+        for (unsigned int i = 0; i < offsets_size - 2; ++i) {
             if (offsets[i] + delta < 0 or offsets[i + 1] + delta < 0 or
                 offsets[i] + delta >= sa.s_len or
                 offsets[i + 1] + delta >= sa.s_len) {
@@ -145,8 +176,8 @@ class RepeatFinder {
         }
 
         int first_rest = rests[0];
-
-        for (unsigned int i = 0; i < starts.size() - 2; ++i) {
+        auto starts_size = starts.size();
+        for (unsigned int i = 0; i < starts_size - 2; ++i) {
             if (starts[i] + delta < 0 or starts[i + 1] + delta < 0 or
                 starts[i] + delta >= sa.s_len or
                 starts[i + 1] + delta >= sa.s_len) {
@@ -164,7 +195,7 @@ class RepeatFinder {
 
         sa.walk_maximal_substrings([this, &tables](
             int nb, int match_len, int start_ix, int) {
-            if (match_len < 5)
+            if (match_len < 3)
                 return;
 
             vector<vector<int>> positions(sa.num_texts, vector<int>());
@@ -199,22 +230,23 @@ class RepeatFinder {
             vector<int> right_rests;
 
             for (auto &file_positions : positions) {
-                if (file_positions.empty())
+                auto file_positions_size = file_positions.size();
+                if (not file_positions_size)
                     return;
 
                 sort(file_positions.begin(), file_positions.end());
 
                 lefts.push_back(file_positions[0]);
-                rights.push_back(file_positions[file_positions.size() - 1] +
+                rights.push_back(file_positions[file_positions_size - 1] +
                                  match_len - 1);
 
-                if (file_positions.size() < 2)
+                if (file_positions_size < 2)
                     continue;
 
-                for (unsigned int ix = 1; ix != file_positions.size(); ++ix) {
+                for (unsigned int ix = 1; ix != file_positions_size; ++ix) {
                     left_rests.push_back(file_positions[ix]);
                 }
-                for (unsigned int ix = 0; ix != file_positions.size() - 1; ++ix) {
+                for (unsigned int ix = 0; ix != file_positions_size - 1; ++ix) {
                     right_rests.push_back(file_positions[ix] + match_len - 1);
                 }
             }
@@ -244,17 +276,16 @@ class RepeatFinder {
             auto lefts_size = lefts.size();
             if (not lefts_size)
                 continue;
-            if (left_table.left_match_length != 25 or lefts[0].size() != 8)
-                continue;
-            cout << lefts << " -- " << left_table.left_match_length << endl;
+
+            // cout << lefts << endl;
 
             for (auto &right_table : tables) {
                 auto &rights = right_table.right_extendables;
                 auto rights_size = rights.size();
                 if (not rights_size)
                     continue;
-                if (right_table.right_match_length != 16)
-                    continue;
+                // cout << rights << " -- " << right_table.right_match_length
+                // << endl;
 
                 bool match = true;
 
@@ -274,8 +305,6 @@ class RepeatFinder {
                         auto &right_offset = doc_right[ix];
 
                         if (left_offset >= right_offset) {
-                            cout << "NOT ZIPPED " << rights << " -- "
-                                 << right_table.right_match_length << endl;
                             match = false;
                             break;
                         }
@@ -284,8 +313,6 @@ class RepeatFinder {
                             auto &next_left = doc_left[ix + 1];
                             if ((right_table.right_match_length + right_offset !=
                                  next_left)) {
-                                cout << "NOT EXACT " << rights << " -- "
-                                     << right_table.right_match_length << endl;
                                 match = false;
                                 break;
                             }

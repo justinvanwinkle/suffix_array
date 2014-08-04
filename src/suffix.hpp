@@ -2,7 +2,7 @@
 #define SUFFIX_HPP
 
 //#include "sais.hpp"
-#include "divsufsort.h"
+#include "divsufsort.hpp"
 #include <string>
 #include <vector>
 #include <map>
