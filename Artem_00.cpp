@@ -457,7 +457,7 @@ public:
 int main(int argc, char* argv[]){
 	string pathIn=PATH;
 	if (argc ==2 ) {
-		pathIn=atof(argv[1]);
+		pathIn=argv[1];
 		cout << pathIn;
 	}
 
