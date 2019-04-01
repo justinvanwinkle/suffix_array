@@ -3,6 +3,11 @@ _THIS_FIXES_CYTHON_BUG = 'wtf'
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libcpp.pair cimport pair
+from libcpp.map cimport map as cpp_map
+
+
+ctypedef pair[int, int] int_pair
+ctypedef cpp_map[int_pair, int_pair] repeat_map
 
 
 cdef extern from "repeats.hpp" namespace "RepeatFinding":
@@ -23,20 +28,14 @@ cdef extern from "repeats.hpp" namespace "RepeatFinding":
         RepeatFinder(vector[string])
         RepeatFinder(SuffixArray) except +
         RepeatFinderResult rstr()
+        repeat_map all_repeats()
         string LCS()
-        vector[Table] find_tables()
         SuffixArray sa
 
     cdef cppclass RepeatFinderResult:
         int match_length
         int matching
         vector[int] matches
-
-    cdef cppclass Table:
-        int left_match_length
-        int right_match_length
-        vector[vector[int]] left_extendables
-        vector[vector[int]] right_extendables
 
 cdef extern from "nodes.hpp" namespace "Nodes":
     cdef double bisect_distance(string, string)

@@ -2,7 +2,7 @@
 CC = clang-7
 CXX = clang++-7
 
-PYTHON_INCLUDES=$(shell python-config --includes)
+PYTHON_INCLUDES=$(shell python3.7-config --includes)
 INCLUDE = $(PYTHON_INCLUDES)
 
 #FLAGS = -fno-strict-aliasing
@@ -21,6 +21,8 @@ FLAGS += -ferror-limit=2
 CYTHON = cython
 CYTHON_FLAGS = -Wextra
 CYTHON_FLAGS += --cplus
+CYTHON_FLAGS += -3
+
 
 ifeq ($(shell uname), Darwin)
 LFLAGS += -bundle
@@ -37,7 +39,7 @@ FLAGS += -fPIC
 endif
 
 CPPFLAGS = $(FLAGS)
-CPPFLAGS += -std=c++11
+CPPFLAGS += -std=c++2a
 #CPPFLAGS += -stdlib=libc++
 #CPPFLAGS += --analyze
 #CPPFLAGS += -fsanitize=address
@@ -53,14 +55,14 @@ src/suffix_array.cpp: src/suffix_array.pyx src/suffix_array.pxd
 	cython $(CYTHON_FLAGS) $< -o $@
 
 build/suffix_array.so: src/suffix_array.o src/divsufsort.o
-	$(shell mkdir build)
+	$(shell mkdir -p build)
 	$(CXX) $(CPPFLAGS) $(LFLAGS) $(INCLUDE) $^ -o $@
 
 test: build/suffix_array.so test/test_basics.py
 	PYTHONPATH=./build/ py.test -s -- test/test_basics.py
 
 install: build/suffix_array.so
-	cp build/suffix_array.so $(shell python -c 'import suffix_array; print suffix_array.__file__')
+	cp build/suffix_array.so $(shell python -c 'import suffix_array; print(suffix_array.__file__)')
 
 clean:
 	rm -rf src/*.o build/ src/suffix_array.cpp

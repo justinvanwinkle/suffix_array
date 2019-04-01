@@ -10,89 +10,10 @@ from suffix_array cimport bisect_distance
 
 from libcpp.string cimport string
 
+##
 
 Result = namedtuple('Result', ['match_length', 'matches'])
 
-
-class TableP:
-    def __init__(self,
-                 strings,
-                 left_match_length,
-                 right_match_length,
-                 left_extendables,
-                 right_extendables):
-        self.strings = tuple(strings)
-        self.left_match_length = left_match_length
-        self.right_match_length = right_match_length
-        self.left_extendables = tuple([tuple(l) for l in left_extendables])
-        self.right_extendables = tuple([tuple(l) for l in right_extendables])
-
-    @property
-    def seperators(self):
-        left_sep = self.strings[0][self.left_extendables[0][0]:self.left_extendables[0][0] + self.left_match_length]
-        right_sep = self.strings[0][self.right_extendables[0][0]: self.right_extendables[0][0] + self.right_match_length]
-        return left_sep, right_sep
-
-    def values(self):
-        vals = []
-        for lefts, rights, s in zip(self.left_extendables,
-                                    self.right_extendables,
-                                    self.strings):
-            current_vals = []
-            for start, end in zip(lefts, rights):
-                end = end + self.right_match_length
-                current_vals.append(s[start:end])
-            vals.append(current_vals)
-        return vals
-
-    def __repr__(self):
-        return '<Table(left_match_length=%s, right_match_length=%s, len=%s, seps=%s>' % (
-            self.left_match_length,
-            self.right_match_length,
-            len(self.left_extendables),
-            self.seperators)
-
-    def tuple(self):
-        return (self.strings,
-                self.left_match_length,
-                self.right_match_length,
-                self.left_extendables,
-                self.right_extendables)
-
-    def __hash__(self):
-        return hash(self.tuple())
-
-    def __eq__(self, o):
-        if hasattr(o, 'tuple'):
-            return self.tuple() == o.tuple()
-        return False
-
-    def start_offsets(self):
-        return [doc_offsets[0] for doc_offsets in self.left_extendables]
-
-    def end_offsets(self):
-        return [doc_offsets[-1] + self.right_match_length
-                for doc_offsets in self.right_extendables]
-
-    def spans(self):
-        starts = self.start_offsets()
-        ends = self.end_offsets()
-        return zip(starts, ends)
-
-    def total_span(self):
-        total = 0
-        for start, end in zip(self.start_offsets(), self.end_offsets()):
-            total += end - start
-        return total
-
-    def intersects(self, o):
-        for (my_start, my_end), (o_start, o_end) in zip(self.spans(), o.spans()):
-            if ((my_start <= o_start < my_end or
-                 my_start < o_end < my_end or
-                 o_start <= my_start < o_end or
-                 o_start < my_end < o_end)):
-                return True
-        return False
 
 cdef class RepeatFinderP:
     cdef RepeatFinder *thisptr
@@ -124,21 +45,18 @@ cdef class RepeatFinderP:
 
         return offsets
 
-    def find_tables(self):
-        cdef vector[Table] c_tables = self.thisptr.find_tables()
-        cdef Table c_table
-        tables = []
-        for c_table in c_tables:
-            tables.append(TableP(
-                self.texts,
-                c_table.left_match_length,
-                c_table.right_match_length,
-                self.unbake_vecs(c_table.left_extendables),
-                self.unbake_vecs(c_table.right_extendables)))
-        return tables
+    def all_repeats(self):
+        result = self.thisptr.all_repeats()
+        l = []
+        for x in result:
+            l.append(x)
+        return l
 
     def LCS(self):
         return self.thisptr.LCS()
+
+    def get_lcp(self):
+        return self.thisptr.sa.lcp;
 
 
 def rstr_max(ss):
@@ -146,21 +64,13 @@ def rstr_max(ss):
     results = rstr.go_rstr()
     return results
 
-
-def unbake_table(offset_set, match_length, ss):
-    unbaked = []
-    for offsets, s in zip(offset_set, ss):
-        unbaked.append([s[offset: offset + match_length] for offset in offsets])
-    return unbaked
+def all_repeats(ss):
+    rstr = RepeatFinderP(ss)
+    all_rpts = rstr.all_repeats()
+    return all_rpts
 
 
-def find_tables(ss):
-    cstr = RepeatFinderP(ss)
-    tables = cstr.find_tables()
-    return tables
-
-
-def LCS(ss):
+def longest_common_substring(ss):
     rstr = RepeatFinderP(ss)
     lcs = rstr.LCS()
     return lcs
