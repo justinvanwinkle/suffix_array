@@ -5,6 +5,7 @@ from glob import glob
 # from suffix_array import make_lcp
 from suffix_array import rstr_max
 from suffix_array import find_tables
+from suffix_array import SuffixArray
 
 
 # def test_basic_sort():
@@ -42,9 +43,9 @@ from suffix_array import find_tables
 #     assert ('c' in sa) is False
 
 
-# def test_lcp_array():
-#     assert LCP(SuffixArray('abcdefg')) == [-1] + [0] * 6
-#     assert LCP(SuffixArray('banana')) == [-1, 1, 3, 0, 0, 2]
+def test_lcp_array():
+    assert LCP(SuffixArray('abcdefg')) == [-1] + [0] * 6
+    assert LCP(SuffixArray('banana')) == [-1, 1, 3, 0, 0, 2]
 
 
 def test_simple_rstr():
@@ -300,14 +301,14 @@ def test_timestamp():
     assert result.matches == tuple()
 
 
-def test_tables():
-    l = ['<ul> <li>this</li> <li>is</li> <li>a</li> <li>fat</li> <li>list</li></ul>',
-         '<ul> <li>of crap</li> <li>that</li></ul>',
-         '<ul> <li>that</li> <li>is</li></ul>',
-         '<ul> <li>dumb</li></ul>']
+# def test_tables():
+#     l = ['<ul> <li>this</li> <li>is</li> <li>a</li> <li>fat</li> <li>list</li></ul>',
+#          '<ul> <li>of crap</li> <li>that</li></ul>',
+#          '<ul> <li>that</li> <li>is</li></ul>',
+#          '<ul> <li>dumb</li></ul>']
 
-    tables = find_tables(l)
-    assert len(tables) == 1
+#     tables = find_tables(l)
+#     assert len(tables) == 1
 
     # fns = glob('/Users/jvanwink/scratch/dpreview/specs/*')[:20]
     # l = [open(fn).read() for fn in fns]

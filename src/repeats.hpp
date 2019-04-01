@@ -142,7 +142,8 @@ class RepeatFinder {
             int_pair key = make_pair(start_ix, max_end_ix - start_ix + 1);
             auto &val = repeats[key];
             if (get<0>(val) < match_len) {
-                val = make_tuple(match_len, start_ix);
+                val.first = match_len;
+                val.second = start_ix;
             }
         });
 

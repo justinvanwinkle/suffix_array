@@ -1,6 +1,6 @@
 
-CC = clang-mp-3.5
-CXX = clang++-mp-3.5
+CC = clang-7
+CXX = clang++-7
 
 PYTHON_INCLUDES=$(shell python-config --includes)
 INCLUDE = $(PYTHON_INCLUDES)
@@ -38,7 +38,7 @@ endif
 
 CPPFLAGS = $(FLAGS)
 CPPFLAGS += -std=c++11
-CPPFLAGS += -stdlib=libc++
+#CPPFLAGS += -stdlib=libc++
 #CPPFLAGS += --analyze
 #CPPFLAGS += -fsanitize=address
 
