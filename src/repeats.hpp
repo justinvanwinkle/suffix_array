@@ -97,8 +97,9 @@ class RepeatFinder {
     }
 
     string LCS() {
-        string lcs;
-        sa.walk_maximal_substrings(1, [this, &lcs](
+        int best_start_ix = 0;
+        int best_match_len = 0;
+        sa.walk_maximal_substrings(1, [this, &best_start_ix, &best_match_len](
             int nb, int match_len, int start_ix, int) {
 
             for (int i = 0; i < sa.num_texts; ++i) {
@@ -119,59 +120,21 @@ class RepeatFinder {
                     return;
             }
 
-            if ((match_len > lcs.length())) {
-                lcs = sa.s.substr(sa.SA(start_ix), match_len);
+            if (match_len > best_match_len) {
+                best_match_len = match_len;
+                best_start_ix = start_ix;
             }
         });
+        string lcs = sa.s.substr(sa.SA(best_start_ix), best_match_len);
         return lcs;
     }
 
-    repeat_map all_repeats() {
-        repeat_map repeats;
-        // sa.walk_maximal_substrings([this, &repeats](
-        //     int nb, int match_len, int start_ix, int) {
-
-        //     for (int i = 0; i < sa.num_texts; ++i) {
-        //         sub_results[i] = -1;
-        //         match_count[i] = 0;
-        //     }
-
-
-        //     for (int o = start_ix; o < start_ix + nb; ++o) {
-        //         int offset_global = sa.SA(o);
-        //         int id_str = sa.text_at(offset_global);
-        //         int offset = sa.text_index_at(offset_global, id_str);
-
-        //         ++match_count[id_str];
-
-        //         if ((sub_results[id_str] == -1) or
-        //             (offset < sub_results[id_str])) {
-        //             sub_results[id_str] = offset;
-        //         }
-        //     }
-
-        //     for (int i = 0; i < sa.num_texts; ++i) {
-        //         if (sub_results[i] == -1)
-        //             return;
-        //     }
-
-        //     int first_count = match_count[0];
-        //     for (auto &k : match_count) {
-        //         if (k != first_count)
-        //             return;
-        //     }
-
-        //     for (auto &k : sub_results) {
-        //         if (k == -1)
-        //             return;
-        //     }
-
-        //     if ((match_len >= result.match_length)) {
-        //         result.matching = sa.num_texts;
-        //         result.match_length = match_len;
-        //         result.matches = sub_results;
-        //     }
-        // });
+    vector<string> all_repeats() {
+        vector<string> repeats;
+        sa.walk_maximal_substrings(1, [this, &repeats](
+            int, int match_len, int start_ix, int max_end_ix) {
+            repeats.push_back(sa.s.substr(sa.SA(start_ix), match_len));
+        });
         return repeats;
     }
 

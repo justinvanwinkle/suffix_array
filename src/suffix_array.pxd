@@ -28,7 +28,7 @@ cdef extern from "repeats.hpp" namespace "RepeatFinding":
         RepeatFinder(vector[string])
         RepeatFinder(SuffixArray) except +
         RepeatFinderResult rstr()
-        repeat_map all_repeats()
+        vector[string] all_repeats()
         string LCS()
         SuffixArray sa
 
