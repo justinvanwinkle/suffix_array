@@ -97,7 +97,7 @@ def test_all_repeats():
 
     result = all_repeats([s1, s2])
 
-    assert result == []
+    assert set(result) == set([b'yyyy', b'yyy', b'yy', b'y'])
 
 
 def test_rstr_max():

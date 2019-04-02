@@ -25,6 +25,8 @@ class Node {
             grouping.resize(texts.size(), 1);
     }
 
+    virtual ~Node() = default;
+
     virtual size_t length_of_data() {
         size_t total = 0;
         for (auto &child : children) {
@@ -53,6 +55,7 @@ class Node {
     ints grouping;
 };
 
+
 class DataNode : public Node {
   public:
     static const bool leaf = true;
@@ -75,9 +78,11 @@ class BinarySplitNode : public Node {
     BinarySplitNode(strings texts, ints groupings = {}) : Node(texts, groupings){};
 };
 
+
 unique_ptr<Node> construct(strings texts, ints grouping = {}) {
     if (texts.size() < 2)
         return unique_ptr<Node>(new DataNode(texts));
+
     RepeatFinder rpf(texts);
     RepeatFinderResult result = rpf.rstr();
     if (result.match_length < 2)

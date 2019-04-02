@@ -43,6 +43,7 @@ CPPFLAGS += -std=c++2a
 #CPPFLAGS += -stdlib=libc++
 #CPPFLAGS += --analyze
 #CPPFLAGS += -fsanitize=address
+CPPFLAGS += -g -O0
 
 .PHONY: test
 
