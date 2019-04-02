@@ -132,7 +132,28 @@ class RepeatFinder {
     vector<string> all_repeats() {
         vector<string> repeats;
         sa.walk_maximal_substrings(1, [this, &repeats](
-            int, int match_len, int start_ix, int max_end_ix) {
+            int nb, int match_len, int start_ix, int) {
+            for (int i = 0; i < sa.num_texts; ++i) {
+                match_count[i] = 0;
+            }
+
+            for (int o = start_ix; o < start_ix + nb; ++o) {
+                int offset_global = sa.SA(o);
+                int id_str = sa.text_at(offset_global);
+                // int offset = sa.text_index_at(offset_global, id_str);
+
+                ++match_count[id_str];
+            }
+
+            for (int i = 0; i < sa.num_texts; ++i) {
+                if (match_count[i] == 0)
+                    break;
+
+                for (int i = 0; i < sa.num_texts; ++i) {
+                    if (match_count[i] == 0)
+                        return;
+                }
+            }
             repeats.push_back(sa.s.substr(sa.SA(start_ix), match_len));
         });
         return repeats;
