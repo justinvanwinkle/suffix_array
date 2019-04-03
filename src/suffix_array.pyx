@@ -1,3 +1,4 @@
+# cython: language_level=3
 # distutils: language = c++
 
 _THIS_FIXES_CYTHON_BUG = 'wtf'

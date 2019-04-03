@@ -52,10 +52,10 @@ default: build/suffix_array.so
 src/%.o: src/%.cpp src/*.hpp Makefile
 	$(CXX) $(CPPFLAGS) $(INCLUDE) -c $< -o $@
 
-src/suffix_array.cpp: src/suffix_array.pyx src/suffix_array.pxd
+build/suffix_array.cpp: src/suffix_array.pyx src/suffix_array.pxd
 	cython $(CYTHON_FLAGS) $< -o $@
 
-build/suffix_array.so: src/suffix_array.o src/divsufsort.o
+build/suffix_array.so: build/suffix_array.o src/divsufsort.o
 	$(shell mkdir -p build)
 	$(CXX) $(CPPFLAGS) $(LFLAGS) $(INCLUDE) $^ -o $@
 

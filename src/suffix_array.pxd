@@ -1,3 +1,4 @@
+# cython: language_level=3
 _THIS_FIXES_CYTHON_BUG = 'wtf'
 
 from libcpp.vector cimport vector
