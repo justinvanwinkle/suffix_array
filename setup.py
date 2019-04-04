@@ -1,5 +1,5 @@
 
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 from Cython.Build import cythonize
 
 
@@ -11,7 +11,7 @@ if __name__ == '__main__':
     extensions = [Extension("suffix_array",
                             sources=src_files,
                             extra_compile_args=['-std=c++17',
-                                                '-O3'])]
+                                                '-O2'])]
     description = "Fast Suffix Array for Python"
     setup(name='suffix_array',
           version=VERSION,
@@ -19,5 +19,7 @@ if __name__ == '__main__':
           author_email='justin.vanwinkle@gmail.com',
           url='https://github.com/justinvanwinkle/suffix_array',
           license="BSD",
+          tests_require=["pytest"],
+          setup_requires=["cython", "pytest-runner"],
           description=description,
-          ext_modules=cythonize(extensions))
+          ext_modules=cythonize(extensions, nthreads=4))

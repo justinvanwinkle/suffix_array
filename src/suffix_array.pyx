@@ -37,15 +37,6 @@ cdef class RepeatFinderP:
                 matches.append(match)
         return Result(result.match_length, tuple(matches))
 
-    cdef unbake_vecs(self, vecs):
-        offsets = []
-        for vec in vecs:
-            offsets.append([
-                self.thisptr.sa.text_index_at(ix, self.thisptr.sa.text_at(ix))
-                for ix in vec])
-
-        return offsets
-
     def all_repeats(self):
         result = self.thisptr.all_repeats()
         l = []

@@ -3,18 +3,17 @@
 
 //#include "sais.hpp"
 #include "divsufsort.hpp"
-#include <string>
-#include <vector>
+#include <iostream>
 #include <map>
 #include <stack>
-#include <iostream>
+#include <string>
+#include <vector>
 
 namespace Suffix {
 
 using namespace std;
 
 using stack_entry = tuple<int, int, int>;
-
 
 class SuffixArray {
   public:
@@ -25,6 +24,7 @@ class SuffixArray {
 
     SuffixArray(vector<string> &texts) {
         num_texts = texts.size();
+        length_before_docs.push_back(s.length());
         for (int text_id = 0; text_id < num_texts; text_id++) {
             auto &text = texts[text_id];
             int text_len = text.length();
@@ -33,17 +33,17 @@ class SuffixArray {
             }
             text_ids.push_back(text_id);
 
-            length_before_docs.push_back(s.length());
             s.append(text);
             s.append("\x02");
+            length_before_docs.push_back(s.length());
         }
-        length_before_docs.push_back(s.length());
 
         s_len = s.length();
 
         suffix_array.resize(s_len, 0);
 
-        divsufsort((const unsigned char *)s.data(), suffix_array.data(), (int)s_len);
+        divsufsort(
+            (const unsigned char *)s.data(), suffix_array.data(), (int)s_len);
         // saisxx((const unsigned char *)s.data(), suffix_array.data(),
         // (int)s_len);
 
@@ -134,18 +134,6 @@ class SuffixArray {
         return top;
     }
 
-    int get_delta(vector<pair<int, int>> &skips, int index) {
-        int new_index = index;
-        for (auto &key_val : skips) {
-            auto &skip_ix = key_val.first;
-            auto &delta = key_val.second;
-            if (index >= skip_ix) {
-                new_index -= delta;
-            }
-        }
-        return new_index;
-    }
-
     void setup_lcp() {
         vector<int> rank(s_len, 0);
         for (int i = 0; i < s_len; i++) {
@@ -181,8 +169,7 @@ class SuffixArray {
                  ++doc_idx) {
                 int doc_end_pos = length_before_docs[doc_idx + 1] - 1;
                 int doc_start_pos = length_before_docs[doc_idx];
-                for (int needle_pos = doc_end_pos;
-                     needle_pos >= doc_start_pos;
+                for (int needle_pos = doc_end_pos; needle_pos >= doc_start_pos;
                      --needle_pos) {
                     int &lcp_value = lcp[rank[needle_pos]];
                     lcp_value = min(doc_end_pos - needle_pos, lcp_value);
@@ -191,6 +178,6 @@ class SuffixArray {
         }
     }
 };
-};
+}; // namespace Suffix
 
 #endif

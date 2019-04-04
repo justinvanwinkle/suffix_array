@@ -10,6 +10,6 @@ int main() {
     vector<string> v = vector<string>({"test", "test"});
     DataNode n(v);
 
-    cout << n.to_html() << endl;
+    cout << n.length_of_data() << endl;
 
 }

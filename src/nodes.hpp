@@ -1,12 +1,12 @@
 #ifndef NODES_HPP
 #define NODES_HPP
 
-#include <vector>
-#include <string>
-#include <sstream>
-#include <numeric>
-#include "repeats.hpp"
 #include "estl.hpp"
+#include "repeats.hpp"
+#include <numeric>
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace Nodes {
 
@@ -55,17 +55,16 @@ class Node {
     ints grouping;
 };
 
-
 class DataNode : public Node {
   public:
     static const bool leaf = true;
     DataNode(strings texts, ints groupings = {}) : Node(texts, groupings){};
 
     size_t length_of_data() override {
-        return accumulate(texts.begin(),
-                          texts.end(),
-                          size_t(0),
-                          [](size_t sum, string val) { return sum + val.size(); });
+        return accumulate(
+            texts.begin(), texts.end(), size_t(0), [](size_t sum, string val) {
+                return sum + val.size();
+            });
     }
 
     size_t length_of_data(size_t text_ix) override {
@@ -75,9 +74,9 @@ class DataNode : public Node {
 
 class BinarySplitNode : public Node {
   public:
-    BinarySplitNode(strings texts, ints groupings = {}) : Node(texts, groupings){};
+    BinarySplitNode(strings texts, ints groupings = {}) :
+        Node(texts, groupings){};
 };
-
 
 unique_ptr<Node> construct(strings texts, ints grouping = {}) {
     if (texts.size() < 2)
@@ -115,6 +114,6 @@ double bisect_distance(string fn0, string fn1) {
 
     return root->length_of_data();
 }
-};
+}; // namespace Nodes
 
 #endif
