@@ -23,6 +23,14 @@ class SuffixArray {
     vector<int> length_before_docs;
 
     SuffixArray(vector<vector<int>> &texts) {
+        int32_t max_ordinal = 0;
+        for (auto vec: texts) {
+            for (auto i: vec) {
+                if (i > max_ordinal) {
+                    max_ordinal = i;
+                }
+            }
+        }
         num_texts = texts.size();
         length_before_docs.push_back(s.size());
         for (int text_id = 0; text_id < num_texts; text_id++) {
@@ -35,7 +43,7 @@ class SuffixArray {
             for (auto i: text) {
                 s.push_back(i);
             }
-            s.push_back(2);
+            s.push_back(max_ordinal + text_id + 1);
             length_before_docs.push_back(s.size());
         }
 
@@ -47,7 +55,7 @@ class SuffixArray {
         //   (const unsigned char *)s.data(), suffix_array.data(), (int)s_len);
         saisxx(s.begin(), suffix_array.begin(), s_len);
 
-        cout << s << endl;
+        // cout << s << endl;
 
         setup_lcp();
     }

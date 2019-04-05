@@ -22,6 +22,8 @@ CYTHON = cython
 CYTHON_FLAGS = -Wextra
 CYTHON_FLAGS += --cplus
 CYTHON_FLAGS += -3
+#CYTHON_FLAGS += --gdb
+#CYTHON_FLAGS += --gdb-outdir .
 
 
 ifeq ($(shell uname), Darwin)
@@ -31,6 +33,9 @@ LFLAGS += -arch x86_64
 LFLAGS += -Wl,-F.
 else
 LFLAGS += -shared
+LFLAGS += -g
+#LFLAGS += -lasan
+#LFLAGS += -lubsan
 #LFLAGS += -pthread
 # LFLAGS += -Wl,-O3
 # LFLAGS += -Wl,-Bsymbolic-functions
@@ -42,8 +47,11 @@ CPPFLAGS = $(FLAGS)
 CPPFLAGS += -std=c++2a
 #CPPFLAGS += -stdlib=libc++
 #CPPFLAGS += --analyze
-CPPFLAGS += -fsanitize=address
-CPPFLAGS += -g -O0
+#CPPFLAGS += -fsanitize=address
+CPPFLAGS += -g
+#CPPFLAGS += -O1
+CPPFLAGS += -O2
+#CPPFLAGS += -fno-omit-frame-pointer
 
 .PHONY: test
 

@@ -17,8 +17,12 @@ Result = namedtuple('Result', ['match_length', 'matches'])
 
 cdef vector[int] to_vector(b):
     cdef vector[int] text
-    for c in b:
-        text.push_back(ord(c))
+    if isinstance(b, str):
+        for c in b:
+            text.push_back(ord(c))
+    else:
+        for c in b:
+            text.push_back(c)
     return text
 
 cdef vector[vector[int]] to_vectors(ss):

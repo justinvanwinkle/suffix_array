@@ -124,7 +124,7 @@ class RepeatFinder {
                 best_start_ix = start_ix;
             }
         });
-        return subvector(sa.s, best_start_ix, best_match_len);
+        return subvector(sa.s, sa.SA(best_start_ix), best_match_len);
     }
 
     vector<vector<int>> all_repeats() {
@@ -145,14 +145,9 @@ class RepeatFinder {
 
             for (int i = 0; i < sa.num_texts; ++i) {
                 if (match_count[i] == 0)
-                    break;
-
-                for (int i = 0; i < sa.num_texts; ++i) {
-                    if (match_count[i] == 0)
-                        return;
-                }
+                    return;
             }
-            repeats.push_back(subvector(sa.s, start_ix, match_len));
+            repeats.push_back(subvector(sa.s, sa.SA(start_ix), match_len));
         });
         return repeats;
     }

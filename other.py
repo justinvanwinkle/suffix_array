@@ -11,11 +11,7 @@ fns = [fn for fn in glob.glob('**/*', recursive=True) if isfile(fn)]
 #     print(fn1, fn2, suffix_array.file_bisect_distance(fn1, fn2))
 
 texts = ['bananas', 'bananas']
-texts = ['aaaaa', 'aaaaa']
-texts = ['abcdefghij'] * 3
 print(texts)
-for x in range(1000):
-    print(suffix_array.longest_common_substring(texts))
 
 print(suffix_array.rstr_max(texts))
 for texts in (['bub'], ['b'], ['abcd'], ['dcba'], ['aaaaa', 'aaaaa'],

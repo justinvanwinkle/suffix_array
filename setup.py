@@ -12,7 +12,7 @@ if __name__ == '__main__':
                             sources=src_files,
                             extra_compile_args=['-std=c++17',
                                                 '-g',
-                                                '-O0'])]
+                                                '-O2'])]
     description = "Fast Suffix Array for Python"
     setup(name='suffix_array',
           version=VERSION,
@@ -23,4 +23,4 @@ if __name__ == '__main__':
           tests_require=["pytest"],
           setup_requires=["cython", "pytest-runner"],
           description=description,
-          ext_modules=cythonize(extensions, nthreads=4, gdb_debug=True))
+          ext_modules=cythonize(extensions, nthreads=4))
