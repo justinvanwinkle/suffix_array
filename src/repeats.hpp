@@ -132,7 +132,7 @@ class RepeatFinder {
         auto first = sa.s.begin() + best_start_ix;
         auto last = sa.s.begin() + best_start_ix + best_match_len;
         vector<int> lcs(first, last);
-        cout << "BEST: " << lcs << endl;
+        // cout << "BEST: " << lcs << endl;
         return lcs;
     }
 

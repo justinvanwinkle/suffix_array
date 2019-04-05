@@ -15,26 +15,17 @@ from libcpp.string cimport string
 
 Result = namedtuple('Result', ['match_length', 'matches'])
 
-cdef vector[int] bytes_to_vector(bytes b):
+cdef vector[int] to_vector(b):
     cdef vector[int] text
     for c in b:
-        text.push_back(c)
+        text.push_back(ord(c))
     return text
 
-
-cdef vector[vector[int]] strings_to_vectors(ss):
+cdef vector[vector[int]] to_vectors(ss):
     cdef vector[vector[int]] texts
-    cdef vector[int] text
-
     for s in ss:
-        if isinstance(s, bytes):
-            text = bytes_to_vector(s)
-        else:
-            text = bytes_to_vector(s.encode('utf-32'))
-        texts.push_back(text)
-
+        texts.push_back(to_vector(s))
     return texts
-
 
 cdef bytes vector_to_byte(vector[int] text):
     ba = bytearray(text.size())
@@ -44,7 +35,11 @@ cdef bytes vector_to_byte(vector[int] text):
 
 
 cdef str vector_to_string(vec):
-    return vector_to_byte(vec).decode('utf-32')
+    print(vec)
+    l = []
+    for i in vec:
+        l.append(chr(i))
+    return ''.join(l)
 
 cdef list vectors_to_strings(vecs):
     ss = []
@@ -76,7 +71,7 @@ cdef class RepeatFinderP:
             for text in texts:
                 if isinstance(text, bytes) != self.is_byte:
                     raise ValueError("Can't mix str and bytes")
-        self.texts = strings_to_vectors(texts)
+        self.texts = to_vectors(texts)
         self.thisptr = new RepeatFinder(self.texts)
 
     def __dealloc__(self):

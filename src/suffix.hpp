@@ -2,7 +2,7 @@
 #define SUFFIX_HPP
 
 //#include "sais.hpp"
-#include "divsufsort.hpp"
+#include "sais.hpp"
 #include "estl.hpp"
 #include "mystack.hpp"
 #include <iostream>
@@ -11,21 +11,24 @@
 #include <vector>
 #include <limits>
 #include <vector>
+#include<iterator>
 
 namespace Suffix {
 
 using namespace std;
 
 using stack_entry = tuple<int, int, int>;
+using sarray_entry = unsigned int;
+
 
 class SuffixArray {
   public:
-    vector<int> s;
+    vector<int32_t> s;
     int s_len;
     int num_texts;
     vector<int> max_index_of_text;
 
-    SuffixArray(vector<vector<int>> &texts) {
+    SuffixArray(vector<vector<int32_t>> &texts) {
         num_texts = texts.size();
         for (int text_id = 0; text_id < num_texts; text_id++) {
             auto &text = texts[text_id];
@@ -34,20 +37,21 @@ class SuffixArray {
                 text_ids.push_back(text_id);
             }
             text_ids.push_back(text_id);
-
-            s.insert(std::end(s), std::begin(text), std::end(text));
-            s.push_back(numeric_limits<int>::max() - text_id);
+            for (auto i: text) {
+                s.push_back(i);
+            }
+            //copy(begin(text), end(text), back_inserter(s));
+            s.push_back(0);
             max_index_of_text.push_back(s.size() - 1);
         }
 
         s_len = s.size();
-
+        // cout << s << endl;
         suffix_array.resize(s_len, 0);
 
-        divsufsort(
-            (const unsigned char *)s.data(), suffix_array.data(), (int)s_len);
-        // saisxx((const unsigned char *)s.data(), suffix_array.data(),
-        // (int)s_len);
+        // divsufsort(
+        //     (const unsigned char *)s.data(), suffix_array.data(), (int)s_len);
+        saisxx(s.data(), suffix_array.data(), (int)s_len);
 
         //cout << suffix_array << endl;
 
@@ -106,7 +110,7 @@ class SuffixArray {
             auto lcp_len = lcp[low_ix];
             auto string_ix = suffix_array[low_ix];
             auto end_ix = max(last_string_ix, string_ix) + lcp_len;
-            int lcp_diff = last_lcp_len - lcp_len - 1;
+            int lcp_diff = last_lcp_len - lcp_len;
 
             if (lcp_diff < 0) {
                 //cout << "push" << endl;
@@ -158,7 +162,7 @@ class SuffixArray {
             if (last_start_ix != start_ix) {
                 nb = end_ix - start_ix + 1;
                 if (top >= min_length)
-                    fn(nb, top, start_ix - 1, max_end_ix);
+                    fn(nb, top, start_ix, max_end_ix);
                 last_start_ix = start_ix;
             }
             current_lcp_diff -= lcp_diff;
@@ -202,16 +206,16 @@ class SuffixArray {
         }
         //cout << "num_texts:" << num_texts << endl;
 
-        int last_left_to_end = 0;
-        for (int suffix_ix = 0; suffix_ix < s_len; suffix_ix++) {
-            int global_ix = suffix_array[suffix_ix];
-            int doc_num = text_at(global_ix);
-            int left_to_end = max_index_of_text[doc_num] - global_ix + 1;
-            // cout << "ix:" << suffix_ix << " lcp:" << lcp[suffix_ix]
-            //      << " let_to_end:" << left_to_end
-            //      << " last_left_to_end:" << last_left_to_end << endl;
-            last_left_to_end = left_to_end;
-        }
+        // int last_left_to_end = 0;
+        // for (int suffix_ix = 0; suffix_ix < s_len; suffix_ix++) {
+        //     int global_ix = suffix_array[suffix_ix];
+        //     int doc_num = text_at(global_ix);
+        //     int left_to_end = max_index_of_text[doc_num] - global_ix + 1;
+        //     // cout << "ix:" << suffix_ix << " lcp:" << lcp[suffix_ix]
+        //     //      << " let_to_end:" << left_to_end
+        //     //      << " last_left_to_end:" << last_left_to_end << endl;
+        //     last_left_to_end = left_to_end;
+        // }
 
         // for (int ix = 0; ix < s_len; ix++) {
         //     cout << suffix_array[ix] << " ";
