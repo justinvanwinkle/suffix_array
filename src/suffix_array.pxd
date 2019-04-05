@@ -7,30 +7,26 @@ from libcpp.pair cimport pair
 from libcpp.map cimport map as cpp_map
 
 
-ctypedef pair[int, int] int_pair
-ctypedef cpp_map[int_pair, int_pair] repeat_map
-
-
 cdef extern from "repeats.hpp" namespace "RepeatFinding":
     cdef cppclass SuffixArray:
         SuffixArray()
-        SuffixArray(vector[string])
-        SuffixArray(SuffixArray, vector[pair[int, int]])
+        SuffixArray(vector[vector[int]])
         vector[int] suffix_array
         vector[int] lcp
         vector[int] rank
-        string s
+        vector[int] s
         int s_len
-        unsigned int num_texts
+        int num_texts
         int text_at(int)
         int text_index_at(int, int)
 
     cdef cppclass RepeatFinder:
-        RepeatFinder(vector[string])
+        RepeatFinder()
+        RepeatFinder(vector[vector[int]])
         RepeatFinder(SuffixArray) except +
         RepeatFinderResult rstr()
-        vector[string] all_repeats()
-        string LCS()
+        vector[vector[int]] all_repeats()
+        vector[int] LCS()
         SuffixArray sa
 
     cdef cppclass RepeatFinderResult:
@@ -39,4 +35,4 @@ cdef extern from "repeats.hpp" namespace "RepeatFinding":
         vector[int] matches
 
 cdef extern from "nodes.hpp" namespace "Nodes":
-    cdef double bisect_distance(string, string)
+    cdef double bisect_distance(vector[int], vector[int])

@@ -11,10 +11,22 @@
 #include <memory>
 #include <iostream>
 #include <system_error>
+#include <stack>
+#include "mystack.hpp"
+
 
 template <typename T>
 std::ostream &operator<<(std::ostream &s, std::pair<T, T> t) {
     s << "(" << t.first << ", " << t.second << ")";
+    return s;
+}
+
+template <typename ...T>
+std::ostream &operator<<(std::ostream &s, std::tuple<T...> t) {
+    s << "("
+      << std::get<0>(t) << ", "
+      << std::get<1>(t) << ", "
+      << std::get<2>(t) << ")";
     return s;
 }
 
@@ -23,6 +35,14 @@ std::ostream &operator<<(std::ostream &s, std::vector<T> t) {
     s << "[";
     for (unsigned int i = 0; i < t.size(); i++)
         s << t[i] << (i == t.size() - 1 ? "" : ", ");
+    return s << "]";
+}
+
+template <typename T>
+std::ostream &operator<<(std::ostream &s, my_stack<T> t) {
+    s << "[";
+    for (unsigned int i = 0; i < t.size(); i++)
+        s << t.c[i] << (i == t.c.size() - 1 ? "" : ", ");
     return s << "]";
 }
 
@@ -63,6 +83,20 @@ void enumerate(C &vec, Function fn) {
         fn(ix, val);
         ++ix;
     }
+}
+
+template <typename T>
+vector<T> subvector(vector<T> in, int start_ix, int len) {
+    auto first = in.begin() + start_ix;
+    auto last = in.begin() + start_ix + len;
+    return vector<T>(first, last);
+}
+
+template <typename T>
+vector<T> subvector(vector<T> in, int start_ix) {
+    auto first = in.begin() + start_ix;
+    auto last = in.end();
+    return vector<T>(first, last);
 }
 
 

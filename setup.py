@@ -11,7 +11,7 @@ if __name__ == '__main__':
     extensions = [Extension("suffix_array",
                             sources=src_files,
                             extra_compile_args=['-std=c++17',
-                                                '-O2'])]
+                                                '-O0'])]
     description = "Fast Suffix Array for Python"
     setup(name='suffix_array',
           version=VERSION,

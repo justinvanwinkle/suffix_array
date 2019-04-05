@@ -47,26 +47,26 @@ CPPFLAGS += -g -O0
 
 .PHONY: test
 
-default: build/suffix_array.so
+default: suffix_array.so
 
 src/%.o: src/%.cpp src/*.hpp Makefile
 	$(CXX) $(CPPFLAGS) $(INCLUDE) -c $< -o $@
 
-build/suffix_array.cpp: src/suffix_array.pyx src/suffix_array.pxd
+src/suffix_array.cpp: src/suffix_array.pyx src/suffix_array.pxd
 	cython $(CYTHON_FLAGS) $< -o $@
 
-build/suffix_array.so: build/suffix_array.o src/divsufsort.o
+suffix_array.so: src/suffix_array.o
 	$(shell mkdir -p build)
 	$(CXX) $(CPPFLAGS) $(LFLAGS) $(INCLUDE) $^ -o $@
 
-test: build/suffix_array.so test/test_basics.py
+test: suffix_array.so test/test_basics.py
 	PYTHONPATH=./build/ py.test -s -- test/test_basics.py
 
-install: build/suffix_array.so
-	cp build/suffix_array.so $(shell python -c 'import suffix_array; print(suffix_array.__file__)')
+install: suffix_array.so
+	cp suffix_array.so $(shell python -c 'import suffix_array; print(suffix_array.__file__)')
 
 clean:
-	rm -rf src/*.o build/ src/suffix_array.cpp
+	rm -rf suffix_array.so src/*.o build/ src/suffix_array.cpp
 
 analyze:
 	/opt/local/libexec/llvm-3.5/libexec/scan-build/scan-build -enable-checker alpha -analyze-headers -V make -j

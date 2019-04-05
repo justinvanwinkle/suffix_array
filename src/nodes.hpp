@@ -5,7 +5,6 @@
 #include "repeats.hpp"
 #include <numeric>
 #include <sstream>
-#include <string>
 #include <vector>
 
 namespace Nodes {
@@ -17,10 +16,10 @@ using namespace estl;
 class Node {
   public:
     static const bool leaf = false;
-    strings texts;
+    vector<vector<int>> texts;
     vector<unique_ptr<Node>> children;
 
-    Node(strings texts, ints grouping = {}) : texts(texts) {
+    Node(vector<vector<int>> texts, ints grouping = {}) : texts(texts) {
         if (grouping.empty())
             grouping.resize(texts.size(), 1);
     }
@@ -58,27 +57,29 @@ class Node {
 class DataNode : public Node {
   public:
     static const bool leaf = true;
-    DataNode(strings texts, ints groupings = {}) : Node(texts, groupings){};
+    DataNode(vector<vector<int>> texts, ints groupings = {}) :
+        Node(texts, groupings){};
 
     size_t length_of_data() override {
         return accumulate(
-            texts.begin(), texts.end(), size_t(0), [](size_t sum, string val) {
-                return sum + val.size();
-            });
+            texts.begin(),
+            texts.end(),
+            size_t(0),
+            [](size_t sum, vector<int> val) { return sum + val.size(); });
     }
 
     size_t length_of_data(size_t text_ix) override {
-        return texts[text_ix].length();
+        return texts[text_ix].size();
     }
 };
 
 class BinarySplitNode : public Node {
   public:
-    BinarySplitNode(strings texts, ints groupings = {}) :
+    BinarySplitNode(vector<vector<int>> texts, ints groupings = {}) :
         Node(texts, groupings){};
 };
 
-unique_ptr<Node> construct(strings texts, ints grouping = {}) {
+unique_ptr<Node> construct(vector<vector<int>> texts, ints grouping = {}) {
     if (texts.size() < 2)
         return unique_ptr<Node>(new DataNode(texts));
 
@@ -87,13 +88,13 @@ unique_ptr<Node> construct(strings texts, ints grouping = {}) {
     if (result.match_length < 2)
         return unique_ptr<Node>(new DataNode(texts));
 
-    vector<string> lefts;
-    vector<string> rights;
+    vector<vector<int>> lefts;
+    vector<vector<int>> rights;
 
-    enumerate(texts, [&](size_t ix, string s) {
+    enumerate(texts, [&](size_t ix, vector<int> s) {
         auto start_offset = result.matches[ix];
-        lefts.push_back(s.substr(0, start_offset));
-        rights.push_back(s.substr(start_offset + result.match_length));
+        lefts.push_back(subvector(s, 0, start_offset));
+        rights.push_back(subvector(s, start_offset + result.match_length));
     });
     unique_ptr<Node> node(new BinarySplitNode(texts, grouping));
     node->children.emplace_back(construct(lefts, grouping));
@@ -101,10 +102,7 @@ unique_ptr<Node> construct(strings texts, ints grouping = {}) {
     return node;
 }
 
-double bisect_distance(string fn0, string fn1) {
-    string content0 = read_file(fn0);
-    string content1 = read_file(fn1);
-
+double bisect_distance(vector<int> content0, vector<int> content1) {
     // size_t size0 = content0.size();
     // size_t size1 = content1.size();
 

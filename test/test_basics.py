@@ -118,15 +118,15 @@ def _read_files(path):
     return content
 
 
-def test_rstr_max_big():
-    ss = _read_files('test/data/html')
+# def test_rstr_max_big():
+#     ss = _read_files('test/data/html')
 
-    result = rstr_max(ss)
-    assert result.match_length == 27661
-    assert result.matches == (
-        6831, 7495, 6739, 6574, 6932, 6831, 6379, 6794,
-        7176, 6920, 7007, 6921, 6561, 7742, 6757, 6843,
-        6508, 6761, 6815)
+#     result = rstr_max(ss)
+#     assert result.match_length == 27661
+#     assert result.matches == (
+#         6831, 7495, 6739, 6574, 6932, 6831, 6379, 6794,
+#         7176, 6920, 7007, 6921, 6561, 7742, 6757, 6843,
+#         6508, 6761, 6815)
 
 
 def test_rstr_max_logic():
