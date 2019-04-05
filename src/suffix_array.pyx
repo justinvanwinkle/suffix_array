@@ -35,7 +35,6 @@ cdef bytes vector_to_byte(vector[int] text):
 
 
 cdef str vector_to_string(vec):
-    print(vec)
     l = []
     for i in vec:
         l.append(chr(i))

@@ -95,7 +95,7 @@ class RepeatFinder {
         return result;
     }
 
-    string LCS() {
+    vector<int> LCS() {
         int best_start_ix = 0;
         int best_match_len = 0;
         sa.walk_maximal_substrings(1, [this, &best_start_ix, &best_match_len](
@@ -124,12 +124,11 @@ class RepeatFinder {
                 best_start_ix = start_ix;
             }
         });
-        string lcs = sa.s.substr(sa.SA(best_start_ix), best_match_len);
-        return lcs;
+        return subvector(sa.s, best_start_ix, best_match_len);
     }
 
-    vector<string> all_repeats() {
-        vector<string> repeats;
+    vector<vector<int>> all_repeats() {
+        vector<vector<int>> repeats;
         sa.walk_maximal_substrings(1, [this, &repeats](
             int nb, int match_len, int start_ix, int) {
             for (int i = 0; i < sa.num_texts; ++i) {
@@ -153,7 +152,7 @@ class RepeatFinder {
                         return;
                 }
             }
-            repeats.push_back(sa.s.substr(sa.SA(start_ix), match_len));
+            repeats.push_back(subvector(sa.s, start_ix, match_len));
         });
         return repeats;
     }
