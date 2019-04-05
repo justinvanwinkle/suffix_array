@@ -3,6 +3,7 @@
 
 #include "sais.hpp"
 //#include "divsufsort.hpp"
+#include "estl.hpp"
 #include <iostream>
 #include <map>
 #include <stack>
@@ -44,7 +45,9 @@ class SuffixArray {
 
         //divsufsort(
         //   (const unsigned char *)s.data(), suffix_array.data(), (int)s_len);
-        saisxx(s.data(), suffix_array.data(), (int)s_len);
+        saisxx(s.begin(), suffix_array.begin(), s_len);
+
+        cout << s << endl;
 
         setup_lcp();
     }
