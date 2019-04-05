@@ -2,34 +2,28 @@
 #define SUFFIX_HPP
 
 //#include "sais.hpp"
-#include "sais.hpp"
-#include "estl.hpp"
-#include "mystack.hpp"
+#include "divsufsort.hpp"
 #include <iostream>
 #include <map>
 #include <stack>
 #include <vector>
-#include <limits>
-#include <vector>
-#include<iterator>
 
 namespace Suffix {
 
 using namespace std;
 
 using stack_entry = tuple<int, int, int>;
-using sarray_entry = unsigned int;
-
 
 class SuffixArray {
   public:
     vector<int32_t> s;
     int s_len;
     int num_texts;
-    vector<int> max_index_of_text;
+    vector<int> length_before_docs;
 
-    SuffixArray(vector<vector<int32_t>> &texts) {
+    SuffixArray(vector<vector<int>> &texts) {
         num_texts = texts.size();
+        length_before_docs.push_back(s.size());
         for (int text_id = 0; text_id < num_texts; text_id++) {
             auto &text = texts[text_id];
             int text_len = text.size();
@@ -40,20 +34,18 @@ class SuffixArray {
             for (auto i: text) {
                 s.push_back(i);
             }
-            //copy(begin(text), end(text), back_inserter(s));
-            s.push_back(0);
-            max_index_of_text.push_back(s.size() - 1);
+            s.push_back(2);
+            length_before_docs.push_back(s.size());
         }
 
         s_len = s.size();
-        // cout << s << endl;
+
         suffix_array.resize(s_len, 0);
 
-        // divsufsort(
-        //     (const unsigned char *)s.data(), suffix_array.data(), (int)s_len);
-        saisxx(s.data(), suffix_array.data(), (int)s_len);
-
-        //cout << suffix_array << endl;
+        divsufsort(
+            (const unsigned char *)s.data(), suffix_array.data(), (int)s_len);
+        // saisxx((const unsigned char *)s.data(), suffix_array.data(),
+        // (int)s_len);
 
         setup_lcp();
     }
@@ -62,31 +54,8 @@ class SuffixArray {
         return suffix_array[ix];
     }
 
-    int global_text_start_ix(int text_num) {
-        int text_start_ix = 0;
-        if (text_num != 0) {
-            text_start_ix = max_index_of_text[text_num - 1] + 1;
-        };
-        return text_start_ix;
-    }
-
-    int global_text_end_ix(int text_num) {
-        return max_index_of_text[text_num];
-    }
-
-    int text_length(int text_num) {
-        return global_text_end_ix(text_num) - global_text_start_ix(text_num) +
-               1;
-    }
-
-    int global_index(int text_num, int index) {
-        return global_text_start_ix(text_num) + index;
-    }
-
     int text_index_at(int o, int text_num) {
-        int new_ix = o - global_text_start_ix(text_num);
-        // cout << new_ix << " " << old_ix << endl;
-        return new_ix;
+        return o - length_before_docs[text_num];
     }
 
     int text_at(int o) {
@@ -101,7 +70,7 @@ class SuffixArray {
     void walk_maximal_substrings(int min_length, Function fn) {
         int top = 0;
 
-        my_stack<stack_entry> stack;
+        stack<stack_entry> stack;
 
         int last_lcp_len = lcp[0];
         int last_string_ix = suffix_array[0];
@@ -113,24 +82,14 @@ class SuffixArray {
             int lcp_diff = last_lcp_len - lcp_len;
 
             if (lcp_diff < 0) {
-                //cout << "push" << endl;
                 stack.emplace(-lcp_diff, low_ix - 1, end_ix);
                 top -= lcp_diff;
             } else if (lcp_diff > 0) {
-                //cout << "remove_many" << endl;
                 top = remove_many(
                     stack, top, lcp_diff, low_ix - 1, min_length, fn);
             } else if (top > 0 and end_ix > get<2>(stack.top())) {
-                //cout << "change_top:" << end_ix << endl;
                 get<2>(stack.top()) = end_ix;
             }
-
-            // cout << "lcp_len:" << lcp_len
-            //      << " string_ix:" << string_ix
-            //      << " end_ix:" << end_ix
-            //      << " lcp_diff:" << lcp_diff
-            //      << " top:" << top << endl;
-            // cout << "Stack:" << stack << endl;
 
             last_lcp_len = lcp_len;
             last_string_ix = string_ix;
@@ -150,13 +109,13 @@ class SuffixArray {
     template <class Function>
     int remove_many(stack<stack_entry> &stack,
                     int top,
-                    int current_lcp_diff,
+                    int m,
                     int end_ix,
                     int min_length,
                     Function fn) {
         int last_start_ix = -1, max_end_ix, lcp_diff, start_ix, nb;
 
-        while (current_lcp_diff > 0) {
+        while (m > 0) {
             tie(lcp_diff, start_ix, max_end_ix) = stack.top();
             stack.pop();
             if (last_start_ix != start_ix) {
@@ -165,14 +124,12 @@ class SuffixArray {
                     fn(nb, top, start_ix, max_end_ix);
                 last_start_ix = start_ix;
             }
-            current_lcp_diff -= lcp_diff;
+            m -= lcp_diff;
             top -= lcp_diff;
         }
-        if (current_lcp_diff < 0) {
-            stack.emplace(-current_lcp_diff,
-                          start_ix,
-                          max_end_ix - lcp_diff - current_lcp_diff);
-            top -= current_lcp_diff;
+        if (m < 0) {
+            stack.push(make_tuple(-m, start_ix, max_end_ix - lcp_diff - m));
+            top -= m;
         }
         return top;
     }
@@ -204,32 +161,21 @@ class SuffixArray {
                 l = 0;
             }
         }
-        //cout << "num_texts:" << num_texts << endl;
 
-        // int last_left_to_end = 0;
-        // for (int suffix_ix = 0; suffix_ix < s_len; suffix_ix++) {
-        //     int global_ix = suffix_array[suffix_ix];
-        //     int doc_num = text_at(global_ix);
-        //     int left_to_end = max_index_of_text[doc_num] - global_ix + 1;
-        //     // cout << "ix:" << suffix_ix << " lcp:" << lcp[suffix_ix]
-        //     //      << " let_to_end:" << left_to_end
-        //     //      << " last_left_to_end:" << last_left_to_end << endl;
-        //     last_left_to_end = left_to_end;
-        // }
-
-        // for (int ix = 0; ix < s_len; ix++) {
-        //     cout << suffix_array[ix] << " ";
-        // }
-        // cout << endl;
-        // for (int ix = 0; ix < s_len; ix++) {
-        //     cout << lcp[ix] << " ";
-        // }
-        // cout << endl;
-        // for (int ix = 0; ix < s_len; ix++) {
-        //     cout << s[ix] << " ";
-        // }
-        // cout << endl;
-        // cout << "LCP:" << lcp << endl;
+        if (not length_before_docs.empty()) {
+            // Fix lcp for multi strings
+            for (int doc_idx = 0, max = length_before_docs.size() - 1;
+                 doc_idx < max;
+                 ++doc_idx) {
+                int doc_end_pos = length_before_docs[doc_idx + 1] - 1;
+                int doc_start_pos = length_before_docs[doc_idx];
+                for (int needle_pos = doc_end_pos; needle_pos >= doc_start_pos;
+                     --needle_pos) {
+                    int &lcp_value = lcp[rank[needle_pos]];
+                    lcp_value = min(doc_end_pos - needle_pos, lcp_value);
+                }
+            }
+        }
     }
 };
 }; // namespace Suffix

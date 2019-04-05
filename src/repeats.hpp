@@ -8,6 +8,7 @@
 #include <map>
 #include <stack>
 #include <iostream>
+#include <string>
 #include "estl.hpp"
 
 namespace RepeatFinding {
@@ -26,6 +27,7 @@ class RepeatFinderResult {
     int matching = 0;
     vector<int> matches;
 };
+
 
 class RepeatFinder {
   protected:
@@ -57,18 +59,14 @@ class RepeatFinder {
 
             for (int o = start_ix; o < start_ix + nb; ++o) {
                 int offset_global = sa.SA(o);
-
-                if (not sa.same_text(offset_global, offset_global + match_len)) {
-                    return;
-                }
-
                 int id_str = sa.text_at(offset_global);
-                int text_ix = sa.text_index_at(offset_global, id_str);
+                int offset = sa.text_index_at(offset_global, id_str);
 
                 ++match_count[id_str];
 
-                if (sub_results[id_str] == -1) {
-                    sub_results[id_str] = text_ix;
+                if ((sub_results[id_str] == -1) or
+                    (offset < sub_results[id_str])) {
+                    sub_results[id_str] = offset;
                 }
             }
 
@@ -97,7 +95,7 @@ class RepeatFinder {
         return result;
     }
 
-    vector<int> LCS() {
+    string LCS() {
         int best_start_ix = 0;
         int best_match_len = 0;
         sa.walk_maximal_substrings(1, [this, &best_start_ix, &best_match_len](
@@ -111,9 +109,6 @@ class RepeatFinder {
             for (int o = start_ix; o < start_ix + nb; ++o) {
                 int offset_global = sa.SA(o);
                 int id_str = sa.text_at(offset_global);
-                if (not sa.same_text(offset_global, offset_global + match_len)) {
-                    return;
-                }
                 // int offset = sa.text_index_at(offset_global, id_str);
 
                 ++match_count[id_str];
@@ -129,15 +124,12 @@ class RepeatFinder {
                 best_start_ix = start_ix;
             }
         });
-        auto first = sa.s.begin() + best_start_ix;
-        auto last = sa.s.begin() + best_start_ix + best_match_len;
-        vector<int> lcs(first, last);
-        // cout << "BEST: " << lcs << endl;
+        string lcs = sa.s.substr(sa.SA(best_start_ix), best_match_len);
         return lcs;
     }
 
-    vector<vector<int>> all_repeats() {
-        vector<vector<int>> repeats;
+    vector<string> all_repeats() {
+        vector<string> repeats;
         sa.walk_maximal_substrings(1, [this, &repeats](
             int nb, int match_len, int start_ix, int) {
             for (int i = 0; i < sa.num_texts; ++i) {
@@ -161,9 +153,7 @@ class RepeatFinder {
                         return;
                 }
             }
-            auto first = sa.s.begin() + start_ix;
-            auto last = sa.s.begin() + start_ix + match_len;
-            repeats.emplace_back(first, last);
+            repeats.push_back(sa.s.substr(sa.SA(start_ix), match_len));
         });
         return repeats;
     }
