@@ -29,6 +29,7 @@ class RepeatFinderResult {
 };
 
 
+
 class RepeatFinder {
   protected:
     vector<int> sub_results;
@@ -37,14 +38,14 @@ class RepeatFinder {
   public:
     SuffixArray sa;
 
-    RepeatFinder(SuffixArray sa)
+    explicit RepeatFinder(const SuffixArray &sa)
         : sub_results(sa.num_texts), match_count(sa.num_texts), sa(sa) {
     }
 
-    RepeatFinder(vector<vector<int>> texts) : RepeatFinder(SuffixArray(texts)) {
+    explicit RepeatFinder(vector<vector<int>> texts) : RepeatFinder(SuffixArray(texts)) {
     }
 
-    virtual ~RepeatFinder(){};
+    virtual ~RepeatFinder() = default;
 
     RepeatFinderResult rstr() {
         RepeatFinderResult result;

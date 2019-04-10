@@ -73,6 +73,12 @@ def test_longest_common_substring(testword):
             lcs = longest_common_substring(texts)
             assert lcs == bub
 
+def test_no_repeats():
+    texts = ['a' * 500, 'b' * 500]
+    result = rstr_max(texts)
+
+    assert result.match_length == 0
+    assert result.matches == tuple()
 
 def test_simple_rstr():
     texts = [b'a::',

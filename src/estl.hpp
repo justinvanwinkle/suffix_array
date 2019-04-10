@@ -101,15 +101,15 @@ vector<T> subvector(vector<T> in, int start_ix) {
 
 
 bool is_dir(string fn) {
-    struct stat statbuf;
+    struct stat statbuf{};
     stat(fn.c_str(), &statbuf);
     if (S_ISDIR(statbuf.st_mode))
-        return true;
-    return false;
+        return false;
+    return true;
 }
 
 
-string read_file(string fn) {
+string read_file(const string& fn) {
     ifstream in(fn, ios::in | ios::binary);
     if (in) {
         string contents;
@@ -124,10 +124,10 @@ string read_file(string fn) {
 }
 
 
-inline vector<string> glob(string pattern, bool only_files = false) {
+inline vector<string> glob(const string& pattern, bool only_files = false) {
     unique_ptr<glob_t, decltype(&globfree)> glob_buffer(new glob_t(), globfree);
 
-    glob(pattern.c_str(), GLOB_TILDE, NULL, glob_buffer.get());
+    glob(pattern.c_str(), GLOB_TILDE, nullptr, glob_buffer.get());
 
     strings fns;
     for (size_t i = 0; i < glob_buffer->gl_pathc; ++i) {
@@ -146,7 +146,7 @@ inline vector<string> glob(string pattern, bool only_files = false) {
 }
 
 
-strings list_dir(string path, bool only_files = false) {
+strings list_dir(const string& path, bool only_files = false) {
     strings fns;
     unique_ptr<DIR, decltype(&closedir)> dir(opendir(path.c_str()), closedir);
     if (not dir) {
@@ -168,7 +168,7 @@ strings list_dir(string path, bool only_files = false) {
     return fns;
 }
 
-strings read_files(strings fns) {
+strings read_files(const strings& fns) {
     strings file_contents;
     for (auto &fn : fns)
         file_contents.push_back(read_file(fn));

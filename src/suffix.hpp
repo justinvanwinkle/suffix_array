@@ -1,8 +1,9 @@
 #ifndef SUFFIX_HPP
 #define SUFFIX_HPP
 
-#include "sais.hpp"
+//#include "sais.hpp"
 //#include "divsufsort.hpp"
+#include "construct_suffix.hpp"
 #include "estl.hpp"
 #include <iostream>
 #include <map>
@@ -22,15 +23,7 @@ class SuffixArray {
     int num_texts;
     vector<int> length_before_docs;
 
-    SuffixArray(vector<vector<int>> &texts) {
-        int32_t max_ordinal = 0;
-        for (auto vec: texts) {
-            for (auto i: vec) {
-                if (i > max_ordinal) {
-                    max_ordinal = i;
-                }
-            }
-        }
+    explicit SuffixArray(vector<vector<int>> &texts) {
         num_texts = texts.size();
         length_before_docs.push_back(s.size());
         for (int text_id = 0; text_id < num_texts; text_id++) {
@@ -43,18 +36,18 @@ class SuffixArray {
             for (auto i: text) {
                 s.push_back(i);
             }
-            s.push_back(max_ordinal + text_id + 1);
+            s.push_back(-text_id - 1);
             length_before_docs.push_back(s.size());
         }
 
         s_len = s.size();
-
-        suffix_array.resize(s_len, 0);
+        suffix_array = buildSuffixArray(s);
+        //suffix_array.resize(s_len, 0);
 
         //divsufsort(
         //   (const unsigned char *)s.data(), suffix_array.data(), (int)s_len);
-        saisxx(s.begin(), suffix_array.begin(), s_len);
-
+        // cout << "max_ordinal:" << max_ordinal << endl;
+        //saisxx(s.data(), suffix_array.data(), s_len, 512);
         // cout << s << endl;
 
         setup_lcp();
@@ -110,7 +103,7 @@ class SuffixArray {
         }
     }
 
-    ~SuffixArray(){};
+    ~SuffixArray() = default;
 
     vector<int> suffix_array;
     vector<int> lcp;
@@ -188,6 +181,6 @@ class SuffixArray {
         }
     }
 };
-}; // namespace Suffix
+} // namespace Suffix
 
 #endif

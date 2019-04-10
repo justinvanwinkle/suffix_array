@@ -8,12 +8,13 @@ INCLUDE = $(PYTHON_INCLUDES)
 #FLAGS = -fno-strict-aliasing
 #FLAGS += -fno-common
 FLAGS = -g
-FLAGS += -O2
+FLAGS += -O3
 FLAGS += -Wall
 FLAGS += -Wextra
 FLAGS += -pipe
 FLAGS += -pedantic
 FLAGS += -ferror-limit=2
+FLAGS += -Wunused-command-line-argument
 #FLAGS += -fprofile-use
 #FLAGS += -fprofile-generate
 #FLAGS += -fprofile-dir=/tmp/gcc-prof
@@ -22,8 +23,6 @@ CYTHON = cython
 CYTHON_FLAGS = -Wextra
 CYTHON_FLAGS += --cplus
 CYTHON_FLAGS += -3
-#CYTHON_FLAGS += --gdb
-#CYTHON_FLAGS += --gdb-outdir .
 
 
 ifeq ($(shell uname), Darwin)
@@ -34,10 +33,9 @@ LFLAGS += -Wl,-F.
 else
 LFLAGS += -shared
 LFLAGS += -g
-#LFLAGS += -lasan
-#LFLAGS += -lubsan
+LFLAGS += -O3
 #LFLAGS += -pthread
-# LFLAGS += -Wl,-O3
+LFLAGS += -Wl,-O0
 # LFLAGS += -Wl,-Bsymbolic-functions
 # LFLAGS += -Wl,-z,relro
 FLAGS += -fPIC
@@ -47,11 +45,15 @@ CPPFLAGS = $(FLAGS)
 CPPFLAGS += -std=c++2a
 #CPPFLAGS += -stdlib=libc++
 #CPPFLAGS += --analyze
+
+#LFLAGS += -lasan
+#LFLAGS += -lubsan
 #CPPFLAGS += -fsanitize=address
-CPPFLAGS += -g
-#CPPFLAGS += -O1
-CPPFLAGS += -O2
+#CPPFLAGS += -O0
 #CPPFLAGS += -fno-omit-frame-pointer
+#CYTHON_FLAGS += --gdb
+#2CYTHON_FLAGS += --gdb-outdir .
+
 
 .PHONY: test
 

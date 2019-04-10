@@ -19,6 +19,10 @@ for texts in (['bub'], ['b'], ['abcd'], ['dcba'], ['aaaaa', 'aaaaa'],
     print(texts)
     print(repr(suffix_array.longest_common_substring(texts)))
 
+pressureratio = open('test/data/html/ef4ba', 'rb').read()
+starpressure = open('test/data/html/e8f8a', 'rb').read()
+print(suffix_array.rstr_max([starpressure, pressureratio]))
+
 
 # ix:0 lcp:0 let_to_end:0 last_left_to_end:0
 # ix:1 lcp:5 let_to_end:5 last_left_to_end:0
